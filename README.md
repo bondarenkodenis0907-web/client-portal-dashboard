@@ -37,5 +37,4 @@ This project will include realistic debugging tasks:
 
 ## Purpose
 
-This project is part of my practical training in building and debugging production-style web applications.# supabase-dashboard-practice
-Practice project for Next.js + Supabase authentication and dashboard
+This project is part of my practical training in building and debugging production-style web applications.
