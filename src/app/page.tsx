@@ -17,7 +17,7 @@ export default function Home() {
         return;
       }
 
-      setStatus("Supabase connection OK");
+      setStatus("Secure account access powered by Supabase");
     }
 
     checkConnection();
@@ -27,7 +27,7 @@ export default function Home() {
     <main className="flex min-h-screen items-center justify-center">
       <div className="text-center">
         <h1 className="text-3xl font-bold">
-          Supabase Dashboard Practice
+          Client Portal Dashboard
         </h1>
 
         <p className="mt-4">
