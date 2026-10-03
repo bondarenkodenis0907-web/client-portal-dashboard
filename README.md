@@ -11,6 +11,19 @@ https://client-portal-dashboard.netlify.app
 Client Portal Dashboard provides authenticated users with a protected account area where they can manage profile information securely.
 
 The application uses Supabase Authentication, PostgreSQL and Row Level Security to isolate user data and prevent unauthorized access.
+## Screenshots
+
+### Dashboard
+
+![Client Portal Dashboard](public/screenshots/dashboard.png)
+
+### Login
+
+![Login](public/screenshots/login.png)
+
+### Profile Management
+
+![Profile Management](public/screenshots/profile.png)
 
 ## Features
 
