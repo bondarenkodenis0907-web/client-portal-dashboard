@@ -15,8 +15,8 @@ The application uses Supabase Authentication, PostgreSQL and Row Level Security 
 ## Features
 
 - Email and password authentication
-- Protected dashboard routes
 - Persistent user sessions
+- Protected dashboard routes
 - User profile management
 - PostgreSQL-backed profile data
 - Row Level Security
@@ -24,8 +24,9 @@ The application uses Supabase Authentication, PostgreSQL and Row Level Security 
 - Error handling
 - Retry flow
 - Empty profile state
-- Save-state protection
+- Duplicate save protection
 - Production deployment
+- GitHub Actions CI
 
 ## Tech Stack
 
@@ -36,7 +37,7 @@ The application uses Supabase Authentication, PostgreSQL and Row Level Security 
 - PostgreSQL
 - Tailwind CSS
 - Netlify
-- GitHub
+- GitHub Actions
 
 ## Security
 
