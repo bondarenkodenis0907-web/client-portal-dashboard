@@ -65,3 +65,77 @@ Protected Next.js Dashboard
 Supabase PostgreSQL
   ↓
 Row Level Security
+```
+
+## CI
+
+GitHub Actions runs automated checks on pull requests and pushes to `main`:
+
+```text
+npm ci
+npm run lint
+npx next typegen
+npx tsc --noEmit
+```
+
+The workflow uses read-only repository permissions and does not expose Supabase secrets to pull request jobs.
+
+## Deployment
+
+The application is deployed on Netlify.
+
+Production authentication URLs are configured separately from local development.
+
+## Local Development
+
+Clone the repository:
+
+```bash
+git clone https://github.com/bondarenkodenis0907-web/client-portal-dashboard.git
+cd client-portal-dashboard
+```
+
+Install dependencies:
+
+```bash
+npm install
+```
+
+Create `.env.local`:
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your_supabase_publishable_key
+```
+
+Start the development server:
+
+```bash
+npm run dev
+```
+
+Open:
+
+```text
+http://localhost:3000
+```
+
+## Project Structure
+
+```text
+src/
+├── app/
+│   ├── dashboard/
+│   ├── login/
+│   └── page.tsx
+│
+└── lib/
+    └── supabase/
+        ├── client.ts
+        ├── server.ts
+        └── proxy.ts
+```
+
+## Status
+
+Deployed and operational.
