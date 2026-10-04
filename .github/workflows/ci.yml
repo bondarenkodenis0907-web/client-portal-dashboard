@@ -12,6 +12,7 @@ jobs:
   check:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+
     steps:
       - name: Check out code
         uses: actions/checkout@v4
@@ -35,3 +36,24 @@ jobs:
 
       - name: Type check
         run: npx tsc --noEmit
+
+  database-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Set up Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Start local Supabase
+        run: supabase start
+
+      - name: Run database tests
+        run: supabase test db
