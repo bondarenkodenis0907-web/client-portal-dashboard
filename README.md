@@ -64,7 +64,7 @@ Each authenticated user can:
 
 Users cannot read or modify another user's profile.
 
-RLS isolation was tested using multiple authenticated accounts.
+RLS isolation is covered by automated pgTAP tests that run in GitHub Actions against a local Supabase environment.
 
 ## Application Flow
 
@@ -82,7 +82,9 @@ Row Level Security
 
 ## CI
 
-GitHub Actions runs automated checks on pull requests and pushes to `main`:
+GitHub Actions runs automated checks on pull requests and pushes to `main`.
+
+Application checks:
 
 ```text
 npm ci
@@ -91,7 +93,16 @@ npx next typegen
 npx tsc --noEmit
 ```
 
-The workflow uses read-only repository permissions and does not expose Supabase secrets to pull request jobs.
+Database security checks:
+
+```text
+supabase start
+supabase test db
+```
+
+The database test suite runs against a local Supabase environment and verifies profile Row Level Security isolation between authenticated users.
+
+The workflow uses read-only repository permissions and does not expose production Supabase secrets to pull request jobs.
 
 ## Deployment
 
