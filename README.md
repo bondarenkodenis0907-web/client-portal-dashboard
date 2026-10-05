@@ -96,3 +96,63 @@ Protected Next.js Dashboard
 Supabase PostgreSQL
         ↓
 Row Level Security
+```
+
+## CI
+
+Pull requests and pushes to `main` run:
+
+```text
+npm ci
+npm run lint
+npx next typegen
+npx tsc --noEmit
+supabase start
+supabase test db
+```
+
+GitHub Actions uses read-only repository permissions and does not require production Supabase credentials.
+
+## Local Development
+
+```bash
+git clone https://github.com/bondarenkodenis0907-web/client-portal-dashboard.git
+cd client-portal-dashboard
+npm install
+```
+
+Create `.env.local`:
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your_supabase_publishable_key
+```
+
+Run:
+
+```bash
+npm run dev
+```
+
+Open:
+
+```text
+http://localhost:3000
+```
+
+## Project Structure
+
+```text
+src/
+├── app/
+│   ├── dashboard/
+│   │   └── requests/
+│   ├── login/
+│   └── page.tsx
+└── lib/
+    └── supabase/
+
+supabase/
+├── migrations/
+└── tests/
+```
