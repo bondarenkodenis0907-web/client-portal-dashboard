@@ -48,7 +48,7 @@ export default function Home() {
 
             <div className="rounded-xl border bg-white p-5">
               <p className="text-sm text-gray-500">Deployment</p>
-              <p className="mt-2 font-semibold">Netlify</p>
+              <p className="mt-2 font-semibold">Vercel</p>
             </div>
           </div>
         </div>
