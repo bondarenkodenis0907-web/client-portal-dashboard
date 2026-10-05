@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
@@ -203,6 +204,7 @@ export default function DashboardPage() {
             <p className="text-sm text-gray-500">
               Account status
             </p>
+
             <p className="mt-2 text-xl font-semibold">
               Active
             </p>
@@ -212,6 +214,7 @@ export default function DashboardPage() {
             <p className="text-sm text-gray-500">
               Company
             </p>
+
             <p className="mt-2 text-xl font-semibold">
               {profile?.company || "Not set"}
             </p>
@@ -221,9 +224,31 @@ export default function DashboardPage() {
             <p className="text-sm text-gray-500">
               Job title
             </p>
+
             <p className="mt-2 text-xl font-semibold">
               {profile?.job_title || "Not set"}
             </p>
+          </div>
+        </div>
+
+        <div className="mt-6 rounded-xl bg-white p-6 shadow">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <h2 className="text-xl font-semibold">
+                Service Requests
+              </h2>
+
+              <p className="mt-2 text-sm text-gray-600">
+                Report a technical issue and track your requests.
+              </p>
+            </div>
+
+            <Link
+              href="/dashboard/requests"
+              className="rounded bg-black px-5 py-3 text-white"
+            >
+              Open requests
+            </Link>
           </div>
         </div>
 
