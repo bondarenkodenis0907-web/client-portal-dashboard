@@ -8,7 +8,7 @@ https://client-portal-dashboard.netlify.app
 
 ## Overview
 
-Client Portal Dashboard provides authenticated users with a protected account area where they can manage profile information securely.
+Client Portal Dashboard is a small customer account portal where users can sign in, manage their profile and access data that belongs only to their account.
 
 The application uses Supabase Authentication, PostgreSQL and Row Level Security to isolate user data and prevent unauthorized access.
 ## Screenshots
@@ -66,6 +66,11 @@ Users cannot read or modify another user's profile.
 
 RLS isolation is covered by automated pgTAP tests that run in GitHub Actions against a local Supabase environment.
 
+## Design Decisions
+
+- Row Level Security is the final authorization boundary, so user isolation does not depend only on client-side filters.
+- Supabase database tests run against a local environment in CI, which avoids using production credentials during pull request checks.
+- Browser and server Supabase clients are kept separate to handle sessions correctly in Next.js.
 ## Application Flow
 
 ```text
