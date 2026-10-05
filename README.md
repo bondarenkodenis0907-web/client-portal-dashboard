@@ -4,7 +4,7 @@ A secure full-stack client portal built with Next.js, TypeScript and Supabase.
 
 ## Live Demo
 
-https://client-portal-dashboard.netlify.app
+https://client-portal-dashboard-one.vercel.app
 
 ## Overview
 
@@ -49,7 +49,7 @@ The application uses Supabase Authentication, PostgreSQL and Row Level Security 
 - Supabase
 - PostgreSQL
 - Tailwind CSS
-- Netlify
+- Vercel
 - GitHub Actions
 
 ## Security
@@ -111,7 +111,7 @@ The workflow uses read-only repository permissions and does not expose productio
 
 ## Deployment
 
-The application is deployed on Netlify.
+The application is deployed on Vercel.
 
 Production authentication URLs are configured separately from local development.
 
