@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
@@ -13,7 +13,7 @@ type Profile = {
 
 export default function DashboardPage() {
   const router = useRouter();
-  const supabase = useMemo(() => createClient(), []);
+  const [supabase] = useState(createClient);
 
   const [email, setEmail] = useState("");
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -27,55 +27,57 @@ export default function DashboardPage() {
   const [saving, setSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState("");
   const [retryCount, setRetryCount] = useState(0);
+  const [saveError, setSaveError] = useState("");
+  const [signOutError, setSignOutError] = useState("");
+  const [signingOut, setSigningOut] = useState(false);
+  const savingRef = useRef(false);
+  const signingOutRef = useRef(false);
 
   useEffect(() => {
     let cancelled = false;
+    const controller = new AbortController();
 
     async function loadDashboard() {
-      const {
-        data: { user },
-        error: userError,
-      } = await supabase.auth.getUser();
+      try {
+        const { data: { user }, error: userError } = await supabase.auth.getUser();
+        if (cancelled) return;
+        if (userError) {
+          if (userError.status === 401 || userError.status === 403 || userError.name === "AuthSessionMissingError") {
+            router.replace("/login");
+            return;
+          }
+          throw userError;
+        }
+        if (!user) {
+          router.replace("/login");
+          return;
+        }
 
-      if (cancelled) {
-        return;
+        const { data, error } = await supabase
+          .from("profiles")
+          .select("full_name, company, job_title")
+          .eq("id", user.id)
+          .abortSignal(controller.signal)
+          .single();
+        if (cancelled) return;
+        if (error || !data) throw error ?? new Error("Profile unavailable");
+
+        setEmail(user.email ?? "");
+        setProfile(data);
+        setFullName(data.full_name ?? "");
+        setCompany(data.company ?? "");
+        setJobTitle(data.job_title ?? "");
+      } catch {
+        if (!cancelled) setLoadError("Your profile could not be loaded. Check your connection and try again.");
+      } finally {
+        if (!cancelled) setLoading(false);
       }
-
-      if (userError || !user) {
-        router.replace("/login");
-        return;
-      }
-
-      const { data, error: profileError } = await supabase
-        .from("profiles")
-        .select("full_name, company, job_title")
-        .eq("id", user.id)
-        .single();
-
-      if (cancelled) {
-        return;
-      }
-
-      if (profileError) {
-        setLoadError(profileError.message);
-        setLoading(false);
-        return;
-      }
-
-      setEmail(user.email ?? "");
-      setProfile(data);
-
-      setFullName(data.full_name ?? "");
-      setCompany(data.company ?? "");
-      setJobTitle(data.job_title ?? "");
-
-      setLoading(false);
     }
 
     void loadDashboard();
-
     return () => {
       cancelled = true;
+      controller.abort();
     };
   }, [router, supabase, retryCount]);
 
@@ -85,58 +87,68 @@ export default function DashboardPage() {
     setRetryCount((current) => current + 1);
   }
 
-  async function handleSave() {
-    if (saving) {
-      return;
-    }
-
+  async function handleSave(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (savingRef.current || signingOutRef.current) return;
+    savingRef.current = true;
     setSaving(true);
     setSaveMessage("");
+    setSaveError("");
 
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser();
-
-    if (userError || !user) {
-      setSaveMessage("Unable to identify current user.");
-      setSaving(false);
-      return;
-    }
-
-    const { data, error } = await supabase
-      .from("profiles")
-      .update({
-        full_name: fullName.trim() || null,
-        company: company.trim() || null,
-        job_title: jobTitle.trim() || null,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", user.id)
-      .select("full_name, company, job_title")
-      .single();
-
-    if (error) {
-      setSaveMessage(`Save failed: ${error.message}`);
-    } else {
+    try {
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError || !user) {
+        setSaveError("Your session could not be verified. Check your connection or sign in again; your changes are still in the form.");
+        return;
+      }
+      const { data, error } = await supabase
+        .from("profiles")
+        .update({
+          full_name: fullName.trim() || null,
+          company: company.trim() || null,
+          job_title: jobTitle.trim() || null,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", user.id)
+        .select("full_name, company, job_title")
+        .single();
+      if (error || !data) throw error ?? new Error("Save not confirmed");
       setProfile(data);
+      setFullName(data.full_name ?? "");
+      setCompany(data.company ?? "");
+      setJobTitle(data.job_title ?? "");
       setSaveMessage("Profile saved.");
+    } catch {
+      setSaveError("Saving could not be confirmed. Your changes are still in the form; check your connection and try saving again.");
+    } finally {
+      savingRef.current = false;
+      setSaving(false);
     }
-
-    setSaving(false);
   }
 
   async function handleSignOut() {
-    await supabase.auth.signOut();
-    router.replace("/login");
-    router.refresh();
+    if (signingOutRef.current || savingRef.current) return;
+    signingOutRef.current = true;
+    setSigningOut(true);
+    setSignOutError("");
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      router.replace("/login");
+      router.refresh();
+    } catch {
+      setSignOutError("Sign-out could not be confirmed. Please try again.");
+    } finally {
+      signingOutRef.current = false;
+      setSigningOut(false);
+    }
   }
 
   if (loading) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-gray-50">
         <div className="rounded-xl bg-white p-8 shadow">
-          <p className="text-lg font-medium">Loading dashboard...</p>
+          <p role="status" className="text-lg font-medium">Loading your profile...</p>
         </div>
       </main>
     );
@@ -147,10 +159,10 @@ export default function DashboardPage() {
       <main className="flex min-h-screen items-center justify-center bg-gray-50">
         <div className="w-full max-w-md rounded-xl bg-white p-8 shadow">
           <h1 className="text-2xl font-bold">
-            Unable to load dashboard
+            Unable to load your profile
           </h1>
 
-          <p className="mt-3 text-sm text-red-700">
+          <p role="alert" className="mt-3 text-sm text-red-700">
             {loadError}
           </p>
 
@@ -173,7 +185,7 @@ export default function DashboardPage() {
   return (
     <main className="min-h-screen bg-gray-50 p-6">
       <div className="mx-auto max-w-4xl">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold">Dashboard</h1>
             <p className="mt-1 text-gray-600">{email}</p>
@@ -181,11 +193,14 @@ export default function DashboardPage() {
 
           <button
             onClick={handleSignOut}
+            disabled={signingOut || saving}
             className="rounded bg-black px-4 py-2 text-white"
           >
-            Sign out
+            {signingOut ? "Signing out..." : "Sign out"}
           </button>
         </div>
+
+        {signOutError && <p role="alert" className="mt-4 text-sm text-red-700">{signOutError}</p>}
 
         {profileIsEmpty && (
           <div className="mt-6 rounded-xl border border-dashed bg-white p-6">
@@ -202,11 +217,11 @@ export default function DashboardPage() {
         <div className="mt-8 grid gap-4 md:grid-cols-3">
           <div className="rounded-xl bg-white p-5 shadow">
             <p className="text-sm text-gray-500">
-              Account status
+              Full name
             </p>
 
             <p className="mt-2 text-xl font-semibold">
-              Active
+              {profile?.full_name || "Not set"}
             </p>
           </div>
 
@@ -257,9 +272,10 @@ export default function DashboardPage() {
             Edit profile
           </h2>
 
-          <div className="mt-5 space-y-4">
+          <form onSubmit={handleSave} className="mt-5">
+            <fieldset disabled={saving || signingOut} className="space-y-4">
             <div>
-              <label className="mb-1 block text-sm font-medium">
+              <label htmlFor="profile-name" className="mb-1 block text-sm font-medium">
                 Full name
               </label>
 
@@ -268,12 +284,15 @@ export default function DashboardPage() {
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
                 className="w-full rounded border p-3"
+                id="profile-name"
+                name="profile-name"
+                autoComplete="name"
                 placeholder="Your full name"
               />
             </div>
 
             <div>
-              <label className="mb-1 block text-sm font-medium">
+              <label htmlFor="profile-company" className="mb-1 block text-sm font-medium">
                 Company
               </label>
 
@@ -282,12 +301,15 @@ export default function DashboardPage() {
                 value={company}
                 onChange={(e) => setCompany(e.target.value)}
                 className="w-full rounded border p-3"
+                id="profile-company"
+                name="profile-company"
+                autoComplete="organization"
                 placeholder="Company name"
               />
             </div>
 
             <div>
-              <label className="mb-1 block text-sm font-medium">
+              <label htmlFor="profile-job-title" className="mb-1 block text-sm font-medium">
                 Job title
               </label>
 
@@ -296,24 +318,31 @@ export default function DashboardPage() {
                 value={jobTitle}
                 onChange={(e) => setJobTitle(e.target.value)}
                 className="w-full rounded border p-3"
+                id="profile-job-title"
+                name="profile-job-title"
+                autoComplete="organization-title"
                 placeholder="Job title"
               />
             </div>
 
             <button
-              onClick={handleSave}
-              disabled={saving}
+              type="submit"
+              disabled={saving || signingOut}
               className="rounded bg-black px-5 py-3 text-white disabled:cursor-not-allowed disabled:opacity-50"
             >
               {saving ? "Saving..." : "Save profile"}
             </button>
 
+            </fieldset>
+
+            {saveError && <p role="alert" className="mt-4 text-sm text-red-700">{saveError}</p>}
+
             {saveMessage && (
-              <p className="text-sm text-gray-700">
+              <p role="status" className="mt-4 text-sm text-gray-700">
                 {saveMessage}
               </p>
             )}
-          </div>
+          </form>
         </div>
       </div>
     </main>
