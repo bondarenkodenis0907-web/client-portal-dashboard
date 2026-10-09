@@ -19,10 +19,10 @@ Registration follows the Supabase project's email-confirmation setting: a return
 
 ## Screenshots
 
-The screenshots below show the earlier interface; the sign-in form has since been updated.
+The sign-in screenshot shows the current form; dashboard and profile screenshots show the existing workflow.
 
 ![Dashboard](public/screenshots/dashboard.png)
-![Sign-in screen before the form update](public/screenshots/login.png)
+![Sign in](public/screenshots/login-current.jpg)
 ![Profile](public/screenshots/profile.png)
 
 ## Run locally
@@ -68,3 +68,4 @@ See [the workflow](.github/workflows/ci.yml), [RLS tests](supabase/tests) and [d
 - Add the staff workflow for request assignment and status changes.
 - Cover the full browser flow with an isolated test backend.
 - Add pagination once request history grows beyond a small list.
+
