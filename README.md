@@ -19,11 +19,12 @@ Registration follows the Supabase project's email-confirmation setting: a return
 
 ## Screenshots
 
-The sign-in screenshot shows the current form; dashboard and profile screenshots show the existing workflow.
+The home and sign-in views reflect the current interface. The profile view uses
+isolated local test data.
 
-![Dashboard](public/screenshots/dashboard.png)
+![Service-request homepage](public/screenshots/home-current.jpg)
 ![Sign in](public/screenshots/login-current.jpg)
-![Profile](public/screenshots/profile.png)
+![Profile with local test data](public/screenshots/profile-current.jpg)
 
 ## Run locally
 
