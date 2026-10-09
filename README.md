@@ -1,124 +1,38 @@
 # Client Portal Dashboard
 
-A small B2B client portal built with Next.js, TypeScript, Supabase and PostgreSQL.
+A service-request portal for building and site systems. Users sign in, update their profile and submit a request with a site, system, description and priority.
 
-## Live Demo
+[Live demo](https://client-portal-dashboard-one.vercel.app)
 
-https://client-portal-dashboard-one.vercel.app
+## Scope
 
-## What it does
+The portal currently provides account registration, a profile and a user's request history. Request statuses are stored in the database and displayed in the dashboard. There is no staff interface for assigning or closing requests yet.
 
-Authenticated users can:
+Registration follows the Supabase project's email-confirmation setting: a returned session opens the dashboard; otherwise the user is asked to confirm their email before signing in. A failed request-list load offers a retry instead of showing an empty history.
 
-- sign in with email and password
-- manage their profile
-- create service requests
-- view only their own requests
-- track request status and priority
+## Implementation choices
 
-Supabase Row Level Security is used to keep data isolated between users.
+- **Authorization lives in PostgreSQL.** Both profiles and requests have ownership policies. The request query does not add a browser-side user filter; RLS restricts the rows returned. The SQL tests verify that a second user cannot read or modify the first user's data.
+- **Sessions cross the browser/server boundary.** Separate Supabase clients handle browser actions and server-side route protection. The browser uses only the publishable key.
+- **Database checks are reproducible.** CI starts a local Supabase instance, replays the migrations and runs pgTAP. Production credentials are not needed.
+- **The interface distinguishes failed loading from no data.** Creating a request has its own feedback, so a list-fetch error is shown beside the history rather than in the submission form.
 
 ## Screenshots
 
-### Dashboard
+The screenshots below show the earlier interface; the sign-in form has since been updated.
 
 ![Dashboard](public/screenshots/dashboard.png)
+![Sign-in screen before the form update](public/screenshots/login.png)
+![Profile](public/screenshots/profile.png)
 
-### Login
+## Run locally
 
-![Login](public/screenshots/login.png)
-
-### Profile Management
-
-![Profile Management](public/screenshots/profile.png)
-
-## Features
-
-- Supabase email/password authentication
-- Persistent sessions
-- Protected dashboard routes
-- Profile management
-- Service request creation and history
-- Request priority and status
-- PostgreSQL persistence
-- Row Level Security
-- Loading, error and empty states
-- GitHub Actions CI
-- Vercel deployment
-
-## Tech Stack
-
-- Next.js
-- React
-- TypeScript
-- Supabase
-- PostgreSQL
-- Tailwind CSS
-- GitHub Actions
-- Vercel
-
-## Database Security
-
-The project currently has separate RLS policies for:
-
-- user profiles
-- service requests
-
-Authenticated users can only read and modify rows that belong to their own account.
-
-Database behavior is tested with pgTAP against a local Supabase instance in CI.
-
-Examples covered by the tests:
-
-- User A can read their own profile
-- User A cannot update User B's profile
-- User A can create their own service request
-- User A cannot update or delete User B's request
-
-## Design Decisions
-
-- PostgreSQL RLS is the final authorization boundary rather than relying only on client-side filtering.
-- Database tests run against local Supabase in CI, so production credentials are not required.
-- Browser and server Supabase clients are kept separate for Next.js session handling.
-- Service requests use `user_id` ownership so authorization stays enforced at the database layer.
-
-## Application Flow
-
-```text
-User
-  ↓
-Supabase Auth
-  ↓
-Protected Next.js Dashboard
-  ├── Profile
-  └── Service Requests
-        ↓
-Supabase PostgreSQL
-        ↓
-Row Level Security
-```
-
-## CI
-
-Pull requests and pushes to `main` run:
-
-```text
-npm ci
-npm run lint
-npx next typegen
-npx tsc --noEmit
-supabase start
-supabase test db
-```
-
-GitHub Actions uses read-only repository permissions and does not require production Supabase credentials.
-
-## Local Development
+Requirements: Node.js, npm and a Supabase project with the migrations in `supabase/migrations` applied. For database tests, also install the Supabase CLI and Docker.
 
 ```bash
 git clone https://github.com/bondarenkodenis0907-web/client-portal-dashboard.git
 cd client-portal-dashboard
-npm install
+npm ci
 ```
 
 Create `.env.local`:
@@ -128,31 +42,29 @@ NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your_supabase_publishable_key
 ```
 
-Run:
-
 ```bash
 npm run dev
 ```
 
-Open:
+Open http://localhost:3000. Use your project's publishable key; never put a secret or service-role key in a `NEXT_PUBLIC_` variable.
 
-```text
-http://localhost:3000
+## Checks
+
+PRs and pushes to `main` run lint, Next.js route-type generation, TypeScript, a production build and the SQL tests. The CI build uses placeholder public Supabase values; it verifies compilation rather than a connection to the live backend.
+
+```bash
+npm run lint
+npx next typegen
+npx tsc --noEmit
+npm run build
+supabase start
+supabase test db
 ```
 
-## Project Structure
+See [the workflow](.github/workflows/ci.yml), [RLS tests](supabase/tests) and [dependency notes](docs/DEPENDENCY_SECURITY.md).
 
-```text
-src/
-├── app/
-│   ├── dashboard/
-│   │   └── requests/
-│   ├── login/
-│   └── page.tsx
-└── lib/
-    └── supabase/
+## Next work
 
-supabase/
-├── migrations/
-└── tests/
-```
+- Add the staff workflow for request assignment and status changes.
+- Cover the full browser flow with an isolated test backend.
+- Add pagination once request history grows beyond a small list.

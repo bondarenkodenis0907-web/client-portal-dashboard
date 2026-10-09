@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { type FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
@@ -19,7 +19,8 @@ type ServiceRequest = {
 
 export default function ServiceRequestsPage() {
   const router = useRouter();
-  const supabase = useMemo(() => createClient(), []);
+  const [supabase] = useState(createClient);
+  const retryController = useRef<AbortController | null>(null);
 
   const [requests, setRequests] = useState<ServiceRequest[]>([]);
 
@@ -31,51 +32,51 @@ export default function ServiceRequestsPage() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState("");
+  const [loadError, setLoadError] = useState("");
 
-  useEffect(() => {
-    let cancelled = false;
-
-    async function loadRequests() {
-      const {
-        data: { user },
-        error: userError,
-      } = await supabase.auth.getUser();
-
-      if (cancelled) {
-        return;
-      }
-
+  const loadRequests = useCallback((signal: AbortSignal) => {
+    return supabase.auth.getUser().then(async ({ data: { user }, error: userError }) => {
+      if (signal.aborted) return;
       if (userError || !user) {
         router.replace("/login");
         return;
       }
-
       const { data, error } = await supabase
         .from("service_requests")
-        .select(
-          "id, site, system, description, priority, status, created_at"
-        )
-        .order("created_at", { ascending: false });
-
-      if (cancelled) {
-        return;
-      }
-
+        .select("id, site, system, description, priority, status, created_at")
+        .order("created_at", { ascending: false })
+        .abortSignal(signal);
+      if (signal.aborted) return;
       if (error) {
-        setMessage(`Unable to load requests: ${error.message}`);
+        setLoadError("Unable to load your requests. Please try again.");
       } else {
         setRequests((data ?? []) as ServiceRequest[]);
+        setLoadError("");
       }
-
-      setLoading(false);
-    }
-
-    void loadRequests();
-
-    return () => {
-      cancelled = true;
-    };
+    }).catch(() => {
+      if (!signal.aborted) setLoadError("Unable to connect. Check your connection and try again.");
+    }).finally(() => {
+      if (!signal.aborted) setLoading(false);
+    });
   }, [router, supabase]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    void loadRequests(controller.signal);
+    return () => {
+      controller.abort();
+      retryController.current?.abort();
+    };
+  }, [loadRequests]);
+
+  function retryLoad() {
+    retryController.current?.abort();
+    const controller = new AbortController();
+    retryController.current = controller;
+    setLoading(true);
+    setLoadError("");
+    void loadRequests(controller.signal);
+  }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -92,50 +93,33 @@ export default function ServiceRequestsPage() {
     }
 
     setSubmitting(true);
-
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser();
-
-    if (userError || !user) {
-      setMessage("Unable to identify current user.");
+    try {
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError || !user) {
+        setMessage("Your session has expired. Sign in again before creating a request.");
+        return;
+      }
+      const { data, error } = await supabase
+        .from("service_requests")
+        .insert({ user_id: user.id, site: site.trim(), system: system.trim(),
+          description: description.trim(), priority })
+        .select("id, site, system, description, priority, status, created_at")
+        .single();
+      if (error) {
+        setMessage("Unable to create request: " + error.message);
+        return;
+      }
+      setRequests((current) => [data as ServiceRequest, ...current]);
+      setSite("");
+      setSystem("");
+      setDescription("");
+      setPriority("medium");
+      setMessage("Service request created.");
+    } catch {
+      setMessage("Unable to confirm your request. Check your connection and reload the list before submitting again.");
+    } finally {
       setSubmitting(false);
-      return;
     }
-
-    const { data, error } = await supabase
-      .from("service_requests")
-      .insert({
-        user_id: user.id,
-        site: site.trim(),
-        system: system.trim(),
-        description: description.trim(),
-        priority,
-      })
-      .select(
-        "id, site, system, description, priority, status, created_at"
-      )
-      .single();
-
-    if (error) {
-      setMessage(`Unable to create request: ${error.message}`);
-      setSubmitting(false);
-      return;
-    }
-
-    setRequests((current) => [
-      data as ServiceRequest,
-      ...current,
-    ]);
-
-    setSite("");
-    setSystem("");
-    setDescription("");
-    setPriority("medium");
-
-    setMessage("Service request created.");
-    setSubmitting(false);
   }
 
   function formatStatus(status: RequestStatus) {
@@ -194,11 +178,13 @@ export default function ServiceRequestsPage() {
               className="mt-5 space-y-4"
             >
               <div>
-                <label className="mb-1 block text-sm font-medium">
+                <label htmlFor="request-site" className="mb-1 block text-sm font-medium">
                   Site
                 </label>
 
                 <input
+                  id="request-site"
+                  required
                   type="text"
                   value={site}
                   onChange={(event) => setSite(event.target.value)}
@@ -208,11 +194,13 @@ export default function ServiceRequestsPage() {
               </div>
 
               <div>
-                <label className="mb-1 block text-sm font-medium">
+                <label htmlFor="request-system" className="mb-1 block text-sm font-medium">
                   System
                 </label>
 
                 <input
+                  id="request-system"
+                  required
                   type="text"
                   value={system}
                   onChange={(event) => setSystem(event.target.value)}
@@ -222,11 +210,13 @@ export default function ServiceRequestsPage() {
               </div>
 
               <div>
-                <label className="mb-1 block text-sm font-medium">
+                <label htmlFor="request-description" className="mb-1 block text-sm font-medium">
                   Issue description
                 </label>
 
                 <textarea
+                  id="request-description"
+                  required
                   value={description}
                   onChange={(event) =>
                     setDescription(event.target.value)
@@ -238,11 +228,12 @@ export default function ServiceRequestsPage() {
               </div>
 
               <div>
-                <label className="mb-1 block text-sm font-medium">
+                <label htmlFor="request-priority" className="mb-1 block text-sm font-medium">
                   Priority
                 </label>
 
                 <select
+                  id="request-priority"
                   value={priority}
                   onChange={(event) =>
                     setPriority(event.target.value as Priority)
@@ -266,7 +257,7 @@ export default function ServiceRequestsPage() {
               </button>
 
               {message && (
-                <p className="text-sm text-gray-700">
+                <p role="status" className="text-sm text-gray-700">
                   {message}
                 </p>
               )}
@@ -278,7 +269,14 @@ export default function ServiceRequestsPage() {
               My requests
             </h2>
 
-            {requests.length === 0 ? (
+            {loadError ? (
+              <div className="mt-4 rounded-xl border border-red-200 bg-white p-6">
+                <p role="alert" className="text-sm text-red-700">{loadError}</p>
+                <button type="button" onClick={retryLoad} className="mt-4 rounded border px-4 py-2">
+                  Try again
+                </button>
+              </div>
+            ) : requests.length === 0 ? (
               <div className="mt-4 rounded-xl border border-dashed bg-white p-8">
                 <p className="font-medium">
                   No service requests yet
