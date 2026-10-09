@@ -68,4 +68,3 @@ See [the workflow](.github/workflows/ci.yml), [RLS tests](supabase/tests) and [d
 - Add the staff workflow for request assignment and status changes.
 - Cover the full browser flow with an isolated test backend.
 - Add pagination once request history grows beyond a small list.
-
