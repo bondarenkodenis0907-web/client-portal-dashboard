@@ -13,9 +13,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Client Portal Dashboard",
+  title: "Client Portal | Service requests",
   description:
-    "Secure client portal built with Next.js, TypeScript, Supabase and PostgreSQL.",
+    "Submit technical service requests for your building or site and view their status in your account.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
