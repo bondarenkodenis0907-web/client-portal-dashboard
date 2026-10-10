@@ -1,11 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { StaffQueue } from "@/components/portal/StaffQueue";
-import {
-  requestColumns,
-  type ServiceRequest,
-  type StaffMember,
-} from "@/lib/requests";
+import { requestColumns, parseServiceRequest } from "@/lib/requests";
 
 export default async function StaffPage() {
   const supabase = await createClient();
@@ -35,8 +31,8 @@ export default async function StaffPage() {
     throw new Error("The service queue could not be loaded. Please try again.");
   return (
     <StaffQueue
-      requests={(requests.data ?? []) as ServiceRequest[]}
-      staff={(staff.data ?? []) as StaffMember[]}
+      requests={(requests.data ?? []).map(parseServiceRequest)}
+      staff={staff.data ?? []}
     />
   );
 }

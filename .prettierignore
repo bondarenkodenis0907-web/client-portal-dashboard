@@ -1,0 +1,10 @@
+.next/
+node_modules/
+playwright-report/
+test-results/
+public/
+/supabase/
+docs/
+README.md
+package-lock.json
+next-env.d.ts

@@ -3,9 +3,8 @@ import { createClient } from "@/lib/supabase/server";
 import { RequestDetail } from "@/components/portal/RequestDetail";
 import {
   requestColumns,
-  type ServiceRequest,
-  type StaffMember,
-  type RequestEvent,
+  parseServiceRequest,
+  parseRequestEvent,
 } from "@/lib/requests";
 
 export default async function RequestPage({
@@ -42,12 +41,12 @@ export default async function RequestPage({
   if (request.error || events.error || staff.error)
     throw new Error("The request could not be loaded. Please try again.");
   if (!request.data) notFound();
-  const members = (staff.data ?? []) as StaffMember[];
+  const members = staff.data ?? [];
   return (
     <RequestDetail
       key={request.data.updated_at}
-      request={request.data as ServiceRequest}
-      events={(events.data ?? []) as RequestEvent[]}
+      request={parseServiceRequest(request.data)}
+      events={(events.data ?? []).map(parseRequestEvent)}
       staff={members}
       isStaff={members.some((member) => member.user_id === user.id)}
     />

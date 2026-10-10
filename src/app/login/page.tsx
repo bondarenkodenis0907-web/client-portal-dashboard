@@ -1,4 +1,3 @@
-
 "use client";
 
 import { type FormEvent, useRef, useState } from "react";
@@ -65,21 +64,17 @@ export default function LoginPage() {
       if (signingUp) {
         setNotice(
           "Check your email for a confirmation link. " +
-          "After confirming your address, return here to sign in."
+            "After confirming your address, return here to sign in.",
         );
 
         setPassword("");
         setShowPassword(false);
         setMode("sign-in");
       } else {
-        setError(
-          "Sign-in did not complete. Please try again."
-        );
+        setError("Sign-in did not complete. Please try again.");
       }
     } catch {
-      setError(
-        "Unable to connect. Check your connection and try again."
-      );
+      setError("Unable to connect. Check your connection and try again.");
     } finally {
       pending.current = false;
       setLoading(false);
@@ -97,7 +92,6 @@ export default function LoginPage() {
   return (
     <main className="min-h-screen bg-[#f8fafc] text-[#172238]">
       <div className="mx-auto grid min-h-screen max-w-[1200px] lg:grid-cols-[minmax(0,1fr)_470px]">
-
         {/* Product information */}
 
         <section className="hidden flex-col justify-between px-12 py-12 lg:flex xl:px-16">
@@ -124,15 +118,12 @@ export default function LoginPage() {
 
             <h1 className="text-[42px] font-semibold leading-[1.16] tracking-[-0.04em] text-slate-900">
               Technical requests,
-              <span className="block text-slate-500">
-                in one place.
-              </span>
+              <span className="block text-slate-500">in one place.</span>
             </h1>
 
             <p className="mt-6 max-w-[370px] text-base leading-7 text-slate-600">
-              Report issues with building systems, follow
-              their status and keep a record of previous
-              service requests.
+              Report issues with building systems, follow their status and keep
+              a record of previous service requests.
             </p>
 
             <div className="mt-10 border-l-2 border-blue-600 pl-5">
@@ -141,9 +132,8 @@ export default function LoginPage() {
               </p>
 
               <p className="mt-2 max-w-sm text-sm leading-6 text-slate-500">
-                A structured way to report issues with
-                CCTV, access control and other technical
-                systems.
+                A structured way to report issues with CCTV, access control and
+                other technical systems.
               </p>
             </div>
           </div>
@@ -158,7 +148,6 @@ export default function LoginPage() {
         {/* Authentication form */}
 
         <section className="flex min-h-screen flex-col bg-white px-6 py-8 sm:px-10 lg:border-l lg:border-slate-200 lg:px-12">
-
           {/* Mobile branding */}
 
           <Link
@@ -176,7 +165,6 @@ export default function LoginPage() {
 
           <div className="flex flex-1 items-start pt-12 sm:pt-16 lg:items-center lg:pt-0">
             <div className="w-full">
-
               <div className="mb-9">
                 <p className="mb-3 text-xs font-semibold uppercase tracking-[0.12em] text-blue-700">
                   Client access
@@ -186,9 +174,7 @@ export default function LoginPage() {
                   id="auth-title"
                   className="text-[29px] font-semibold tracking-tight text-slate-900"
                 >
-                  {signingUp
-                    ? "Create your account"
-                    : "Welcome back"}
+                  {signingUp ? "Create your account" : "Welcome back"}
                 </h2>
 
                 <p className="mt-2 text-sm leading-6 text-slate-600">
@@ -205,7 +191,6 @@ export default function LoginPage() {
                 className="space-y-5"
               >
                 <fieldset disabled={loading} className="space-y-5">
-
                   <div>
                     <label
                       htmlFor="auth-email"
@@ -223,9 +208,7 @@ export default function LoginPage() {
                       spellCheck={false}
                       required
                       value={email}
-                      onChange={(event) =>
-                        setEmail(event.target.value)
-                      }
+                      onChange={(event) => setEmail(event.target.value)}
                       placeholder="you@company.com"
                       className={inputClass}
                     />
@@ -245,15 +228,11 @@ export default function LoginPage() {
                         name="password"
                         type={showPassword ? "text" : "password"}
                         autoComplete={
-                          signingUp
-                            ? "new-password"
-                            : "current-password"
+                          signingUp ? "new-password" : "current-password"
                         }
                         required
                         value={password}
-                        onChange={(event) =>
-                          setPassword(event.target.value)
-                        }
+                        onChange={(event) => setPassword(event.target.value)}
                         placeholder="Enter your password"
                         className={`${inputClass} pr-16`}
                       />
@@ -261,14 +240,10 @@ export default function LoginPage() {
                       <button
                         type="button"
                         aria-label={
-                          showPassword
-                            ? "Hide password"
-                            : "Show password"
+                          showPassword ? "Hide password" : "Show password"
                         }
                         aria-pressed={showPassword}
-                        onClick={() =>
-                          setShowPassword((current) => !current)
-                        }
+                        onClick={() => setShowPassword((current) => !current)}
                         className="absolute inset-y-0 right-3 text-xs font-medium text-slate-500 hover:text-slate-900"
                       >
                         {showPassword ? "Hide" : "Show"}
@@ -288,7 +263,6 @@ export default function LoginPage() {
                         ? "Create account"
                         : "Sign in"}
                   </button>
-
                 </fieldset>
 
                 {error && (
@@ -322,9 +296,7 @@ export default function LoginPage() {
                     disabled={loading}
                     className="ml-2 font-semibold text-blue-700 hover:text-blue-800 disabled:opacity-50"
                   >
-                    {signingUp
-                      ? "Sign in"
-                      : "Create an account"}
+                    {signingUp ? "Sign in" : "Create an account"}
                   </button>
                 </p>
               </div>

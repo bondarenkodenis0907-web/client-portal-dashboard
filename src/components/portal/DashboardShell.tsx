@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useEffect, useState, type ReactNode } from "react";
@@ -6,10 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/client";
-import {
-  PortalIcon,
-  type PortalIconName,
-} from "./PortalIcon";
+import { PortalIcon, type PortalIconName } from "./PortalIcon";
 
 type NavItem = {
   label: string;
@@ -81,31 +77,25 @@ export function DashboardShell({
       router.replace("/login");
       router.refresh();
     } catch {
-      setSignOutError(
-        "Could not sign out. Please try again."
-      );
+      setSignOutError("Could not sign out. Please try again.");
     } finally {
       setSigningOut(false);
     }
   }
 
-  const initials = accountEmail
-    ? accountEmail.slice(0, 2).toUpperCase()
-    : "CP";
+  const initials = accountEmail ? accountEmail.slice(0, 2).toUpperCase() : "CP";
 
-  const isRequestsPage = pathname.startsWith(
-    "/dashboard/requests"
-  );
+  const isRequestsPage = pathname.startsWith("/dashboard/requests");
 
-  const isSettingsPage = pathname.startsWith(
-    "/dashboard/settings"
-  );
+  const isSettingsPage = pathname.startsWith("/dashboard/settings");
 
   const heading = isRequestsPage
     ? "Service requests"
     : isSettingsPage
       ? "Settings"
-      : pathname.startsWith("/dashboard/staff") ? "Service queue" : "Overview";
+      : pathname.startsWith("/dashboard/staff")
+        ? "Service queue"
+        : "Overview";
 
   function navItem(item: NavItem) {
     const selected =
@@ -134,7 +124,6 @@ export function DashboardShell({
   return (
     <div className="min-h-screen bg-[#f8fafc] text-[#172238]">
       <div className="mx-auto flex min-h-screen max-w-[1720px]">
-
         {navOpen && (
           <button
             type="button"
@@ -146,9 +135,7 @@ export function DashboardShell({
 
         <aside
           className={`fixed inset-y-0 left-0 z-50 flex w-60 shrink-0 flex-col border-r border-slate-200 bg-white px-3 py-5 transition-transform lg:sticky lg:top-0 lg:h-screen lg:translate-x-0 ${
-            navOpen
-              ? "translate-x-0"
-              : "-translate-x-full"
+            navOpen ? "translate-x-0" : "-translate-x-full"
           }`}
         >
           <div className="flex items-center justify-between px-3 pb-8">
@@ -182,17 +169,19 @@ export function DashboardShell({
             </button>
           </div>
 
-          <nav
-            aria-label="Main navigation"
-            className="flex-1"
-          >
+          <nav aria-label="Main navigation" className="flex-1">
             <p className="px-3 pb-2 text-[10px] font-semibold uppercase tracking-[.15em] text-slate-400">
               Workspace
             </p>
 
             <div className="space-y-1">
               {workspaceNav.map(navItem)}
-              {isStaff && navItem({ label: "Service queue", icon: "requests", href: "/dashboard/staff" })}
+              {isStaff &&
+                navItem({
+                  label: "Service queue",
+                  icon: "requests",
+                  href: "/dashboard/staff",
+                })}
             </div>
 
             <p className="px-3 pb-2 pt-8 text-[10px] font-semibold uppercase tracking-[.15em] text-slate-400">
@@ -202,9 +191,7 @@ export function DashboardShell({
             <Link
               href="/dashboard/settings"
               onClick={() => setNavOpen(false)}
-              aria-current={
-                isSettingsPage ? "page" : undefined
-              }
+              aria-current={isSettingsPage ? "page" : undefined}
               className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
                 isSettingsPage
                   ? "bg-blue-50 text-blue-700"
@@ -244,16 +231,11 @@ export function DashboardShell({
             >
               <PortalIcon name="logout" />
 
-              {signingOut
-                ? "Signing out..."
-                : "Sign out"}
+              {signingOut ? "Signing out..." : "Sign out"}
             </button>
 
             {signOutError && (
-              <p
-                role="alert"
-                className="mt-2 text-xs text-red-700"
-              >
+              <p role="alert" className="mt-2 text-xs text-red-700">
                 {signOutError}
               </p>
             )}
@@ -277,31 +259,21 @@ export function DashboardShell({
                   Workspace
                 </span>
 
-                <span className="mx-2 hidden text-slate-300 sm:inline">
-                  /
-                </span>
+                <span className="mx-2 hidden text-slate-300 sm:inline">/</span>
 
-                <span className="font-semibold text-slate-800">
-                  {heading}
-                </span>
+                <span className="font-semibold text-slate-800">{heading}</span>
               </div>
             </div>
 
             <div className="flex items-center gap-3">
-
               {!isRequestsPage && (
                 <Link
                   href="/dashboard/requests#new-request"
                   className="inline-flex items-center gap-1.5 rounded-lg bg-[#315fd4] px-3.5 py-2.5 text-xs font-semibold text-white transition-colors hover:bg-blue-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700 sm:text-sm"
                 >
-                  <PortalIcon
-                    name="plus"
-                    className="h-4 w-4"
-                  />
+                  <PortalIcon name="plus" className="h-4 w-4" />
 
-                  <span className="hidden min-[380px]:inline">
-                    New request
-                  </span>
+                  <span className="hidden min-[380px]:inline">New request</span>
                 </Link>
               )}
 
