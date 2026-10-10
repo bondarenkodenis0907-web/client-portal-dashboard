@@ -13,6 +13,7 @@ export default async function StaffPage() {
     .from("service_staff")
     .select("user_id")
     .eq("user_id", user.id)
+    .eq("is_active", true)
     .maybeSingle();
   if (error)
     throw new Error("The service queue could not be loaded. Please try again.");
@@ -24,7 +25,7 @@ export default async function StaffPage() {
       .order("created_at", { ascending: false }),
     supabase
       .from("service_staff")
-      .select("user_id, display_name")
+      .select("user_id, display_name, is_active")
       .order("display_name"),
   ]);
   if (requests.error || staff.error)
