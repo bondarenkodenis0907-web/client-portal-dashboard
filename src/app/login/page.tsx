@@ -92,8 +92,6 @@ export default function LoginPage() {
   return (
     <main className="min-h-screen bg-[#f8fafc] text-[#172238]">
       <div className="mx-auto grid min-h-screen max-w-[1200px] lg:grid-cols-[minmax(0,1fr)_470px]">
-        {/* Product information */}
-
         <section className="hidden flex-col justify-between px-12 py-12 lg:flex xl:px-16">
           <Link href="/" className="inline-flex w-fit items-center gap-3">
             <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#315fd4] text-sm font-bold text-white">
@@ -113,43 +111,28 @@ export default function LoginPage() {
 
           <div className="max-w-[450px] pb-12">
             <p className="mb-5 text-xs font-semibold uppercase tracking-[0.16em] text-blue-700">
-              Technical service management
+              Building systems support
             </p>
 
             <h1 className="text-[42px] font-semibold leading-[1.16] tracking-[-0.04em] text-slate-900">
-              Technical requests,
-              <span className="block text-slate-500">in one place.</span>
+              Report a fault.
+              <span className="block text-slate-500">Follow the work.</span>
             </h1>
 
             <p className="mt-6 max-w-[370px] text-base leading-7 text-slate-600">
-              Report issues with building systems, follow their status and keep
-              a record of previous service requests.
+              Report equipment faults and follow the engineer&apos;s work from
+              assignment to resolution.
             </p>
-
-            <div className="mt-10 border-l-2 border-blue-600 pl-5">
-              <p className="text-sm font-semibold text-slate-900">
-                Built for site and facility support
-              </p>
-
-              <p className="mt-2 max-w-sm text-sm leading-6 text-slate-500">
-                A structured way to report issues with CCTV, access control and
-                other technical systems.
-              </p>
-            </div>
           </div>
 
           <div className="border-t border-slate-200 pt-5">
             <p className="text-xs text-slate-500">
-              Site · System · Priority · Status
+              CCTV · Access control · Fire alarms · Networks
             </p>
           </div>
         </section>
 
-        {/* Authentication form */}
-
         <section className="flex min-h-screen flex-col bg-white px-6 py-8 sm:px-10 lg:border-l lg:border-slate-200 lg:px-12">
-          {/* Mobile branding */}
-
           <Link
             href="/"
             className="inline-flex w-fit items-center gap-2.5 lg:hidden"
@@ -167,14 +150,14 @@ export default function LoginPage() {
             <div className="w-full">
               <div className="mb-9">
                 <p className="mb-3 text-xs font-semibold uppercase tracking-[0.12em] text-blue-700">
-                  Client access
+                  Account access
                 </p>
 
                 <h2
                   id="auth-title"
                   className="text-[29px] font-semibold tracking-tight text-slate-900"
                 >
-                  {signingUp ? "Create your account" : "Welcome back"}
+                  {signingUp ? "Create your account" : "Sign in"}
                 </h2>
 
                 <p className="mt-2 text-sm leading-6 text-slate-600">
