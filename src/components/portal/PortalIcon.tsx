@@ -115,7 +115,13 @@ const paths: Record<PortalIconName, ReactNode> = {
   ),
 };
 
-export function PortalIcon({ name, className = "" }: { name: PortalIconName; className?: string }) {
+export function PortalIcon({
+  name,
+  className = "",
+}: {
+  name: PortalIconName;
+  className?: string;
+}) {
   return (
     <svg
       viewBox="0 0 24 24"

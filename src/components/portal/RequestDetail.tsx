@@ -4,6 +4,7 @@ import { useRef, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
+import { inputLimits } from "@/lib/input-limits";
 import {
   formatRequestDate,
   type RequestEvent,
@@ -45,8 +46,16 @@ export function RequestDetail({
       setError("Choose an engineer before saving.");
       return;
     }
-    if (status === "closed" && resolution.trim().length < 10) {
+    const completedWork = resolution.trim();
+    if (
+      status === "closed" &&
+      completedWork.length < inputLimits.resolutionMinimum
+    ) {
       setError("Describe the completed work in at least 10 characters.");
+      return;
+    }
+    if (status === "closed" && completedWork.length > inputLimits.resolution) {
+      setError("Completed work must be 5,000 characters or fewer.");
       return;
     }
     busyRef.current = true;
@@ -57,7 +66,7 @@ export function RequestDetail({
         .update({
           assigned_to: assignedTo,
           status,
-          resolution: status === "closed" ? resolution.trim() : null,
+          resolution: status === "closed" ? completedWork : null,
         })
         .eq("id", request.id)
         .eq("updated_at", request.updated_at)
@@ -236,8 +245,8 @@ export function RequestDetail({
                         value={resolution}
                         onChange={(e) => setResolution(e.target.value)}
                         required
-                        minLength={10}
-                        maxLength={5000}
+                        minLength={inputLimits.resolutionMinimum}
+                        maxLength={inputLimits.resolution}
                         rows={5}
                         placeholder="What was repaired and how was it checked?"
                         className={fieldClass}
