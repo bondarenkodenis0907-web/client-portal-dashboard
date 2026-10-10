@@ -135,14 +135,17 @@ export type Database = {
       service_staff: {
         Row: {
           display_name: string;
+          is_active: boolean;
           user_id: string;
         };
         Insert: {
           display_name: string;
+          is_active?: boolean;
           user_id: string;
         };
         Update: {
           display_name?: string;
+          is_active?: boolean;
           user_id?: string;
         };
         Relationships: [];

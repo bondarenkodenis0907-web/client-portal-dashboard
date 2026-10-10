@@ -32,7 +32,7 @@ export type ServiceRequestSummary = Pick<
 >;
 export type StaffMember = Pick<
   Tables<"service_staff">,
-  "user_id" | "display_name"
+  "user_id" | "display_name" | "is_active"
 >;
 export type RequestEvent = Omit<
   Pick<

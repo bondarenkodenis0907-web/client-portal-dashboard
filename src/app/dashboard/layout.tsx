@@ -16,6 +16,7 @@ export default async function DashboardLayout({
         .from("service_staff")
         .select("user_id")
         .eq("user_id", user.id)
+        .eq("is_active", true)
         .maybeSingle()
     : null;
   return (
