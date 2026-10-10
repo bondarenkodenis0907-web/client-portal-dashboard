@@ -20,8 +20,12 @@ export type RequestEvent = {
   resolution: string | null;
   created_at: string;
 };
-export const requestColumns = "id, site, system, description, priority, status, assigned_to, resolution, created_at, updated_at, closed_at";
+export const requestColumns =
+  "id, site, system, description, priority, status, assigned_to, resolution, created_at, updated_at, closed_at";
 
 export function formatRequestDate(value: string) {
-  return new Date(value).toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" });
+  return new Date(value).toLocaleString("en-US", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  });
 }

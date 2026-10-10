@@ -1,8 +1,11 @@
 import { execSync, spawnSync } from "node:child_process";
 
-const status = JSON.parse(execSync("npx --yes supabase status --output json", { encoding: "utf8" }));
+const status = JSON.parse(
+  execSync("npx --yes supabase status --output json", { encoding: "utf8" }),
+);
 const url = new URL(status.API_URL);
-if (!["127.0.0.1", "localhost"].includes(url.hostname)) throw new Error("Browser tests require a local Supabase instance.");
+if (!["127.0.0.1", "localhost"].includes(url.hostname))
+  throw new Error("Browser tests require a local Supabase instance.");
 const env = {
   ...process.env,
   NEXT_PUBLIC_SUPABASE_URL: status.API_URL,
