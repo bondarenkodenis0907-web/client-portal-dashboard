@@ -63,3 +63,18 @@ jobs:
 
       - name: Run database tests
         run: supabase test db
+
+      - name: Set up Node.js for browser tests
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install browser test dependencies
+        run: npm ci
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Verify the request lifecycle against local Supabase
+        run: npm run test:browser

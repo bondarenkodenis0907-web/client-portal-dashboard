@@ -166,7 +166,7 @@ export default function SettingsPage() {
           </section>
           <section className="rounded-xl border border-slate-200 bg-white px-5 py-5 sm:px-7">
             <div className="flex items-center gap-2.5"><PortalIcon name="shield" className="text-blue-700" /><h2 className="text-sm font-semibold text-slate-900">Account security</h2></div>
-            <p className="mt-2 text-sm leading-6 text-slate-500">Your account is protected through Supabase Authentication. Service requests and profile records are subject to database access policies.</p>
+            <p className="mt-2 text-sm leading-6 text-slate-500">Your profile is private. The service team can view and process the requests you submit; other clients cannot access them.</p>
             <p className="mt-2 text-xs text-slate-400">Password and notification settings are not available in this version.</p>
           </section>
         </div>
