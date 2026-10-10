@@ -537,12 +537,24 @@ test("deactivation revokes an existing staff session and preserves request histo
       activePage
         .getByLabel("Assigned engineer")
         .locator(`option[value="${ids[1]}"]`),
-    ).toBeDisabled();
+    ).toHaveAttribute("disabled", "");
+    await activePage.getByLabel("Completed work").fill(completedWork);
+    await activePage
+      .getByRole("button", { name: "Close request", exact: true })
+      .click();
+    await expect(
+      activePage
+        .getByRole("alert")
+        .filter({ hasText: "Choose an active engineer" }),
+    ).toBeVisible();
     await activePage.getByLabel("Assigned engineer").selectOption(ids[2]);
     await activePage.getByRole("button", { name: "Save assignment" }).click();
     await expect(activePage.getByRole("listitem")).toHaveCount(3);
     await expect(activePage.getByLabel("Assigned engineer")).toHaveValue(
       ids[2],
+    );
+    await expect(activePage.getByLabel("Completed work")).toHaveValue(
+      completedWork,
     );
     const reassigned = await admin
       .from("service_requests")
