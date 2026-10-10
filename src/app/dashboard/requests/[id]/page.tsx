@@ -35,7 +35,7 @@ export default async function RequestPage({
       .order("id", { ascending: false }),
     supabase
       .from("service_staff")
-      .select("user_id, display_name")
+      .select("user_id, display_name, is_active")
       .order("display_name"),
   ]);
   if (request.error || events.error || staff.error)
@@ -44,11 +44,13 @@ export default async function RequestPage({
   const members = staff.data ?? [];
   return (
     <RequestDetail
-      key={request.data.updated_at}
+      key={request.data.id}
       request={parseServiceRequest(request.data)}
       events={(events.data ?? []).map(parseRequestEvent)}
       staff={members}
-      isStaff={members.some((member) => member.user_id === user.id)}
+      isStaff={members.some(
+        (member) => member.user_id === user.id && member.is_active,
+      )}
     />
   );
 }
