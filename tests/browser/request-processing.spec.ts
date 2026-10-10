@@ -98,9 +98,11 @@ test("client submits an issue, staff complete it, client sees the resolution", a
     await clientPage
       .getByRole("button", { name: "Create request", exact: true })
       .click();
-    await expect(clientPage.getByRole("alert")).toContainText(
-      "Please complete all required fields",
-    );
+    await expect(
+      clientPage
+        .getByRole("alert")
+        .filter({ hasText: "Please complete all required fields" }),
+    ).toBeVisible();
     await expect(clientPage.getByLabel("Issue description")).toHaveValue(
       "The loading-bay camera is offline. The remaining cameras are working.",
     );
@@ -157,9 +159,11 @@ test("client submits an issue, staff complete it, client sees the resolution", a
     await staffPage
       .getByRole("button", { name: "Close request", exact: true })
       .click();
-    await expect(staffPage.getByRole("alert")).toContainText(
-      "at least 10 characters",
-    );
+    await expect(
+      staffPage
+        .getByRole("alert")
+        .filter({ hasText: "at least 10 characters" }),
+    ).toBeVisible();
     await expect(
       staffPage.getByRole("button", { name: "Close request", exact: true }),
     ).toBeVisible();
