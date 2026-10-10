@@ -1,1 +1,21 @@
 project_id = "client-portal-dashboard"
+
+[api]
+port = 55321
+
+[db]
+port = 55322
+shadow_port = 55320
+
+[studio]
+port = 55323
+
+[inbucket]
+port = 55324
+
+[analytics]
+port = 55327
+vector_port = 55328
+
+[db.pooler]
+port = 55329
