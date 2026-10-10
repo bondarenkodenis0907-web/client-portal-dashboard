@@ -56,6 +56,10 @@ The first four captures were supplied from the updated client interface and show
 
 **A stale screen must not overwrite another update.** Saves include the request's last observed update time. If another staff member has changed it, the interface asks for a reload. Failed saves preserve form edits and do not show a successful closure.
 
+**Assignment changes preserve the work draft.** Saving an engineer assignment refreshes the request and its history without clearing the completed-work text. The draft stays in that open page's memory; closing the request, losing staff access or leaving the page removes it.
+
+**Staff access can be revoked without deleting history.** An administrator can deactivate a membership. Database policies check the active flag on each operation, including with an existing session. Inactive engineers remain in recorded assignments and history, but cannot be selected for new work; their open requests must be reassigned to an active engineer before processing continues. A deactivated employee keeps ordinary client access to their own requests.
+
 **Checks use a real isolated backend.** SQL tests cover client isolation, staff membership, transitions and immutable history. The browser test signs in as a client and as staff, submits a request, assigns and closes it, and checks the result in the client's screen and the database. It also exercises a failed save, a stale update and a mobile viewport.
 
 The application uses Next.js, React, TypeScript and Tailwind CSS. Supabase provides authentication and PostgreSQL. Browser code uses a publishable key; staff operations do not depend on a service-role key in the application.
@@ -96,10 +100,23 @@ select id, 'Service engineer'
 from auth.users
 where email = 'engineer@example.test'
 on conflict (user_id) do update
-set display_name = excluded.display_name;
+set display_name = excluded.display_name,
+    is_active = true;
 ```
 
 After a page reload, staff can open **Service queue** in the navigation. All staff in this version belong to one service team and can process every client's request. It does not implement separate contractor organizations or tenant-scoped staff teams.
+
+To revoke staff access, keep the membership row and deactivate it instead of deleting the account or breaking recorded assignments:
+
+```sql
+update public.service_staff
+set is_active = false
+where user_id = (
+  select id from auth.users where email = 'engineer@example.test'
+);
+```
+
+Only an administrator can change this flag. Use `is_active = true` to restore access. Revocation takes effect for the next database operation; an already open screen can still display previously loaded information until it refreshes. Names on closed requests and the event history remain available to authorized viewers.
 
 ## Verification
 
@@ -116,7 +133,7 @@ npm run test:browser
 
 `test:browser` reads only local Supabase configuration, refuses a remote backend, creates temporary accounts and removes their data afterward. It builds the app and runs it on port 3010. On a machine with an existing Edge installation, `PLAYWRIGHT_CHANNEL=msedge` can select that browser.
 
-CI checks formatting, lint, types and a production build, then runs SQL tests and the browser lifecycle test. It starts its own local backend; production credentials are not used. See [the workflow](.github/workflows/ci.yml), [SQL tests](supabase/tests), [browser test](tests/browser/request-processing.spec.ts) and [dependency notes](docs/DEPENDENCY_SECURITY.md). Use `npm run format` to format source files and configuration before committing.
+CI checks formatting, lint, types and a production build, then runs SQL tests and browser regressions for the lifecycle, draft preservation and staff deactivation. It starts its own local backend; production credentials are not used. See [the workflow](.github/workflows/ci.yml), [SQL tests](supabase/tests), [browser test](tests/browser/request-processing.spec.ts) and [dependency notes](docs/DEPENDENCY_SECURITY.md). Use `npm run format` to format source files and configuration before committing.
 
 ## Current boundaries
 
