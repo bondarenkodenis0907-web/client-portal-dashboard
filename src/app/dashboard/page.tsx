@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useEffect, useState } from "react";
@@ -6,23 +5,12 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/client";
-import { PortalIcon } from "@/components/portal/PortalIcon";
 import {
-  PriorityBadge,
-  StatusBadge,
-} from "@/components/portal/StatusBadge";
-
-type RequestStatus = "new" | "in_progress" | "closed";
-type Priority = "low" | "medium" | "high";
-
-type ServiceRequest = {
-  id: string;
-  site: string;
-  system: string;
-  status: RequestStatus;
-  priority: Priority;
-  created_at: string;
-};
+  parseServiceRequest,
+  type ServiceRequestSummary,
+} from "@/lib/requests";
+import { PortalIcon } from "@/components/portal/PortalIcon";
+import { PriorityBadge, StatusBadge } from "@/components/portal/StatusBadge";
 
 type RequestCounts = {
   new: number;
@@ -33,8 +21,8 @@ type RequestCounts = {
 
 type Overview = {
   company: string;
-  recent: ServiceRequest[];
-  urgent: ServiceRequest[];
+  recent: ServiceRequestSummary[];
+  urgent: ServiceRequestSummary[];
   counts: RequestCounts;
 };
 
@@ -57,28 +45,19 @@ function StatCard({
 }) {
   return (
     <div className="rounded-xl border border-slate-200 bg-white p-5">
-      <p className="text-sm font-medium text-slate-600">
-        {label}
-      </p>
+      <p className="text-sm font-medium text-slate-600">{label}</p>
 
       <p className="mt-3 text-[32px] font-semibold leading-none tracking-tight text-slate-900">
         {value}
       </p>
 
-      <p className="mt-3 text-xs text-slate-500">
-        {detail}
-      </p>
+      <p className="mt-3 text-xs text-slate-500">{detail}</p>
     </div>
   );
 }
 
-function StatusBreakdown({
-  counts,
-}: {
-  counts: RequestCounts;
-}) {
-  const total =
-    counts.new + counts.inProgress + counts.closed;
+function StatusBreakdown({ counts }: { counts: RequestCounts }) {
+  const total = counts.new + counts.inProgress + counts.closed;
 
   const rows = [
     {
@@ -105,24 +84,18 @@ function StatusBreakdown({
           Request status
         </h2>
 
-        <span className="text-xs text-slate-500">
-          {total} total
-        </span>
+        <span className="text-xs text-slate-500">{total} total</span>
       </div>
 
       <div className="space-y-5">
         {rows.map((row) => {
           const percentage =
-            total > 0
-              ? Math.round((row.value / total) * 100)
-              : 0;
+            total > 0 ? Math.round((row.value / total) * 100) : 0;
 
           return (
             <div key={row.label}>
               <div className="mb-2 flex items-center justify-between text-sm">
-                <span className="text-slate-600">
-                  {row.label}
-                </span>
+                <span className="text-slate-600">{row.label}</span>
 
                 <span className="font-medium text-slate-900">
                   {row.value}
@@ -150,7 +123,7 @@ function PriorityRequests({
   items,
   count,
 }: {
-  items: ServiceRequest[];
+  items: ServiceRequestSummary[];
   count: number;
 }) {
   return (
@@ -173,10 +146,7 @@ function PriorityRequests({
       {items.length === 0 ? (
         <div className="px-5 py-7 sm:px-6">
           <div className="flex items-center gap-2 text-sm font-medium text-slate-800">
-            <PortalIcon
-              name="check"
-              className="text-emerald-600"
-            />
+            <PortalIcon name="check" className="text-emerald-600" />
             No open high-priority requests
           </div>
 
@@ -197,8 +167,7 @@ function PriorityRequests({
                 </p>
 
                 <p className="mt-1 text-xs text-slate-500">
-                  {request.system} ·{" "}
-                  {formatDate(request.created_at)}
+                  {request.system} · {formatDate(request.created_at)}
                 </p>
               </div>
 
@@ -229,9 +198,7 @@ export default function DashboardPage() {
   const router = useRouter();
   const [supabase] = useState(createClient);
 
-  const [overview, setOverview] = useState<Overview | null>(
-    null
-  );
+  const [overview, setOverview] = useState<Overview | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
   const [retryCount, setRetryCount] = useState(0);
@@ -284,9 +251,7 @@ export default function DashboardPage() {
 
           supabase
             .from("service_requests")
-            .select(
-              "id, site, system, status, priority, created_at"
-            )
+            .select("id, site, system, status, priority, created_at")
             .eq("user_id", user.id)
             .order("created_at", { ascending: false })
             .limit(5)
@@ -294,9 +259,7 @@ export default function DashboardPage() {
 
           supabase
             .from("service_requests")
-            .select(
-              "id, site, system, status, priority, created_at"
-            )
+            .select("id, site, system, status, priority, created_at")
             .eq("priority", "high")
             .neq("status", "closed")
             .eq("user_id", user.id)
@@ -348,8 +311,8 @@ export default function DashboardPage() {
 
         setOverview({
           company: profile.data?.company ?? "",
-          recent: (recent.data ?? []) as ServiceRequest[],
-          urgent: (urgent.data ?? []) as ServiceRequest[],
+          recent: (recent.data ?? []).map(parseServiceRequest),
+          urgent: (urgent.data ?? []).map(parseServiceRequest),
           counts: {
             new: newlyCreated.count ?? 0,
             inProgress: inProgress.count ?? 0,
@@ -362,7 +325,7 @@ export default function DashboardPage() {
       } catch {
         if (!cancelled) {
           setLoadError(
-            "Could not load service requests. Check your connection and try again."
+            "Could not load service requests. Check your connection and try again.",
           );
         }
       } finally {
@@ -387,9 +350,7 @@ export default function DashboardPage() {
   }
 
   const counts = overview?.counts;
-  const openRequests = counts
-    ? counts.new + counts.inProgress
-    : 0;
+  const openRequests = counts ? counts.new + counts.inProgress : 0;
 
   return (
     <div className="space-y-6">
@@ -406,14 +367,8 @@ export default function DashboardPage() {
       </header>
 
       {loading ? (
-        <div
-          role="status"
-          aria-busy="true"
-          className="space-y-5"
-        >
-          <span className="sr-only">
-            Loading service overview
-          </span>
+        <div role="status" aria-busy="true" className="space-y-5">
+          <span className="sr-only">Loading service overview</span>
 
           <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
             {[1, 2, 3, 4].map((item) => (
@@ -432,10 +387,7 @@ export default function DashboardPage() {
             Unable to load overview
           </h2>
 
-          <p
-            role="alert"
-            className="mt-2 text-sm text-red-700"
-          >
+          <p role="alert" className="mt-2 text-sm text-red-700">
             {loadError}
           </p>
 
@@ -502,10 +454,7 @@ export default function DashboardPage() {
                 className="inline-flex items-center gap-1.5 text-sm font-medium text-blue-700 hover:text-blue-800"
               >
                 View all
-                <PortalIcon
-                  name="arrow-right"
-                  className="h-4 w-4"
-                />
+                <PortalIcon name="arrow-right" className="h-4 w-4" />
               </Link>
             </div>
 
@@ -516,8 +465,7 @@ export default function DashboardPage() {
                 </h3>
 
                 <p className="mt-2 text-sm text-slate-500">
-                  Report a technical issue to start your
-                  service history.
+                  Report a technical issue to start your service history.
                 </p>
 
                 <Link
@@ -532,30 +480,17 @@ export default function DashboardPage() {
                 <table className="w-full min-w-[660px] text-left text-sm">
                   <thead className="bg-slate-50 text-xs text-slate-500">
                     <tr>
-                      <th className="px-5 py-3 font-medium">
-                        Site
-                      </th>
-                      <th className="px-4 py-3 font-medium">
-                        System
-                      </th>
-                      <th className="px-4 py-3 font-medium">
-                        Status
-                      </th>
-                      <th className="px-4 py-3 font-medium">
-                        Priority
-                      </th>
-                      <th className="px-5 py-3 font-medium">
-                        Submitted
-                      </th>
+                      <th className="px-5 py-3 font-medium">Site</th>
+                      <th className="px-4 py-3 font-medium">System</th>
+                      <th className="px-4 py-3 font-medium">Status</th>
+                      <th className="px-4 py-3 font-medium">Priority</th>
+                      <th className="px-5 py-3 font-medium">Submitted</th>
                     </tr>
                   </thead>
 
                   <tbody className="divide-y divide-slate-100">
                     {overview.recent.map((request) => (
-                      <tr
-                        key={request.id}
-                        className="hover:bg-slate-50"
-                      >
+                      <tr key={request.id} className="hover:bg-slate-50">
                         <td className="px-5 py-4 font-medium text-slate-900">
                           {request.site}
                         </td>
@@ -565,15 +500,11 @@ export default function DashboardPage() {
                         </td>
 
                         <td className="px-4 py-4">
-                          <StatusBadge
-                            status={request.status}
-                          />
+                          <StatusBadge status={request.status} />
                         </td>
 
                         <td className="px-4 py-4">
-                          <PriorityBadge
-                            priority={request.priority}
-                          />
+                          <PriorityBadge priority={request.priority} />
                         </td>
 
                         <td className="whitespace-nowrap px-5 py-4 text-slate-500">
