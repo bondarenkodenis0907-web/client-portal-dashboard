@@ -1,6 +1,7 @@
 import { test, expect, type Page } from "@playwright/test";
 import { createClient } from "@supabase/supabase-js";
 import { randomUUID } from "node:crypto";
+import type { Database } from "../../src/lib/supabase/database.types";
 
 test("client submits an issue, staff complete it, client sees the resolution", async ({
   browser,
@@ -8,9 +9,13 @@ test("client submits an issue, staff complete it, client sees the resolution", a
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
   if (!["127.0.0.1", "localhost"].includes(new URL(url).hostname))
     throw new Error("Use an isolated local backend.");
-  const admin = createClient(url, process.env.TEST_SUPABASE_SECRET_KEY!, {
-    auth: { persistSession: false },
-  });
+  const admin = createClient<Database>(
+    url,
+    process.env.TEST_SUPABASE_SECRET_KEY!,
+    {
+      auth: { persistSession: false },
+    },
+  );
   const suffix = randomUUID();
   const password = randomUUID();
   const clientEmail = `client-${suffix}@example.test`;
@@ -87,6 +92,23 @@ test("client submits an issue, staff complete it, client sees the resolution", a
         "The loading-bay camera is offline. The remaining cameras are working.",
       );
     await clientPage
+      .getByLabel("Site", { exact: false })
+      .first()
+      .fill(" \u00a0 ");
+    await clientPage
+      .getByRole("button", { name: "Create request", exact: true })
+      .click();
+    await expect(clientPage.getByRole("alert")).toContainText(
+      "Please complete all required fields",
+    );
+    await expect(clientPage.getByLabel("Issue description")).toHaveValue(
+      "The loading-bay camera is offline. The remaining cameras are working.",
+    );
+    await clientPage
+      .getByLabel("Site", { exact: false })
+      .first()
+      .fill("Demo · Riverside Office");
+    await clientPage
       .getByLabel("Priority", { exact: true })
       .selectOption("high");
     await clientPage
@@ -129,6 +151,18 @@ test("client submits an issue, staff complete it, client sees the resolution", a
       staffPage.getByRole("button", { name: "Close request" }),
     ).toBeVisible();
     await screenshot(staffPage, "request-in-progress.png");
+    await staffPage
+      .getByLabel("Completed work")
+      .fill("\u00a0 123456789 \u00a0");
+    await staffPage
+      .getByRole("button", { name: "Close request", exact: true })
+      .click();
+    await expect(staffPage.getByRole("alert")).toContainText(
+      "at least 10 characters",
+    );
+    await expect(
+      staffPage.getByRole("button", { name: "Close request", exact: true }),
+    ).toBeVisible();
     const stalePage = await staffContext.newPage();
     await stalePage.goto(requestUrl);
     await expect(
