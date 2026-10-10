@@ -32,8 +32,10 @@ const workspaceNav: NavItem[] = [
 
 export function DashboardShell({
   children,
+  isStaff = false,
 }: {
   children: ReactNode;
+  isStaff?: boolean;
 }) {
   const pathname = usePathname();
   const router = useRouter();
@@ -103,7 +105,7 @@ export function DashboardShell({
     ? "Service requests"
     : isSettingsPage
       ? "Settings"
-      : "Overview";
+      : pathname.startsWith("/dashboard/staff") ? "Service queue" : "Overview";
 
   function navItem(item: NavItem) {
     const selected =
@@ -190,6 +192,7 @@ export function DashboardShell({
 
             <div className="space-y-1">
               {workspaceNav.map(navItem)}
+              {isStaff && navItem({ label: "Service queue", icon: "requests", href: "/dashboard/staff" })}
             </div>
 
             <p className="px-3 pb-2 pt-8 text-[10px] font-semibold uppercase tracking-[.15em] text-slate-400">
@@ -221,7 +224,7 @@ export function DashboardShell({
 
               <div className="min-w-0">
                 <div className="text-xs font-semibold text-slate-900">
-                  Client account
+                  {isStaff ? "Service staff" : "Client account"}
                 </div>
 
                 <div

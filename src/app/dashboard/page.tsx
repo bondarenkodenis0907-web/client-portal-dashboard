@@ -287,6 +287,7 @@ export default function DashboardPage() {
             .select(
               "id, site, system, status, priority, created_at"
             )
+            .eq("user_id", user.id)
             .order("created_at", { ascending: false })
             .limit(5)
             .abortSignal(controller.signal),
@@ -298,6 +299,7 @@ export default function DashboardPage() {
             )
             .eq("priority", "high")
             .neq("status", "closed")
+            .eq("user_id", user.id)
             .order("created_at", { ascending: false })
             .limit(3)
             .abortSignal(controller.signal),
@@ -305,21 +307,25 @@ export default function DashboardPage() {
           supabase
             .from("service_requests")
             .select("id", { count: "exact", head: true })
+            .eq("user_id", user.id)
             .eq("status", "new"),
 
           supabase
             .from("service_requests")
             .select("id", { count: "exact", head: true })
+            .eq("user_id", user.id)
             .eq("status", "in_progress"),
 
           supabase
             .from("service_requests")
             .select("id", { count: "exact", head: true })
+            .eq("user_id", user.id)
             .eq("status", "closed"),
 
           supabase
             .from("service_requests")
             .select("id", { count: "exact", head: true })
+            .eq("user_id", user.id)
             .eq("priority", "high")
             .neq("status", "closed"),
         ]);

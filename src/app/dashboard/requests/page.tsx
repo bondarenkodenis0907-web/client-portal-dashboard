@@ -2,6 +2,7 @@
 
 import { type FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { PortalIcon } from "@/components/portal/PortalIcon";
 import { PriorityBadge, StatusBadge } from "@/components/portal/StatusBadge";
@@ -53,6 +54,7 @@ export default function ServiceRequestsPage() {
       }
       const { data, error } = await supabase.from("service_requests")
         .select("id, site, system, description, priority, status, created_at")
+        .eq("user_id", user.id)
         .order("created_at", { ascending: false })
         .abortSignal(signal);
       if (signal.aborted) return;
@@ -164,7 +166,7 @@ export default function ServiceRequestsPage() {
 
         <section aria-labelledby="requests-heading" className="min-w-0 overflow-hidden rounded-xl border border-slate-200 bg-white">
           <div className="border-b border-slate-100 px-5 py-5 sm:px-6">
-            <div className="flex flex-wrap items-center justify-between gap-3"><div><h2 id="requests-heading" className="text-sm font-semibold text-slate-900">My requests</h2><p className="mt-1 text-xs text-slate-500">Visible only to your account</p></div><span className="rounded-md bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600">{loading ? "..." : `${requests.length} total`}</span></div>
+            <div className="flex flex-wrap items-center justify-between gap-3"><div><h2 id="requests-heading" className="text-sm font-semibold text-slate-900">My requests</h2><p className="mt-1 text-xs text-slate-500">Your submissions and updates from the service team</p></div><span className="rounded-md bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600">{loading ? "..." : `${requests.length} total`}</span></div>
             <div className="mt-5 flex flex-wrap gap-2.5">
               <label className="relative min-w-[180px] flex-1"><span className="sr-only">Search requests</span><PortalIcon name="search" className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-slate-400" /><input type="search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search site, system or issue" className="w-full rounded-lg border border-slate-200 py-2.5 pl-9 pr-3 text-xs text-slate-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" /></label>
               <label><span className="sr-only">Filter by status</span><select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as RequestStatus | "all")} className="rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-xs text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"><option value="all">All statuses</option><option value="new">New</option><option value="in_progress">In progress</option><option value="closed">Closed</option></select></label>
@@ -179,7 +181,7 @@ export default function ServiceRequestsPage() {
           ) : filteredRequests.length === 0 ? (
             <div className="p-10 text-center"><h3 className="text-sm font-semibold">No matching requests</h3><p className="mt-1.5 text-sm text-slate-500">Try a different search term or status filter.</p><button type="button" onClick={() => { setSearch(""); setStatusFilter("all"); }} className="mt-4 text-sm font-semibold text-blue-700">Clear filters</button></div>
           ) : (
-            <div className="overflow-x-auto"><table className="w-full min-w-[620px] border-collapse text-left text-xs"><thead className="bg-slate-50/80 text-slate-500"><tr><th className="px-5 py-3 font-medium">Site / Issue</th><th className="px-3 py-3 font-medium">System</th><th className="px-3 py-3 font-medium">Status</th><th className="px-3 py-3 font-medium">Priority</th><th className="px-5 py-3 font-medium">Created</th></tr></thead><tbody className="divide-y divide-slate-100">{filteredRequests.map((request) => <tr key={request.id} className="align-top hover:bg-slate-50/60"><td className="max-w-[230px] px-5 py-4"><div className="font-semibold text-slate-800">{request.site}</div><p className="mt-1 line-clamp-2 text-[11px] leading-4 text-slate-500" title={request.description}>{request.description}</p></td><td className="px-3 py-4 text-slate-600">{request.system}</td><td className="px-3 py-4"><StatusBadge status={request.status} /></td><td className="px-3 py-4"><PriorityBadge priority={request.priority} /></td><td className="whitespace-nowrap px-5 py-4 text-slate-500">{formatDate(request.created_at)}</td></tr>)}</tbody></table></div>
+            <div className="overflow-x-auto"><table className="w-full min-w-[620px] border-collapse text-left text-xs"><thead className="bg-slate-50/80 text-slate-500"><tr><th className="px-5 py-3 font-medium">Site / Issue</th><th className="px-3 py-3 font-medium">System</th><th className="px-3 py-3 font-medium">Status</th><th className="px-3 py-3 font-medium">Priority</th><th className="px-5 py-3 font-medium">Created</th></tr></thead><tbody className="divide-y divide-slate-100">{filteredRequests.map((request) => <tr key={request.id} className="align-top hover:bg-slate-50/60"><td className="max-w-[230px] px-5 py-4"><Link href={`/dashboard/requests/${request.id}`} className="font-semibold text-blue-700 hover:underline">{request.site}</Link><p className="mt-1 line-clamp-2 text-[11px] leading-4 text-slate-500" title={request.description}>{request.description}</p></td><td className="px-3 py-4 text-slate-600">{request.system}</td><td className="px-3 py-4"><StatusBadge status={request.status} /></td><td className="px-3 py-4"><PriorityBadge priority={request.priority} /></td><td className="whitespace-nowrap px-5 py-4 text-slate-500">{formatDate(request.created_at)}</td></tr>)}</tbody></table></div>
           )}
         </section>
       </div>
