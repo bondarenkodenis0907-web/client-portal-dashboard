@@ -6,9 +6,9 @@ A service-request portal for building systems: clients report an issue, the serv
 
 ## The use case
 
-A site coordinator needs to report a failed camera or access-control reader and find out what happened next. The service team needs a shared queue with priorities, an assigned engineer and a record of the completed work.
+A site coordinator reports a failed camera or access-control reader. The service team assigns an engineer, records the repair and gives the coordinator a result to check.
 
-I built this portfolio project around that hand-off. It draws on my background in technical systems and troubleshooting; it is not presented as a paid client deployment or evidence of measured business results.
+This is a portfolio project based on my experience supporting building systems.
 
 ## From a reported issue to completed work
 
@@ -17,11 +17,9 @@ I built this portfolio project around that hand-off. It draws on my background i
 3. **The engineer's work is recorded.** Closing requires a description of what was done. PostgreSQL records the closure time and a history entry in the same transaction.
 4. **The client sees the result.** The request detail shows the assigned engineer, changes in status and the resolution. Closed requests remain read-only.
 
-For example, the local demonstration follows an offline loading-bay camera: a coordinator reports it, an engineer starts work, then records replacement of a damaged PoE connector and a playback check. This is synthetic demonstration data, not a claim about an actual service visit.
-
 ## Screenshots
 
-The first four captures were supplied from the updated client interface and show test data. The workflow captures come from the browser test against an isolated local backend; names, accounts and the service scenario are fictional.
+Screenshots use fictional accounts and requests. Workflow captures were taken against the local test backend: an offline loading-bay camera is reported, assigned and closed with a repair note.
 
 ### Client overview and request submission
 
@@ -46,21 +44,18 @@ The first four captures were supplied from the updated client interface and show
 
 ## Decisions and checks
 
-**Client ownership and staff access are different permissions.** PostgreSQL RLS limits a client to their own requests and events. Staff membership is stored in an administrator-managed table, not in editable profile fields or user metadata. Staff can see the service queue, but their updates are limited to assignment, status and resolution. The personal overview still filters to the signed-in user's submissions.
+| Area | Behavior |
+| --- | --- |
+| Access | PostgreSQL RLS limits clients to their own requests and events. Active staff can process the shared queue; membership is administrator-managed. Staff updates are limited to assignment, status and resolution. |
+| Request lifecycle | The database requires an active engineer and the sequence New → In progress → Closed. Closing requires completed-work text. A trigger records history, which the Data API cannot edit. |
+| Conflicting saves | Updates include the last observed modification time. A stale screen asks for a reload; failed saves retain edits. Assignment changes preserve the work draft in the open page's memory. |
+| Staff deactivation | Revocation applies to the next database operation, including an existing session. Historical names remain; open work needs an active assignee. The account keeps ordinary access to its own requests. |
+| Types | Supabase clients use the generated `Database` type. Status and priority values are checked against the UI's allowed states. Regenerate [the types](src/lib/supabase/database.types.ts) after schema changes. |
+| Verification | SQL tests cover permissions, input validation and transitions. Browser tests cover submission, assignment, closure, failed and stale saves, draft preservation, deactivation and mobile layout. |
 
-**The database validates the lifecycle.** An engineer is required before work starts. A request cannot skip directly from New to Closed, and closure needs a resolution. A trigger writes change history; neither clients nor staff can edit or invent history entries through the Data API.
+PostgreSQL rejects whitespace-only required fields, including Unicode whitespace. Site and system are limited to 120 characters, descriptions to 5,000, optional profile fields to 120 and completed work to 10–5,000. The resolution minimum excludes surrounding whitespace. Forms provide the same limits before submission.
 
-**Input limits are enforced in PostgreSQL.** Required request fields reject whitespace-only values, including Unicode whitespace. Site and system are limited to 120 characters, issue descriptions to 5,000, optional profile fields to 120 and completed work to 10–5,000. The resolution minimum excludes surrounding whitespace; the maximum applies to stored text. Form controls and submit handlers provide early feedback; the database also rejects invalid direct API writes.
-
-**Query types come from the database schema.** Supabase clients use the generated `Database` type and UI models derive from table rows. Status and priority are text columns with SQL CHECK constraints, so query results are checked before they become finite UI states. Regenerate [the types](src/lib/supabase/database.types.ts) when changing the schema.
-
-**A stale screen must not overwrite another update.** Saves include the request's last observed update time. If another staff member has changed it, the interface asks for a reload. Failed saves preserve form edits and do not show a successful closure.
-
-**Assignment changes preserve the work draft.** Saving an engineer assignment refreshes the request and its history without clearing the completed-work text. The draft stays in that open page's memory; closing the request, losing staff access or leaving the page removes it.
-
-**Staff access can be revoked without deleting history.** An administrator can deactivate a membership. Database policies check the active flag on each operation, including with an existing session. Inactive engineers remain in recorded assignments and history, but cannot be selected for new work; their open requests must be reassigned to an active engineer before processing continues. A deactivated employee keeps ordinary client access to their own requests.
-
-**Checks use a real isolated backend.** SQL tests cover client isolation, staff membership, transitions and immutable history. The browser test signs in as a client and as staff, submits a request, assigns and closes it, and checks the result in the client's screen and the database. It also exercises a failed save, a stale update and a mobile viewport.
+The work draft is removed when the request closes, staff access is lost or the page is left.
 
 The application uses Next.js, React, TypeScript and Tailwind CSS. Supabase provides authentication and PostgreSQL. Browser code uses a publishable key; staff operations do not depend on a service-role key in the application.
 
