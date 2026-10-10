@@ -1,350 +1,596 @@
+
 "use client";
 
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
 
-type Profile = {
-  full_name: string | null;
-  company: string | null;
-  job_title: string | null;
+import { createClient } from "@/lib/supabase/client";
+import { PortalIcon } from "@/components/portal/PortalIcon";
+import {
+  PriorityBadge,
+  StatusBadge,
+} from "@/components/portal/StatusBadge";
+
+type RequestStatus = "new" | "in_progress" | "closed";
+type Priority = "low" | "medium" | "high";
+
+type ServiceRequest = {
+  id: string;
+  site: string;
+  system: string;
+  status: RequestStatus;
+  priority: Priority;
+  created_at: string;
 };
+
+type RequestCounts = {
+  new: number;
+  inProgress: number;
+  closed: number;
+  highPriority: number;
+};
+
+type Overview = {
+  company: string;
+  recent: ServiceRequest[];
+  urgent: ServiceRequest[];
+  counts: RequestCounts;
+};
+
+function formatDate(value: string) {
+  return new Date(value).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
+function StatCard({
+  label,
+  value,
+  detail,
+}: {
+  label: string;
+  value: number;
+  detail: string;
+}) {
+  return (
+    <div className="rounded-xl border border-slate-200 bg-white p-5">
+      <p className="text-sm font-medium text-slate-600">
+        {label}
+      </p>
+
+      <p className="mt-3 text-[32px] font-semibold leading-none tracking-tight text-slate-900">
+        {value}
+      </p>
+
+      <p className="mt-3 text-xs text-slate-500">
+        {detail}
+      </p>
+    </div>
+  );
+}
+
+function StatusBreakdown({
+  counts,
+}: {
+  counts: RequestCounts;
+}) {
+  const total =
+    counts.new + counts.inProgress + counts.closed;
+
+  const rows = [
+    {
+      label: "New",
+      value: counts.new,
+      color: "bg-blue-600",
+    },
+    {
+      label: "In progress",
+      value: counts.inProgress,
+      color: "bg-amber-500",
+    },
+    {
+      label: "Closed",
+      value: counts.closed,
+      color: "bg-emerald-600",
+    },
+  ];
+
+  return (
+    <section className="rounded-xl border border-slate-200 bg-white p-5 sm:p-6">
+      <div className="mb-6 flex items-center justify-between">
+        <h2 className="text-base font-semibold text-slate-900">
+          Request status
+        </h2>
+
+        <span className="text-xs text-slate-500">
+          {total} total
+        </span>
+      </div>
+
+      <div className="space-y-5">
+        {rows.map((row) => {
+          const percentage =
+            total > 0
+              ? Math.round((row.value / total) * 100)
+              : 0;
+
+          return (
+            <div key={row.label}>
+              <div className="mb-2 flex items-center justify-between text-sm">
+                <span className="text-slate-600">
+                  {row.label}
+                </span>
+
+                <span className="font-medium text-slate-900">
+                  {row.value}
+                  <span className="ml-2 text-xs font-normal text-slate-400">
+                    {percentage}%
+                  </span>
+                </span>
+              </div>
+
+              <div className="h-1.5 overflow-hidden rounded-full bg-slate-100">
+                <div
+                  className={`h-full rounded-full ${row.color}`}
+                  style={{ width: `${percentage}%` }}
+                />
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+function PriorityRequests({
+  items,
+  count,
+}: {
+  items: ServiceRequest[];
+  count: number;
+}) {
+  return (
+    <section className="overflow-hidden rounded-xl border border-slate-200 bg-white">
+      <div className="flex items-center justify-between gap-3 border-b border-slate-100 px-5 py-5 sm:px-6">
+        <div>
+          <h2 className="text-base font-semibold text-slate-900">
+            High-priority requests
+          </h2>
+          <p className="mt-1 text-xs text-slate-500">
+            Open issues reported as high priority
+          </p>
+        </div>
+
+        <span className="rounded-md bg-red-50 px-2.5 py-1 text-xs font-semibold text-red-700">
+          {count} open
+        </span>
+      </div>
+
+      {items.length === 0 ? (
+        <div className="px-5 py-7 sm:px-6">
+          <div className="flex items-center gap-2 text-sm font-medium text-slate-800">
+            <PortalIcon
+              name="check"
+              className="text-emerald-600"
+            />
+            No open high-priority requests
+          </div>
+
+          <p className="mt-2 text-sm text-slate-500">
+            Any new high-priority issues will appear here.
+          </p>
+        </div>
+      ) : (
+        <div className="divide-y divide-slate-100">
+          {items.map((request) => (
+            <div
+              key={request.id}
+              className="flex items-start justify-between gap-4 px-5 py-4 sm:px-6"
+            >
+              <div className="min-w-0">
+                <p className="truncate text-sm font-semibold text-slate-900">
+                  {request.site}
+                </p>
+
+                <p className="mt-1 text-xs text-slate-500">
+                  {request.system} ·{" "}
+                  {formatDate(request.created_at)}
+                </p>
+              </div>
+
+              <div className="flex shrink-0 items-center gap-2">
+                <PriorityBadge priority={request.priority} />
+                <StatusBadge status={request.status} />
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {count > 3 && (
+        <div className="border-t border-slate-100 px-5 py-3 sm:px-6">
+          <Link
+            href="/dashboard/requests"
+            className="text-xs font-semibold text-blue-700 hover:text-blue-800"
+          >
+            View all requests
+          </Link>
+        </div>
+      )}
+    </section>
+  );
+}
 
 export default function DashboardPage() {
   const router = useRouter();
   const [supabase] = useState(createClient);
 
-  const [email, setEmail] = useState("");
-  const [profile, setProfile] = useState<Profile | null>(null);
-
-  const [fullName, setFullName] = useState("");
-  const [company, setCompany] = useState("");
-  const [jobTitle, setJobTitle] = useState("");
-
+  const [overview, setOverview] = useState<Overview | null>(
+    null
+  );
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
-  const [saving, setSaving] = useState(false);
-  const [saveMessage, setSaveMessage] = useState("");
   const [retryCount, setRetryCount] = useState(0);
-  const [saveError, setSaveError] = useState("");
-  const [signOutError, setSignOutError] = useState("");
-  const [signingOut, setSigningOut] = useState(false);
-  const savingRef = useRef(false);
-  const signingOutRef = useRef(false);
 
   useEffect(() => {
     let cancelled = false;
     const controller = new AbortController();
 
-    async function loadDashboard() {
+    async function loadOverview() {
       try {
-        const { data: { user }, error: userError } = await supabase.auth.getUser();
+        const {
+          data: { user },
+          error: userError,
+        } = await supabase.auth.getUser();
+
         if (cancelled) return;
+
         if (userError) {
-          if (userError.status === 401 || userError.status === 403 || userError.name === "AuthSessionMissingError") {
+          if (
+            userError.status === 401 ||
+            userError.status === 403 ||
+            userError.name === "AuthSessionMissingError"
+          ) {
             router.replace("/login");
             return;
           }
+
           throw userError;
         }
+
         if (!user) {
           router.replace("/login");
           return;
         }
 
-        const { data, error } = await supabase
-          .from("profiles")
-          .select("full_name, company, job_title")
-          .eq("id", user.id)
-          .abortSignal(controller.signal)
-          .single();
-        if (cancelled) return;
-        if (error || !data) throw error ?? new Error("Profile unavailable");
+        const [
+          profile,
+          recent,
+          urgent,
+          newlyCreated,
+          inProgress,
+          closed,
+          highPriority,
+        ] = await Promise.all([
+          supabase
+            .from("profiles")
+            .select("company")
+            .eq("id", user.id)
+            .maybeSingle(),
 
-        setEmail(user.email ?? "");
-        setProfile(data);
-        setFullName(data.full_name ?? "");
-        setCompany(data.company ?? "");
-        setJobTitle(data.job_title ?? "");
+          supabase
+            .from("service_requests")
+            .select(
+              "id, site, system, status, priority, created_at"
+            )
+            .order("created_at", { ascending: false })
+            .limit(5)
+            .abortSignal(controller.signal),
+
+          supabase
+            .from("service_requests")
+            .select(
+              "id, site, system, status, priority, created_at"
+            )
+            .eq("priority", "high")
+            .neq("status", "closed")
+            .order("created_at", { ascending: false })
+            .limit(3)
+            .abortSignal(controller.signal),
+
+          supabase
+            .from("service_requests")
+            .select("id", { count: "exact", head: true })
+            .eq("status", "new"),
+
+          supabase
+            .from("service_requests")
+            .select("id", { count: "exact", head: true })
+            .eq("status", "in_progress"),
+
+          supabase
+            .from("service_requests")
+            .select("id", { count: "exact", head: true })
+            .eq("status", "closed"),
+
+          supabase
+            .from("service_requests")
+            .select("id", { count: "exact", head: true })
+            .eq("priority", "high")
+            .neq("status", "closed"),
+        ]);
+
+        if (cancelled) return;
+
+        const results = [
+          profile,
+          recent,
+          urgent,
+          newlyCreated,
+          inProgress,
+          closed,
+          highPriority,
+        ];
+
+        if (results.some((result) => result.error)) {
+          throw new Error("Unable to load service data");
+        }
+
+        setOverview({
+          company: profile.data?.company ?? "",
+          recent: (recent.data ?? []) as ServiceRequest[],
+          urgent: (urgent.data ?? []) as ServiceRequest[],
+          counts: {
+            new: newlyCreated.count ?? 0,
+            inProgress: inProgress.count ?? 0,
+            closed: closed.count ?? 0,
+            highPriority: highPriority.count ?? 0,
+          },
+        });
+
+        setLoadError("");
       } catch {
-        if (!cancelled) setLoadError("Your profile could not be loaded. Check your connection and try again.");
+        if (!cancelled) {
+          setLoadError(
+            "Could not load service requests. Check your connection and try again."
+          );
+        }
       } finally {
-        if (!cancelled) setLoading(false);
+        if (!cancelled) {
+          setLoading(false);
+        }
       }
     }
 
-    void loadDashboard();
+    void loadOverview();
+
     return () => {
       cancelled = true;
       controller.abort();
     };
   }, [router, supabase, retryCount]);
 
-  function handleRetry() {
+  function retry() {
     setLoading(true);
     setLoadError("");
-    setRetryCount((current) => current + 1);
+    setRetryCount((value) => value + 1);
   }
 
-  async function handleSave(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (savingRef.current || signingOutRef.current) return;
-    savingRef.current = true;
-    setSaving(true);
-    setSaveMessage("");
-    setSaveError("");
+  const counts = overview?.counts;
+  const openRequests = counts
+    ? counts.new + counts.inProgress
+    : 0;
 
-    try {
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      if (userError || !user) {
-        setSaveError("Your session could not be verified. Check your connection or sign in again; your changes are still in the form.");
-        return;
-      }
-      const { data, error } = await supabase
-        .from("profiles")
-        .update({
-          full_name: fullName.trim() || null,
-          company: company.trim() || null,
-          job_title: jobTitle.trim() || null,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", user.id)
-        .select("full_name, company, job_title")
-        .single();
-      if (error || !data) throw error ?? new Error("Save not confirmed");
-      setProfile(data);
-      setFullName(data.full_name ?? "");
-      setCompany(data.company ?? "");
-      setJobTitle(data.job_title ?? "");
-      setSaveMessage("Profile saved.");
-    } catch {
-      setSaveError("Saving could not be confirmed. Your changes are still in the form; check your connection and try saving again.");
-    } finally {
-      savingRef.current = false;
-      setSaving(false);
-    }
-  }
+  return (
+    <div className="space-y-6">
+      <header>
+        <h1 className="text-[28px] font-semibold tracking-tight text-slate-900">
+          Service overview
+        </h1>
 
-  async function handleSignOut() {
-    if (signingOutRef.current || savingRef.current) return;
-    signingOutRef.current = true;
-    setSigningOut(true);
-    setSignOutError("");
-    try {
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
-      router.replace("/login");
-      router.refresh();
-    } catch {
-      setSignOutError("Sign-out could not be confirmed. Please try again.");
-    } finally {
-      signingOutRef.current = false;
-      setSigningOut(false);
-    }
-  }
+        <p className="mt-2 text-sm text-slate-600">
+          {overview?.company
+            ? `Service requests for ${overview.company}`
+            : "Technical requests and maintenance activity for your sites."}
+        </p>
+      </header>
 
-  if (loading) {
-    return (
-      <main className="flex min-h-screen items-center justify-center bg-gray-50">
-        <div className="rounded-xl bg-white p-8 shadow">
-          <p role="status" className="text-lg font-medium">Loading your profile...</p>
+      {loading ? (
+        <div
+          role="status"
+          aria-busy="true"
+          className="space-y-5"
+        >
+          <span className="sr-only">
+            Loading service overview
+          </span>
+
+          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+            {[1, 2, 3, 4].map((item) => (
+              <div
+                key={item}
+                className="h-32 animate-pulse rounded-xl border border-slate-200 bg-white"
+              />
+            ))}
+          </div>
+
+          <div className="h-72 animate-pulse rounded-xl border border-slate-200 bg-white" />
         </div>
-      </main>
-    );
-  }
+      ) : loadError ? (
+        <section className="max-w-xl rounded-xl border border-red-200 bg-white p-6">
+          <h2 className="text-base font-semibold text-slate-900">
+            Unable to load overview
+          </h2>
 
-  if (loadError) {
-    return (
-      <main className="flex min-h-screen items-center justify-center bg-gray-50">
-        <div className="w-full max-w-md rounded-xl bg-white p-8 shadow">
-          <h1 className="text-2xl font-bold">
-            Unable to load your profile
-          </h1>
-
-          <p role="alert" className="mt-3 text-sm text-red-700">
+          <p
+            role="alert"
+            className="mt-2 text-sm text-red-700"
+          >
             {loadError}
           </p>
 
           <button
-            onClick={handleRetry}
-            className="mt-6 rounded bg-black px-5 py-3 text-white"
+            type="button"
+            onClick={retry}
+            className="mt-5 inline-flex items-center gap-2 rounded-lg bg-blue-700 px-4 py-2.5 text-sm font-semibold text-white"
           >
-            Retry
+            <PortalIcon name="refresh" />
+            Try again
           </button>
-        </div>
-      </main>
-    );
-  }
-
-  const profileIsEmpty =
-    !profile?.full_name &&
-    !profile?.company &&
-    !profile?.job_title;
-
-  return (
-    <main className="min-h-screen bg-gray-50 p-6">
-      <div className="mx-auto max-w-4xl">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-bold">Dashboard</h1>
-            <p className="mt-1 text-gray-600">{email}</p>
-          </div>
-
-          <button
-            onClick={handleSignOut}
-            disabled={signingOut || saving}
-            className="rounded bg-black px-4 py-2 text-white"
+        </section>
+      ) : overview && counts ? (
+        <>
+          <section
+            aria-label="Request statistics"
+            className="grid grid-cols-2 gap-3 lg:grid-cols-4"
           >
-            {signingOut ? "Signing out..." : "Sign out"}
-          </button>
-        </div>
+            <StatCard
+              label="Open requests"
+              value={openRequests}
+              detail="New and in progress"
+            />
 
-        {signOutError && <p role="alert" className="mt-4 text-sm text-red-700">{signOutError}</p>}
+            <StatCard
+              label="High priority"
+              value={counts.highPriority}
+              detail="Open requests requiring attention"
+            />
 
-        {profileIsEmpty && (
-          <div className="mt-6 rounded-xl border border-dashed bg-white p-6">
-            <h2 className="text-lg font-semibold">
-              Your profile is empty
-            </h2>
+            <StatCard
+              label="In progress"
+              value={counts.inProgress}
+              detail="Active requests"
+            />
 
-            <p className="mt-2 text-sm text-gray-600">
-              Add your name, company and job title below.
-            </p>
-          </div>
-        )}
+            <StatCard
+              label="Closed"
+              value={counts.closed}
+              detail="Completed requests"
+            />
+          </section>
 
-        <div className="mt-8 grid gap-4 md:grid-cols-3">
-          <div className="rounded-xl bg-white p-5 shadow">
-            <p className="text-sm text-gray-500">
-              Full name
-            </p>
+          <section
+            aria-labelledby="recent-requests-title"
+            className="overflow-hidden rounded-xl border border-slate-200 bg-white"
+          >
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 px-5 py-5 sm:px-6">
+              <div>
+                <h2
+                  id="recent-requests-title"
+                  className="text-base font-semibold text-slate-900"
+                >
+                  Recent requests
+                </h2>
 
-            <p className="mt-2 text-xl font-semibold">
-              {profile?.full_name || "Not set"}
-            </p>
-          </div>
+                <p className="mt-1 text-xs text-slate-500">
+                  Five most recent submissions
+                </p>
+              </div>
 
-          <div className="rounded-xl bg-white p-5 shadow">
-            <p className="text-sm text-gray-500">
-              Company
-            </p>
-
-            <p className="mt-2 text-xl font-semibold">
-              {profile?.company || "Not set"}
-            </p>
-          </div>
-
-          <div className="rounded-xl bg-white p-5 shadow">
-            <p className="text-sm text-gray-500">
-              Job title
-            </p>
-
-            <p className="mt-2 text-xl font-semibold">
-              {profile?.job_title || "Not set"}
-            </p>
-          </div>
-        </div>
-
-        <div className="mt-6 rounded-xl bg-white p-6 shadow">
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <div>
-              <h2 className="text-xl font-semibold">
-                Service Requests
-              </h2>
-
-              <p className="mt-2 text-sm text-gray-600">
-                Report a technical issue and track your requests.
-              </p>
+              <Link
+                href="/dashboard/requests"
+                className="inline-flex items-center gap-1.5 text-sm font-medium text-blue-700 hover:text-blue-800"
+              >
+                View all
+                <PortalIcon
+                  name="arrow-right"
+                  className="h-4 w-4"
+                />
+              </Link>
             </div>
 
-            <Link
-              href="/dashboard/requests"
-              className="rounded bg-black px-5 py-3 text-white"
-            >
-              Open requests
-            </Link>
-          </div>
-        </div>
+            {overview.recent.length === 0 ? (
+              <div className="px-6 py-10">
+                <h3 className="text-sm font-semibold text-slate-900">
+                  No requests submitted
+                </h3>
 
-        <div className="mt-6 rounded-xl bg-white p-6 shadow">
-          <h2 className="text-xl font-semibold">
-            Edit profile
-          </h2>
+                <p className="mt-2 text-sm text-slate-500">
+                  Report a technical issue to start your
+                  service history.
+                </p>
 
-          <form onSubmit={handleSave} className="mt-5">
-            <fieldset disabled={saving || signingOut} className="space-y-4">
-            <div>
-              <label htmlFor="profile-name" className="mb-1 block text-sm font-medium">
-                Full name
-              </label>
+                <Link
+                  href="/dashboard/requests#new-request"
+                  className="mt-4 inline-block text-sm font-semibold text-blue-700"
+                >
+                  Create your first request
+                </Link>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[660px] text-left text-sm">
+                  <thead className="bg-slate-50 text-xs text-slate-500">
+                    <tr>
+                      <th className="px-5 py-3 font-medium">
+                        Site
+                      </th>
+                      <th className="px-4 py-3 font-medium">
+                        System
+                      </th>
+                      <th className="px-4 py-3 font-medium">
+                        Status
+                      </th>
+                      <th className="px-4 py-3 font-medium">
+                        Priority
+                      </th>
+                      <th className="px-5 py-3 font-medium">
+                        Submitted
+                      </th>
+                    </tr>
+                  </thead>
 
-              <input
-                type="text"
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                className="w-full rounded border p-3"
-                id="profile-name"
-                name="profile-name"
-                autoComplete="name"
-                placeholder="Your full name"
-              />
-            </div>
+                  <tbody className="divide-y divide-slate-100">
+                    {overview.recent.map((request) => (
+                      <tr
+                        key={request.id}
+                        className="hover:bg-slate-50"
+                      >
+                        <td className="px-5 py-4 font-medium text-slate-900">
+                          {request.site}
+                        </td>
 
-            <div>
-              <label htmlFor="profile-company" className="mb-1 block text-sm font-medium">
-                Company
-              </label>
+                        <td className="px-4 py-4 text-slate-600">
+                          {request.system}
+                        </td>
 
-              <input
-                type="text"
-                value={company}
-                onChange={(e) => setCompany(e.target.value)}
-                className="w-full rounded border p-3"
-                id="profile-company"
-                name="profile-company"
-                autoComplete="organization"
-                placeholder="Company name"
-              />
-            </div>
+                        <td className="px-4 py-4">
+                          <StatusBadge
+                            status={request.status}
+                          />
+                        </td>
 
-            <div>
-              <label htmlFor="profile-job-title" className="mb-1 block text-sm font-medium">
-                Job title
-              </label>
+                        <td className="px-4 py-4">
+                          <PriorityBadge
+                            priority={request.priority}
+                          />
+                        </td>
 
-              <input
-                type="text"
-                value={jobTitle}
-                onChange={(e) => setJobTitle(e.target.value)}
-                className="w-full rounded border p-3"
-                id="profile-job-title"
-                name="profile-job-title"
-                autoComplete="organization-title"
-                placeholder="Job title"
-              />
-            </div>
-
-            <button
-              type="submit"
-              disabled={saving || signingOut}
-              className="rounded bg-black px-5 py-3 text-white disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              {saving ? "Saving..." : "Save profile"}
-            </button>
-
-            </fieldset>
-
-            {saveError && <p role="alert" className="mt-4 text-sm text-red-700">{saveError}</p>}
-
-            {saveMessage && (
-              <p role="status" className="mt-4 text-sm text-gray-700">
-                {saveMessage}
-              </p>
+                        <td className="whitespace-nowrap px-5 py-4 text-slate-500">
+                          {formatDate(request.created_at)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             )}
-          </form>
-        </div>
-      </div>
-    </main>
+          </section>
+
+          <div className="grid items-start gap-5 lg:grid-cols-2">
+            <PriorityRequests
+              items={overview.urgent}
+              count={counts.highPriority}
+            />
+
+            <StatusBreakdown counts={counts} />
+          </div>
+        </>
+      ) : null}
+    </div>
   );
 }
