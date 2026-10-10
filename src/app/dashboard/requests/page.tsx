@@ -217,14 +217,11 @@ export default function ServiceRequestsPage() {
   return (
     <div>
       <div className="mb-7">
-        <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-[.16em] text-blue-700">
-          Workspace / Requests
-        </p>
         <h1 className="text-[28px] font-semibold tracking-tight text-slate-900">
           Service requests
         </h1>
         <p className="mt-1.5 text-sm text-slate-500">
-          Report technical issues and keep their history in one place.
+          Report a fault or check progress on an existing request.
         </p>
       </div>
       <div className="grid items-start gap-5 xl:grid-cols-[340px_minmax(0,1fr)]">
