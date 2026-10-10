@@ -143,14 +143,11 @@ export default function SettingsPage() {
   return (
     <div className="max-w-4xl">
       <div className="mb-8">
-        <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-[.16em] text-blue-700">
-          Account / Settings
-        </p>
         <h1 className="text-[28px] font-semibold tracking-tight text-slate-900">
           Settings
         </h1>
         <p className="mt-1.5 text-sm text-slate-500">
-          Manage the information attached to your service requests.
+          Update your name, company and job title.
         </p>
       </div>
 
@@ -183,8 +180,7 @@ export default function SettingsPage() {
         <div className="space-y-5">
           {emptyProfile && (
             <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm text-blue-900">
-              Your profile is empty. Add your details below to personalize the
-              workspace.
+              Add your name, company or job title below.
             </div>
           )}
           <section
@@ -279,8 +275,7 @@ export default function SettingsPage() {
                     className="w-full cursor-not-allowed rounded-lg border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm text-slate-500"
                   />
                   <p className="mt-1.5 text-xs text-slate-400">
-                    Email is managed by your sign-in account, not by this
-                    profile form.
+                    Your sign-in email cannot be edited here.
                   </p>
                 </div>
                 <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-5 sm:col-span-2">

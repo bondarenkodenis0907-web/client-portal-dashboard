@@ -162,9 +162,12 @@ function PriorityRequests({
               className="flex items-start justify-between gap-4 px-5 py-4 sm:px-6"
             >
               <div className="min-w-0">
-                <p className="truncate text-sm font-semibold text-slate-900">
+                <Link
+                  href={`/dashboard/requests/${request.id}`}
+                  className="block truncate text-sm font-semibold text-blue-700 underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+                >
                   {request.site}
-                </p>
+                </Link>
 
                 <p className="mt-1 text-xs text-slate-500">
                   {request.system} · {formatDate(request.created_at)}
@@ -492,7 +495,12 @@ export default function DashboardPage() {
                     {overview.recent.map((request) => (
                       <tr key={request.id} className="hover:bg-slate-50">
                         <td className="px-5 py-4 font-medium text-slate-900">
-                          {request.site}
+                          <Link
+                            href={`/dashboard/requests/${request.id}`}
+                            className="text-blue-700 underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+                          >
+                            {request.site}
+                          </Link>
                         </td>
 
                         <td className="px-4 py-4 text-slate-600">
