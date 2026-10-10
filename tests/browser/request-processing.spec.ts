@@ -25,6 +25,7 @@ test("client submits an issue, staff complete it, client sees the resolution", a
     await expect(page).toHaveURL(/\/dashboard$/);
   }
   async function screenshot(page: Page, filename: string) {
+    await page.evaluate(() => document.fonts.ready);
     if (process.env.CAPTURE_PORTFOLIO === "1") await page.screenshot({ path: `public/screenshots/${filename}`, fullPage: true, animations: "disabled" });
   }
   try {
@@ -88,6 +89,7 @@ test("client submits an issue, staff complete it, client sees the resolution", a
     await screenshot(clientPage, "request-completed.png");
     await clientPage.setViewportSize({ width: 390, height: 844 });
     await expect(clientPage.getByRole("link", { name: "Settings", exact: true })).not.toBeInViewport();
+    expect(await clientPage.getByRole("heading", { level: 1 }).evaluate((el) => el.getBoundingClientRect().right <= window.innerWidth)).toBe(true);
     await screenshot(clientPage, "request-mobile.png");
     expect(await clientPage.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
     await clientPage.setViewportSize({ width: 1440, height: 1000 });
