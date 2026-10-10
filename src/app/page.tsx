@@ -1,4 +1,3 @@
-
 import Link from "next/link";
 
 const reportingSteps = [
@@ -11,8 +10,7 @@ const reportingSteps = [
   {
     number: "02",
     title: "Describe the problem",
-    description:
-      "Explain what happened and select the appropriate priority.",
+    description: "Explain what happened and select the appropriate priority.",
   },
   {
     number: "03",
@@ -25,16 +23,11 @@ const reportingSteps = [
 export default function Home() {
   return (
     <div className="min-h-screen bg-[#f8fafc] text-[#172238]">
-
       {/* Navigation */}
 
       <header className="border-b border-slate-200 bg-white">
         <div className="mx-auto flex h-[76px] max-w-[1200px] items-center justify-between gap-4 px-6 sm:px-8">
-
-          <Link
-            href="/"
-            className="inline-flex items-center gap-3"
-          >
+          <Link href="/" className="inline-flex items-center gap-3">
             <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#315fd4] text-sm font-bold text-white">
               CP
             </span>
@@ -72,11 +65,9 @@ export default function Home() {
       </header>
 
       <main>
-
         {/* Hero */}
 
         <section className="mx-auto grid max-w-[1200px] items-center gap-12 px-6 py-16 sm:px-8 sm:py-20 lg:grid-cols-[minmax(0,1fr)_420px] lg:gap-20 lg:py-28">
-
           <div className="max-w-[590px]">
             <div className="mb-7 flex items-center gap-3">
               <span className="h-px w-8 bg-[#315fd4]" />
@@ -94,14 +85,13 @@ export default function Home() {
             </h1>
 
             <p className="mt-7 max-w-[470px] text-base leading-8 text-slate-600">
-              A central place to report problems with CCTV,
-              access control, fire alarms and other building
-              systems.
+              A central place to report problems with CCTV, access control, fire
+              alarms and other building systems.
             </p>
 
             <p className="mt-4 max-w-[470px] text-sm leading-7 text-slate-500">
-              Submit a service request, set its priority and
-              access your request history whenever you need it.
+              Submit a service request, set its priority and access your request
+              history whenever you need it.
             </p>
 
             <div className="mt-9 flex flex-wrap items-center gap-3">
@@ -110,7 +100,6 @@ export default function Home() {
                 className="inline-flex items-center justify-center rounded-lg bg-[#315fd4] px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-blue-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
               >
                 Sign in to submit a request
-
                 <svg
                   viewBox="0 0 24 24"
                   fill="none"
@@ -134,8 +123,7 @@ export default function Home() {
             </div>
 
             <p className="mt-5 text-xs text-slate-500">
-              Your request history is accessible through your
-              account.
+              Your request history is accessible through your account.
             </p>
           </div>
 
@@ -162,12 +150,9 @@ export default function Home() {
             </div>
 
             <div className="px-6 py-6">
-
               <div className="grid grid-cols-2 gap-x-5 gap-y-6">
                 <div>
-                  <p className="text-xs text-slate-500">
-                    Location
-                  </p>
+                  <p className="text-xs text-slate-500">Location</p>
 
                   <p className="mt-2 text-sm font-medium text-slate-900">
                     Office — Floor 2
@@ -175,9 +160,7 @@ export default function Home() {
                 </div>
 
                 <div>
-                  <p className="text-xs text-slate-500">
-                    System
-                  </p>
+                  <p className="text-xs text-slate-500">System</p>
 
                   <p className="mt-2 text-sm font-medium text-slate-900">
                     CCTV
@@ -185,9 +168,7 @@ export default function Home() {
                 </div>
 
                 <div>
-                  <p className="text-xs text-slate-500">
-                    Priority
-                  </p>
+                  <p className="text-xs text-slate-500">Priority</p>
 
                   <div className="mt-2">
                     <span className="inline-flex rounded-md bg-red-50 px-2.5 py-1 text-xs font-semibold text-red-700">
@@ -197,9 +178,7 @@ export default function Home() {
                 </div>
 
                 <div>
-                  <p className="text-xs text-slate-500">
-                    Status
-                  </p>
+                  <p className="text-xs text-slate-500">Status</p>
 
                   <p className="mt-2 text-sm font-medium text-slate-900">
                     Awaiting review
@@ -213,15 +192,15 @@ export default function Home() {
                 </p>
 
                 <p className="mt-3 text-sm leading-7 text-slate-700">
-                  Camera 12 is offline and does not respond to
-                  network checks. Connection requires inspection.
+                  Camera 12 is offline and does not respond to network checks.
+                  Connection requires inspection.
                 </p>
               </div>
 
               <div className="mt-7 border-l-2 border-blue-600 bg-slate-50 px-4 py-3">
                 <p className="text-xs font-medium leading-5 text-slate-600">
-                  Site, system, description and priority are
-                  recorded together with every request.
+                  Site, system, description and priority are recorded together
+                  with every request.
                 </p>
               </div>
             </div>
@@ -242,7 +221,6 @@ export default function Home() {
           className="scroll-mt-12 border-y border-slate-200 bg-white"
         >
           <div className="mx-auto grid max-w-[1200px] gap-10 px-6 py-16 sm:px-8 lg:grid-cols-[0.75fr_1.25fr] lg:gap-20 lg:py-20">
-
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.14em] text-blue-700">
                 Reporting process
@@ -256,18 +234,14 @@ export default function Home() {
               </h2>
 
               <p className="mt-5 max-w-[360px] text-sm leading-7 text-slate-600">
-                Each request contains the information needed
-                to identify the affected system and understand
-                the reported problem.
+                Each request contains the information needed to identify the
+                affected system and understand the reported problem.
               </p>
             </div>
 
             <ol className="divide-y divide-slate-200 border-t border-slate-200">
               {reportingSteps.map((step) => (
-                <li
-                  key={step.number}
-                  className="flex gap-5 py-6"
-                >
+                <li key={step.number} className="flex gap-5 py-6">
                   <span className="w-9 shrink-0 pt-0.5 text-sm font-semibold text-blue-700">
                     {step.number}
                   </span>
@@ -291,7 +265,6 @@ export default function Home() {
 
         <section className="mx-auto max-w-[1200px] px-6 py-16 sm:px-8 lg:py-20">
           <div className="flex flex-col justify-between gap-6 sm:flex-row sm:items-end">
-
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.14em] text-blue-700">
                 Use cases
@@ -302,8 +275,8 @@ export default function Home() {
               </h2>
 
               <p className="mt-3 max-w-[600px] text-sm leading-7 text-slate-600">
-                The request form accepts different building
-                systems and site locations.
+                The request form accepts different building systems and site
+                locations.
               </p>
             </div>
           </div>
