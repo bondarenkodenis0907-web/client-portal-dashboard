@@ -3,19 +3,13 @@ import type { ReactNode } from "react";
 export type PortalIconName =
   | "dashboard"
   | "requests"
-  | "projects"
-  | "tasks"
-  | "files"
   | "settings"
   | "menu"
   | "close"
   | "plus"
   | "arrow-right"
   | "logout"
-  | "clock"
   | "check"
-  | "alert"
-  | "activity"
   | "building"
   | "shield"
   | "refresh"
@@ -37,23 +31,6 @@ const paths: Record<PortalIconName, ReactNode> = {
       <path d="M8 11h8M8 15h8" />
     </>
   ),
-  projects: (
-    <>
-      <rect x="4" y="3" width="16" height="18" rx="2" />
-      <path d="M9 7h2m4 0h0M9 11h2m4 0h0M9 15h2m4 0h0M10 21v-3h4v3" />
-    </>
-  ),
-  tasks: (
-    <>
-      <path d="m4 7 2 2 3-3M12 8h8M4 16l2 2 3-3M12 17h8" />
-    </>
-  ),
-  files: (
-    <>
-      <path d="M13 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V10z" />
-      <path d="M13 3v7h7M8 15h8M8 18h5" />
-    </>
-  ),
   settings: (
     <>
       <circle cx="12" cy="12" r="3" />
@@ -70,25 +47,12 @@ const paths: Record<PortalIconName, ReactNode> = {
       <path d="M14 8l4 4-4 4M8 12h10" />
     </>
   ),
-  clock: (
-    <>
-      <circle cx="12" cy="12" r="9" />
-      <path d="M12 7v5l3 2" />
-    </>
-  ),
   check: (
     <>
       <circle cx="12" cy="12" r="9" />
       <path d="m8 12 2.5 2.5L16 9" />
     </>
   ),
-  alert: (
-    <>
-      <path d="m12 3 10 18H2L12 3z" />
-      <path d="M12 9v5m0 3h.01" />
-    </>
-  ),
-  activity: <path d="M3 12h4l3-7 4 14 3-7h4" />,
   building: (
     <>
       <rect x="4" y="3" width="16" height="18" rx="2" />
