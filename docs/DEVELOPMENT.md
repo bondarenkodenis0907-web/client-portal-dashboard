@@ -54,19 +54,25 @@ Only an administrator can change this flag. Use `is_active = true` to restore ac
 
 ## Preview safety (temporary)
 
-**All app Preview hosts must be unavailable while they may share Production Supabase configuration.** The application Proxy returns HTTP 503 with `Cache-Control: no-store` before any auth/database call on Vercel Preview (`VERCEL_ENV=preview`), on a Netlify build (`NETLIFY=true` or `CONTEXT=deploy-preview/branch-deploy`), and on `*.netlify.app` hosts. Netlify is **not an approved production host** for this project. This blocks application routes, not static assets, and **is not an isolated Preview database or a replacement for host-level access protection**. A raw Supabase endpoint remains outside this guard.
+**No cloud Preview has a verified isolated Supabase backend.** Production is hosted on Vercel; Netlify is not an authorized production host. Vercel currently assigns the same `NEXT_PUBLIC_SUPABASE_URL` and publishable-key variables to Production, Preview and Development. Environment target assignment is not backend isolation.
 
-GitHub PR #22 has **two separately configured Netlify projects** generating previews: `https://deploy-preview-22--client-portal-dashboard.netlify.app` and `https://deploy-preview-22--ornate-daffodil-920c83.netlify.app`. Its provider-side access policy, environment variables and **all previously published builds** are NOT confirmed secure. The updated code applies to future Netlify builds only. Disabling the redundant Netlify integration or its Deploy Previews at the Netlify dashboard is the safest option while cloud Preview Supabase isolation is unavailable. Do not assume this code protects an already published deploy or any Netlify functions that bypass the Next.js Proxy.
+The Next.js `src/proxy.ts` denies application traffic by default with HTTP 503, `Cache-Control: no-store`, and `X-Robots-Tag: noindex, nofollow` **before** any Supabase Auth refresh unless one of these conditions holds:
 
-CI runs `preview-guard` using harmless placeholder public Supabase values, compiles **separate Vercel and Netlify Preview simulations**, and asserts app GET and POST routes return HTTP 503/no-store. A separate PR #22-only `preview-host-smoke` job does a **read-only GET** on the known Vercel Preview and both Netlify project domains/previews; only HTTP 401/403 (host protection) or 503 (application maintenance guard) passes. A 200, redirect, or connection error leaves isolation **unverified**. This job never accesses Supabase directly or submits forms. This only proves the checked source; the real deployed Preview must still be checked via read-only GET (expected 503 from the app or a confirmed 401/403 from provider access protection). The existing `database-tests` job remains isolated: `supabase start` starts a temporary local database, SQL tests run against it, and the browser test runner refuses any non-loopback Supabase URL.
+- `VERCEL_ENV=production` — the established Vercel Production deployment; or
+- localhost/127.0.0.1 with `NODE_ENV=development` (local development), or an explicit `CLIENT_PORTAL_LOCAL_TESTS=1` (isolated test runner only).
 
-Until an isolated online test database is available:
-- Do not test account registration, password recovery, ticket creation, or staff actions on Vercel Preview.
-- Do not expose Production keys or data to GitHub Actions or to unreviewed test builds.
-- Treat each actual Vercel and Netlify Preview as unverified until a read-only GET confirms its deployment-level protection or an app HTTP 503. A 403 returned by a connector's authorization API is **not** evidence that the app returned 403.
-- Audit Netlify settings and legacy URLs directly in the Netlify dashboard; Github PR notification alone does not prove the deployment is protected.
-- Do not allow Netlify previews to share or embed Production Supabase connection details, including the public URL and publishable key, even if the Next.js Proxy denies normal UI routes. Disable Netlify auto deployments when this cannot be guaranteed.
-- Remove this guard **only** in a separate reviewed PR after configuring and verifying a distinct Preview Supabase project. Keep changes to Production, database policies and live data outside such a PR.
+This rejects Vercel Preview, Netlify Deploy Previews/branch deploys and other unapproved public hosts even if Netlify-specific environment variables (`NETLIFY`, `CONTEXT`) are absent at runtime. **Do not set `CLIENT_PORTAL_LOCAL_TESTS=1` on any hosted environment.** `scripts/browser-tests.mjs` sets it only after checking that the Supabase CLI API URL resolves to loopback.
+
+The CI `check` job builds with harmless public placeholders and verifies an unapproved host defaults to HTTP 503. The `preview-guard` job simulates both Vercel Preview and Netlify deploy-preview using placeholder public values, checking GET and POST application paths. `database-tests` starts a temporary local Supabase, runs SQL/RLS tests and full Playwright request lifecycle. CI never reads production Auth secrets.
+
+### External deployment limitations / unresolved release gates
+
+- **Vercel:** Deployment Protection is enabled. The connected integration cannot obtain a protected deployment's HTML (permission 403), so a real HTTP 503 app response is **not yet verified**. Restoring scoped Vercel access and running read-only GET checks is still required.
+- **Netlify:** A Netlify bot reported `https://deploy-preview-22--client-portal-dashboard.netlify.app` on PR #22. Its provider-level access protection, runtime environment and original data connection are **not verified**. Netlify build-scoped values are not guaranteed to be available in Functions/Edge runtime. Even passing CI cannot prove a Netlify deploy executes the Proxy. Existing old deploy URLs are not patched by new commits. Before release, use **Netlify → Project configuration → Developer settings → Continuous deployment → Branches and deploy contexts** to disable future Deploy Previews if Netlify is not needed; separately protect or delete existing preview deployments after confirming impact. Keep any currently reachable Preview untrusted until verified.
+- **Older deployments:** Vercel and Netlify may have immutable deployment URLs from before these guards. Vercel protection must remain enabled; do not create unprotected exceptions. Do not infer that all historical URLs are safe from the current commit's tests.
+- **Direct API:** A frontend HTTP 503 is a mitigation, not Supabase tenant isolation. Direct Supabase Auth/REST public endpoints remain reachable. RLS and proper Auth permissions must remain enforced independently.
+
+**Do not** run account registration, password recovery, request creation or staff tests on any cloud Preview until backend isolation is confirmed. Never copy production data into Preview. The guard must be removed only after a reviewed separate Supabase Preview backend and per-branch Vercel environment variables are verified.
 
 ## Verification
 
