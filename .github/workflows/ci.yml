@@ -28,11 +28,6 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Show Prettier changes for confirmation page
-        run: |
-          npx prettier --write src/app/auth/confirm/page.tsx
-          git diff --no-color -- src/app/auth/confirm/page.tsx
-
       - name: Check code formatting
         run: npm run format:check
 
