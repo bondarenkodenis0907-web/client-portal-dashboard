@@ -8,7 +8,9 @@ const response = await fetch(base + "/login", {
   signal: AbortSignal.timeout(10_000),
 });
 if (response.status !== 200) {
-  console.log(`Public Netlify fingerprint not applicable: HTTP ${response.status}`);
+  console.log(
+    `Public Netlify fingerprint not applicable: HTTP ${response.status}`,
+  );
   process.exit(0);
 }
 const html = await response.text();
