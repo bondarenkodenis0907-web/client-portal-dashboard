@@ -52,6 +52,18 @@ where user_id = (
 
 Only an administrator can change this flag. Use `is_active = true` to restore access. Revocation takes effect for the next database operation; an already open screen can still display previously loaded information until it refreshes. Names on closed requests and the event history remain available to authorized viewers.
 
+## Preview safety (temporary)
+
+**Vercel Preview is deliberately unavailable while it shares the Production Supabase configuration.** The application Proxy returns HTTP 503 with `Cache-Control: no-store` when `VERCEL_ENV=preview`, before authentication or database work. This blocks application routes, not static asset paths, and is **not a substitute for a separate database**. Existing older Preview deployments do not inherit this protection.
+
+CI runs `preview-guard` in a separate GitHub-hosted job. It compiles a Next.js Preview build with harmless placeholder public Supabase values and checks that key pages and a POST request return HTTP 503. The existing `database-tests` job remains isolated: `supabase start` starts a temporary local database, SQL tests run against it, and the browser test runner refuses any non-loopback Supabase URL.
+
+Until an isolated online test database is available:
+- Do not test account registration, password recovery, ticket creation, or staff actions on Vercel Preview.
+- Do not expose Production keys or data to GitHub Actions or to unreviewed test builds.
+- Treat Preview as unverified until the deployed Preview URL also passes a read-only HTTP 503 smoke test.
+- Remove this guard **only** in a separate reviewed PR after configuring and verifying a distinct Preview Supabase project. Keep changes to Production, database policies and live data outside such a PR.
+
 ## Verification
 
 ```bash
