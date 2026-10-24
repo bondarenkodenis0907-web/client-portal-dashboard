@@ -99,7 +99,22 @@ test("local recovery email opens a one-time link and changes the password", asyn
     });
     if (!action) throw new Error("Local reset email contains no recovery link");
 
+    page.on("response", (response) => {
+      if (new URL(response.url()).pathname === "/auth/callback") {
+        console.log("Recovery callback HTTP:", response.status());
+        console.log(
+          "Recovery callback set-cookie header present:",
+          Boolean(response.headers()["set-cookie"]),
+        );
+      }
+    });
     await page.goto(action);
+    const visibleCookies = await page.context().cookies();
+    console.log(
+      "Recovery session cookie present:",
+      visibleCookies.some((cookie) => cookie.name.includes("-auth-token") &&
+        !cookie.name.includes("-code-verifier")),
+    );
     await expect(page).toHaveURL(/\/reset-password$/);
     await expect(
       page.getByLabel("New password", { exact: true }),
