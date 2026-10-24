@@ -267,6 +267,17 @@ export default function LoginPage() {
                 )}
               </form>
 
+              {!signingUp && (
+                <div className="mt-4 text-right">
+                  <Link
+                    href="/forgot-password"
+                    className="text-sm font-semibold text-blue-700 hover:underline"
+                  >
+                    Forgot password?
+                  </Link>
+                </div>
+              )}
+
               <div className="mt-8 border-t border-slate-200 pt-6">
                 <p className="text-center text-sm text-slate-600">
                   {signingUp
