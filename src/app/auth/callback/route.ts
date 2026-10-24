@@ -1,6 +1,5 @@
-import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
-import type { Database } from "@/lib/supabase/database.types";
+import { createClient } from "@/lib/supabase/server";
 
 export async function GET(request: NextRequest) {
   const tokenHash = request.nextUrl.searchParams.get("token_hash");
@@ -12,36 +11,21 @@ export async function GET(request: NextRequest) {
   destination.hash = "";
 
   if (tokenHash && type === "recovery") {
-    const response = NextResponse.redirect(destination, {
-      status: 303,
-      headers: {
-        "Cache-Control": "no-store",
-        "Referrer-Policy": "no-referrer",
-      },
-    });
-    const supabase = createServerClient<Database>(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
-      {
-        cookies: {
-          getAll() {
-            return request.cookies.getAll();
-          },
-          setAll(cookiesToSet) {
-            cookiesToSet.forEach(({ name, value, options }) => {
-              request.cookies.set(name, value);
-              response.cookies.set(name, value, options);
-            });
-          },
-        },
-      },
-    );
-
-    const { error } = await supabase.auth.verifyOtp({
+    // Next.js Route Handlers can persist server Auth cookies via cookies().
+    const supabase = await createClient();
+    const { data, error } = await supabase.auth.verifyOtp({
       type: "recovery",
       token_hash: tokenHash,
     });
-    if (!error) return response;
+    if (!error && data.session) {
+      return NextResponse.redirect(destination, {
+        status: 303,
+        headers: {
+          "Cache-Control": "no-store",
+          "Referrer-Policy": "no-referrer",
+        },
+      });
+    }
   }
 
   const retry = request.nextUrl.clone();
