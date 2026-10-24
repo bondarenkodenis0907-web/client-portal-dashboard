@@ -46,6 +46,9 @@ jobs:
           NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
           NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_ci_build_placeholder
 
+      - name: Verify unapproved cloud deployments are denied by default
+        run: node scripts/verify-preview-guard.mjs unapproved
+
   preview-guard:
     runs-on: ubuntu-latest
     timeout-minutes: 15
