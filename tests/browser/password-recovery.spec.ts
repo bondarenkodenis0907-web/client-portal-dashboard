@@ -100,7 +100,6 @@ test("local recovery email opens a one-time link and changes the password", asyn
 
     await page.goto(action);
     await expect(page).toHaveURL(/\/reset-password$/);
-    console.log("Recovery screen:", (await page.locator("main").innerText()).slice(0, 180));
     await expect(
       page.getByLabel("New password", { exact: true }),
     ).toBeVisible();
