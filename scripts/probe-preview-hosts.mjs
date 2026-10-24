@@ -16,17 +16,23 @@ for (const name of names) {
       headers: { "User-Agent": "ClientPortal-ReadOnly-Preview-Safety-Audit" },
       signal: AbortSignal.timeout(10_000),
     });
-    const safe = [401, 403, 503].includes(response.status);
     const location = response.headers.get("location");
+    let ssoProtected = false;
     let redirectSummary = "";
     if (location) {
       try {
         const destination = new URL(location, `https://${name}`);
         redirectSummary = ` redirect-host=${destination.hostname} redirect-path=${destination.pathname}`;
+        ssoProtected =
+          name.endsWith(".vercel.app") &&
+          response.status === 302 &&
+          destination.origin === "https://vercel.com" &&
+          destination.pathname === "/sso-api";
       } catch {
         redirectSummary = " redirect-invalid";
       }
     }
+    const safe = [401, 403, 503].includes(response.status) || ssoProtected;
     console.log(
       `${safe ? "PASS" : "UNVERIFIED"} ${name}: HTTP ${response.status}${redirectSummary}`,
     );
