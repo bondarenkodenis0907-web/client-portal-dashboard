@@ -113,8 +113,47 @@ test("local recovery email opens a one-time link and changes the password", asyn
         });
       }
     });
-    await page.goto(action);
+    // Local-only diagnostic: never log cookie values, tokens, identities or links.
+    const redirectResponse = await page.goto(action);
     await expect(page).toHaveURL(/\/reset-password$/);
+    const authCookies = (await page.context().cookies()).filter(
+      (cookie) =>
+        cookie.name.includes("-auth-token") &&
+        !cookie.name.includes("code-verifier"),
+    );
+    const serialized = authCookies
+      .sort((a, b) => a.name.localeCompare(b.name))
+      .map((cookie) => cookie.value)
+      .join("");
+    let sessionStructure: "valid" | "invalid" | "missing" = "missing";
+    if (serialized) {
+      try {
+        const decoded = serialized.startsWith("base64-")
+          ? Buffer.from(serialized.slice(7), "base64url").toString("utf8")
+          : serialized;
+        const parsed = JSON.parse(decoded) as Record<string, unknown>;
+        sessionStructure =
+          typeof parsed.access_token === "string" &&
+          typeof parsed.refresh_token === "string"
+            ? "valid"
+            : "invalid";
+      } catch {
+        sessionStructure = "invalid";
+      }
+    }
+    const serverCheck = await page.context().request.get(
+      "http://127.0.0.1:3010/dashboard",
+      { maxRedirects: 0 },
+    );
+    console.log("Isolated recovery compatibility:", JSON.stringify({
+      callbackCookieHeader: Boolean(
+        (redirectResponse ? await redirectResponse.allHeaders() : {})["set-cookie"],
+      ),
+      tokenCookieParts: authCookies.length,
+      cookieSessionStructure: sessionStructure,
+      serverDashboardStatus: serverCheck.status(),
+      resetFormVisible: await page.getByLabel("New password", { exact: true }).isVisible(),
+    }));
     const browserCookies = await page.context().cookies();
     const authCookies = browserCookies.filter(
       (c) => c.name.includes("-auth-token") && !c.name.includes("-code-verifier"),
