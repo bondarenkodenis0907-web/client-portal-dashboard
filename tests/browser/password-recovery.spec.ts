@@ -22,6 +22,8 @@ test("recovery routes reject missing or invalid links", async ({ page }) => {
 
   await page.goto("/auth/callback?next=https://example.test");
   await expect(page).toHaveURL(/\/forgot-password\?status=invalid$/);
+  await page.goto("/auth/confirm");
+  await expect(page.getByRole("alert")).toContainText("invalid");
 });
 
 test("local recovery email opens a one-time link and changes the password", async ({
@@ -105,7 +107,37 @@ test("local recovery email opens a one-time link and changes the password", asyn
     if (!action) throw new Error("Local reset email contains no recovery link");
 
     const expectedHost = new URL(action).hostname;
+
+    // Simulate a mail-security scanner following GET links. Neither GET
+    // may verify the token or create an authenticated browser session.
+    const scanned = await page.request.get(action, { maxRedirects: 0 });
+    expect(scanned.status()).toBe(303);
+    const safeLanding = scanned.headers()["location"];
+    expect(safeLanding).toMatch(/^\/auth\/confirm\?token_hash=/);
+    const landing = await page.request.get(
+      new URL(safeLanding, new URL(action).origin).toString(),
+    );
+    expect(landing.status()).toBe(200);
+    expect(landing.headers()["cache-control"]).toContain("no-store");
+    expect(landing.headers()["referrer-policy"]).toBe("no-referrer");
+
     await page.goto(action);
+    await expect.poll(() => new URL(page.url()).pathname).toBe("/auth/confirm");
+    expect(new URL(page.url()).hostname).toBe(expectedHost);
+    await expect(
+      page.getByRole("button", { name: "Continue password reset" }),
+    ).toBeVisible();
+    const sessionBeforeConfirmation = await page.evaluate(() =>
+      document.cookie.includes("-auth-token"),
+    );
+    expect(sessionBeforeConfirmation).toBe(false);
+
+    // Multiple GETs and reloads must not consume the reset link.
+    await page.reload();
+    await expect(
+      page.getByRole("button", { name: "Continue password reset" }),
+    ).toBeVisible();
+    await page.getByRole("button", { name: "Continue password reset" }).click();
     await expect(page).toHaveURL(/\/reset-password$/);
     expect(new URL(page.url()).hostname).toBe(expectedHost);
 
@@ -135,8 +167,11 @@ test("local recovery email opens a one-time link and changes the password", asyn
     await page.getByRole("button", { name: "Sign in", exact: true }).click();
     await expect(page).toHaveURL(/\/dashboard$/);
 
-    // A recovery token must be single-use, even after a successful login.
+    // The GET confirmation page remains safe after consumption, but a
+    // subsequent POST must reject the already-used token.
     await page.goto(action);
+    await expect.poll(() => new URL(page.url()).pathname).toBe("/auth/confirm");
+    await page.getByRole("button", { name: "Continue password reset" }).click();
     await expect(page).toHaveURL(/\/forgot-password\?status=invalid$/);
   } finally {
     await admin.auth.admin.deleteUser(created.user.id);
