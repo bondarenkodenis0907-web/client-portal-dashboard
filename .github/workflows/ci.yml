@@ -95,6 +95,25 @@ jobs:
           NETLIFY: "true"
           CONTEXT: deploy-preview
 
+  preview-host-smoke:
+    # Only evaluate the known PR #22 previews; never probe hosts on main.
+    if: github.event_name == 'pull_request' && github.event.pull_request.number == 22
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Read-only GET smoke against known Preview hosts
+        run: node scripts/probe-preview-hosts.mjs
+
   database-tests:
     runs-on: ubuntu-latest
     timeout-minutes: 20
