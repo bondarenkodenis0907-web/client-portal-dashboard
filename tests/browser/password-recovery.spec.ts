@@ -99,8 +99,47 @@ test("local recovery email opens a one-time link and changes the password", asyn
     });
     if (!action) throw new Error("Local reset email contains no recovery link");
 
+    // Isolated metadata-only cookie compatibility probe. Never print values,
+    // tokens, links, user identifiers or secret headers.
+    const transitions: Array<{ path: string; status: number; setCookie: boolean }> = [];
+    page.on("response", async (response) => {
+      const path = new URL(response.url()).pathname;
+      if (path === "/auth/callback" || path === "/reset-password") {
+        const headers = await response.headersArray();
+        transitions.push({
+          path,
+          status: response.status(),
+          setCookie: headers.some((h) => h.name.toLowerCase() === "set-cookie"),
+        });
+      }
+    });
     await page.goto(action);
     await expect(page).toHaveURL(/\/reset-password$/);
+    const browserCookies = await page.context().cookies();
+    const authCookies = browserCookies.filter(
+      (c) => c.name.includes("-auth-token") && !c.name.includes("-code-verifier"),
+    );
+    const documentCookies = await page.evaluate(() =>
+      document.cookie
+        .split(";")
+        .map((entry) => entry.trim().split("=")[0])
+        .filter(Boolean),
+    );
+    console.log("Recovery response cookie flags:", JSON.stringify(transitions));
+    console.log("Recovery auth cookie metadata:", JSON.stringify(
+      authCookies.map((c) => ({
+        domainIsLoopback: ["127.0.0.1", "localhost"].includes(c.domain),
+        pathRoot: c.path === "/",
+        httpOnly: c.httpOnly,
+        secure: c.secure,
+        visibleToJS: documentCookies.includes(c.name),
+        lengthBand: c.value.length > 1024 ? "large" : c.value.length > 128 ? "medium" : "small",
+      })),
+    ));
+    const probe = await page.context().newPage();
+    await probe.goto("/dashboard");
+    console.log("Recovery session reaches Proxy:", new URL(probe.url()).pathname === "/dashboard");
+    await probe.close();
     await expect(
       page.getByLabel("New password", { exact: true }),
     ).toBeVisible();
