@@ -98,7 +98,29 @@ test("local recovery email opens a one-time link and changes the password", asyn
     });
     if (!action) throw new Error("Local reset email contains no recovery link");
 
+    // Only log non-secret diagnostics (no tokens, codes, email, cookie values).
+    const verifierCookieBefore = (await page.context().cookies()).some((cookie) =>
+      cookie.name.endsWith("-code-verifier"),
+    );
+    const observedPaths: string[] = [];
+    page.on("request", (request) => {
+      const url = new URL(request.url());
+      if (["/auth/callback", "/reset-password"].includes(url.pathname)) {
+        observedPaths.push(
+          url.pathname +
+            (url.searchParams.has("code") ? " with_code" : " no_code"),
+        );
+      }
+    });
+    page.on("response", (response) => {
+      const url = new URL(response.url());
+      if (url.pathname.endsWith("/auth/v1/token")) {
+        console.log("Auth exchange HTTP:", response.status());
+      }
+    });
     await page.goto(action);
+    console.log("Auth verifier cookie before link:", verifierCookieBefore);
+    console.log("Recovery route path flags:", observedPaths.join(" -> "));
     await expect(page).toHaveURL(/\/reset-password$/);
     await expect(
       page.getByLabel("New password", { exact: true }),
