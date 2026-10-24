@@ -2,19 +2,19 @@ import { NextResponse, type NextRequest } from "next/server";
 import { updateSession } from "@/lib/supabase/proxy";
 
 export async function proxy(request: NextRequest) {
-  // Preview is unsafe until every hosting provider has a separate backend.
-  // Vercel and Netlify builds may otherwise use Production Supabase credentials.
-  // Netlify is not an approved Production host for this project: fail closed
-  // there regardless of its deployment context, before refreshing Auth cookies.
+  // Only approved Vercel Production may access the hosted backend.
+  // Public deployments on other providers have no verified staging database,
+  // so reject them even if their provider-specific env vars are unavailable
+  // at runtime. The loopback exception is for local development/CI only.
   const hostname = request.nextUrl.hostname.toLowerCase();
-  const netlifyHost =
-    hostname === "netlify.app" || hostname.endsWith(".netlify.app");
-  const unsafePreview =
-    process.env.VERCEL_ENV === "preview" ||
-    process.env.NETLIFY === "true" ||
-    process.env.CONTEXT === "deploy-preview" ||
-    process.env.CONTEXT === "branch-deploy" ||
-    netlifyHost;
+  const isLoopback = hostname === "localhost" || hostname === "127.0.0.1";
+  const localOnly =
+    isLoopback &&
+    !process.env.VERCEL_ENV &&
+    (process.env.NODE_ENV === "development" ||
+      process.env.CLIENT_PORTAL_LOCAL_TESTS === "1");
+  const approvedProduction = process.env.VERCEL_ENV === "production";
+  const unsafePreview = !approvedProduction && !localOnly;
 
   if (unsafePreview) {
     return new NextResponse(
