@@ -2,9 +2,21 @@ import { NextResponse, type NextRequest } from "next/server";
 import { updateSession } from "@/lib/supabase/proxy";
 
 export async function proxy(request: NextRequest) {
-  // Vercel Preview currently uses the same Supabase configuration as Production.
-  // Deny app routes before auth or database access until an isolated test DB exists.
-  if (process.env.VERCEL_ENV === "preview") {
+  // Preview is unsafe until every hosting provider has a separate backend.
+  // Vercel and Netlify builds may otherwise use Production Supabase credentials.
+  // Netlify is not an approved Production host for this project: fail closed
+  // there regardless of its deployment context, before refreshing Auth cookies.
+  const hostname = request.nextUrl.hostname.toLowerCase();
+  const netlifyHost =
+    hostname === "netlify.app" || hostname.endsWith(".netlify.app");
+  const unsafePreview =
+    process.env.VERCEL_ENV === "preview" ||
+    process.env.NETLIFY === "true" ||
+    process.env.CONTEXT === "deploy-preview" ||
+    process.env.CONTEXT === "branch-deploy" ||
+    netlifyHost;
+
+  if (unsafePreview) {
     return new NextResponse(
       "Preview unavailable until an isolated test database is configured.",
       {
