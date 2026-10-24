@@ -19,3 +19,15 @@ vector_port = 55328
 
 [db.pooler]
 port = 55329
+
+# Local-only Auth redirect allowlist. Hosted Supabase settings are unchanged.
+[auth]
+site_url = "http://127.0.0.1:3000"
+additional_redirect_urls = [
+  "http://127.0.0.1:3000/auth/callback",
+  "http://127.0.0.1:3010/auth/callback",
+]
+
+[auth.email.template.recovery]
+subject = "Reset your Client Portal password"
+content_path = "./supabase/templates/recovery.html"
