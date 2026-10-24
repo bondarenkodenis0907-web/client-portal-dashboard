@@ -17,8 +17,18 @@ for (const name of names) {
       signal: AbortSignal.timeout(10_000),
     });
     const safe = [401, 403, 503].includes(response.status);
+    const location = response.headers.get("location");
+    let redirectSummary = "";
+    if (location) {
+      try {
+        const destination = new URL(location, `https://${name}`);
+        redirectSummary = ` redirect-host=${destination.hostname} redirect-path=${destination.pathname}`;
+      } catch {
+        redirectSummary = " redirect-invalid";
+      }
+    }
     console.log(
-      `${safe ? "PASS" : "UNVERIFIED"} ${name}: HTTP ${response.status}`,
+      `${safe ? "PASS" : "UNVERIFIED"} ${name}: HTTP ${response.status}${redirectSummary}`,
     );
     if (!safe) failed = true;
     await response.body?.cancel();
