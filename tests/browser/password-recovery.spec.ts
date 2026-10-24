@@ -154,6 +154,10 @@ test("local recovery email opens a one-time link and changes the password", asyn
       serverDashboardStatus: serverCheck.status(),
       resetFormVisible: await page.getByLabel("New password", { exact: true }).isVisible(),
     }));
+    console.log("Recovery callback and final hosts:", JSON.stringify({
+      clickedHost: new URL(action).hostname,
+      finalHost: new URL(page.url()).hostname,
+    }));
     const browserCookies = await page.context().cookies();
     const authCookies = browserCookies.filter(
       (c) => c.name.includes("-auth-token") && !c.name.includes("-code-verifier"),
@@ -167,7 +171,9 @@ test("local recovery email opens a one-time link and changes the password", asyn
     console.log("Recovery response cookie flags:", JSON.stringify(transitions));
     console.log("Recovery auth cookie metadata:", JSON.stringify(
       authCookies.map((c) => ({
-        domainIsLoopback: ["127.0.0.1", "localhost"].includes(c.domain),
+        domain: c.domain,
+        currentPageHost: new URL(page.url()).hostname,
+        domainMatchesPage: c.domain.replace(/^\./, "") === new URL(page.url()).hostname,
         pathRoot: c.path === "/",
         httpOnly: c.httpOnly,
         secure: c.secure,
@@ -175,6 +181,16 @@ test("local recovery email opens a one-time link and changes the password", asyn
         lengthBand: c.value.length > 1024 ? "large" : c.value.length > 128 ? "medium" : "small",
       })),
     ));
+    console.log(
+      "Recovery cookie visibility counters:",
+      JSON.stringify({
+        documentTotal: documentCookies.length,
+        documentAuthTokenNames: documentCookies.filter((name) =>
+          name.includes("-auth-token"),
+        ).length,
+        contextAuthTokenNames: authCookies.length,
+      }),
+    );
     const probe = await page.context().newPage();
     await probe.goto("/dashboard");
     console.log("Recovery session reaches Proxy:", new URL(probe.url()).pathname === "/dashboard");
