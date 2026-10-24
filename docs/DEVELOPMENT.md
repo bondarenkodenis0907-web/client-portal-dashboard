@@ -54,14 +54,18 @@ Only an administrator can change this flag. Use `is_active = true` to restore ac
 
 ## Preview safety (temporary)
 
-**Vercel Preview is deliberately unavailable while it shares the Production Supabase configuration.** The application Proxy returns HTTP 503 with `Cache-Control: no-store` when `VERCEL_ENV=preview`, before authentication or database work. This blocks application routes, not static asset paths, and is **not a substitute for a separate database**. Existing older Preview deployments do not inherit this protection.
+**All app Preview hosts must be unavailable while they may share Production Supabase configuration.** The application Proxy returns HTTP 503 with `Cache-Control: no-store` before any auth/database call on Vercel Preview (`VERCEL_ENV=preview`), on a Netlify build (`NETLIFY=true` or `CONTEXT=deploy-preview/branch-deploy`), and on `*.netlify.app` hosts. Netlify is **not an approved production host** for this project. This blocks application routes, not static assets, and **is not an isolated Preview database or a replacement for host-level access protection**. A raw Supabase endpoint remains outside this guard.
 
-CI runs `preview-guard` in a separate GitHub-hosted job. It compiles a Next.js Preview build with harmless placeholder public Supabase values and checks that key pages and a POST request return HTTP 503. The existing `database-tests` job remains isolated: `supabase start` starts a temporary local database, SQL tests run against it, and the browser test runner refuses any non-loopback Supabase URL.
+GitHub PR #22 also has an automatic Netlify deployment at `https://deploy-preview-22--client-portal-dashboard.netlify.app`. Its provider-side access policy, environment variables and **all previously published builds** are NOT confirmed secure. The updated code applies to future Netlify builds only. Disabling the redundant Netlify integration or its Deploy Previews at the Netlify dashboard is the safest option while cloud Preview Supabase isolation is unavailable. Do not assume this code protects an already published deploy or any Netlify functions that bypass the Next.js Proxy.
+
+CI runs `preview-guard` using harmless placeholder public Supabase values, compiles **separate Vercel and Netlify Preview simulations**, and asserts app GET and POST routes return HTTP 503/no-store. This only proves the checked source; the real deployed Preview must still be checked via read-only GET (expected 503 from the app or a confirmed 401/403 from provider access protection). The existing `database-tests` job remains isolated: `supabase start` starts a temporary local database, SQL tests run against it, and the browser test runner refuses any non-loopback Supabase URL.
 
 Until an isolated online test database is available:
 - Do not test account registration, password recovery, ticket creation, or staff actions on Vercel Preview.
 - Do not expose Production keys or data to GitHub Actions or to unreviewed test builds.
-- Treat Preview as unverified until the deployed Preview URL also passes a read-only HTTP 503 smoke test.
+- Treat each actual Vercel and Netlify Preview as unverified until a read-only GET confirms its deployment-level protection or an app HTTP 503. A 403 returned by a connector's authorization API is **not** evidence that the app returned 403.
+- Audit Netlify settings and legacy URLs directly in the Netlify dashboard; Github PR notification alone does not prove the deployment is protected.
+- Do not allow Netlify previews to share or embed Production Supabase connection details, including the public URL and publishable key, even if the Next.js Proxy denies normal UI routes. Disable Netlify auto deployments when this cannot be guaranteed.
 - Remove this guard **only** in a separate reviewed PR after configuring and verifying a distinct Preview Supabase project. Keep changes to Production, database policies and live data outside such a PR.
 
 ## Verification
