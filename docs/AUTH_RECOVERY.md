@@ -36,6 +36,14 @@ For a future production rollout, the project owner must explicitly authorize the
 - The Auth Recovery PR and PR #22 are reviewed, merged in dependency order, and monitored.
 - A separate safe testing backend is available before the Vercel Preview guard is lifted.
 
+## Known blocking failure (24 October 2026)
+
+**BLOCKED / not ready for production.** The local Mailpit email sends a signed recovery link, the callback returns HTTP 303 to `/reset-password`, and the browser reports a session-cookie name present. Nevertheless, `supabase.auth.getUser()` returns `user: null` without an Auth error and the reset form is not displayed. The end-to-end browser regression fails. This is **not** a successful Auth Recovery acceptance test.
+
+Previous PKCE implementation also failed with `pkce_code_verifier_not_found`, despite the same browser having stored a verifier. We switched only the *local* recovery email template to signed token-hash `verifyOtp`, which eliminates the PKCE verifier dependency but has not yet solved session hydration.
+
+**Next investigation** (only on isolated Supabase / disposable users): inspect safe cookie *metadata* and server/client session presence at the callback and redirected page; verify the Next.js Proxy cookie refresh behavior; use a focused reproducible test. Do not log raw cookies, auth codes, recovery URLs, token hashes, passwords, user identifiers, or access/refresh tokens. Keep this PR Draft until the recovery email-to-new-sign-in scenario passes and is independently reviewed.
+
 ## Checks
 
 The existing GitHub Actions `database-tests` job runs `supabase start`, PostgreSQL SQL tests and `npm run test:browser` on isolated loopback services. `password-recovery.spec.ts` exercises the email and browser flow with a disposable account and deletes that account in `finally`. This does not connect to production.
