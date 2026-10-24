@@ -22,10 +22,6 @@ export default function ResetPasswordPage() {
     void supabase.auth
       .getUser()
       .then(({ data, error: authError }) => {
-        console.info("Recovery user state:", {
-          hasUser: Boolean(data.user),
-          authErrorCode: authError?.code ?? "none",
-        });
         if (active) setState(!authError && data.user ? "ready" : "invalid");
       })
       .catch(() => {
