@@ -19,14 +19,27 @@ export default function ResetPasswordPage() {
 
   useEffect(() => {
     let active = true;
-    void supabase.auth
-      .getUser()
-      .then(({ data, error: authError }) => {
+
+    async function validateRecovery() {
+      const code = new URLSearchParams(window.location.search).get("code");
+      try {
+        // Browser SSR Auth may exchange the code during initialization.
+        let { data, error: authError } = await supabase.auth.getUser();
+        if ((authError || !data.user) && code) {
+          // Otherwise exchange using the verifier stored by this browser.
+          const exchanged = await supabase.auth.exchangeCodeForSession(code);
+          if (exchanged.error) throw exchanged.error;
+          ({ data, error: authError } = await supabase.auth.getUser());
+        }
         if (active) setState(!authError && data.user ? "ready" : "invalid");
-      })
-      .catch(() => {
+      } catch {
         if (active) setState("invalid");
-      });
+      } finally {
+        if (code) window.history.replaceState(null, "", "/reset-password");
+      }
+    }
+
+    void validateRecovery();
     return () => {
       active = false;
     };
