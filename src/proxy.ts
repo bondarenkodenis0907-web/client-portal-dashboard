@@ -8,12 +8,19 @@ export async function proxy(request: NextRequest) {
   // at runtime. The loopback exception is for local development/CI only.
   const hostname = request.nextUrl.hostname.toLowerCase();
   const isLoopback = hostname === "localhost" || hostname === "127.0.0.1";
+  const netlifyDeployment =
+    hostname.endsWith(".netlify.app") ||
+    process.env.NETLIFY === "true" ||
+    process.env.CONTEXT === "deploy-preview" ||
+    process.env.CONTEXT === "branch-deploy";
   const localOnly =
     isLoopback &&
+    !netlifyDeployment &&
     !process.env.VERCEL_ENV &&
     (process.env.NODE_ENV === "development" ||
       process.env.CLIENT_PORTAL_LOCAL_TESTS === "1");
-  const approvedProduction = process.env.VERCEL_ENV === "production";
+  const approvedProduction =
+    !netlifyDeployment && process.env.VERCEL_ENV === "production";
   const unsafePreview = !approvedProduction && !localOnly;
 
   if (unsafePreview) {
