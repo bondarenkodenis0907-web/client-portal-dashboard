@@ -130,9 +130,9 @@ test("local recovery email opens a one-time link and changes the password", asyn
       page.getByRole("button", { name: "Continue password reset" }),
     ).toBeVisible();
     // GET must only show the confirmation screen, never the password form.
-    await expect(
-      page.getByLabel("New password", { exact: true }),
-    ).toHaveCount(0);
+    await expect(page.getByLabel("New password", { exact: true })).toHaveCount(
+      0,
+    );
 
     // Multiple GETs and reloads must not consume the reset link.
     await page.reload();
