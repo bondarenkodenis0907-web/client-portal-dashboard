@@ -36,13 +36,19 @@ For a future production rollout, the project owner must explicitly authorize the
 - The Auth Recovery PR and PR #22 are reviewed, merged in dependency order, and monitored.
 - A separate safe testing backend is available before the Vercel Preview guard is lifted.
 
-## Known blocking failure (24 October 2026)
+## Isolated Auth-cookie compatibility finding (24 October 2026)
 
-**BLOCKED / not ready for production.** The local Mailpit email sends a signed recovery link, the callback returns HTTP 303 to `/reset-password`, and the browser reports a session-cookie name present. Nevertheless, `supabase.auth.getUser()` returns `user: null` without an Auth error and the reset form is not displayed. The end-to-end browser regression fails. This is **not** a successful Auth Recovery acceptance test.
+**Root cause proven in CI:** the recovery link was opened on `127.0.0.1`, but the callback's absolute redirect (built from `request.nextUrl.clone()`) sent the browser to `localhost`. The server had written a host-scoped Auth-cookie for `127.0.0.1`; browser JavaScript at `localhost` could not see it. The same cookie was valid for the Next.js Proxy on `127.0.0.1`. Therefore `getUser()` returned no browser user although server-side authentication succeeded.
 
-Previous PKCE implementation also failed with `pkce_code_verifier_not_found`, despite the same browser having stored a verifier. We switched only the *local* recovery email template to signed token-hash `verifyOtp`, which eliminates the PKCE verifier dependency but has not yet solved session hydration.
+Evidence from isolated Playwright metadata only:
+- callback HTTP 303 and `Set-Cookie` present
+- host of clicked recovery link: `127.0.0.1`; final reset-page host: `localhost`
+- cookie domain: `127.0.0.1`; path `/`; `HttpOnly=false`; not visible in `document.cookie` on `localhost`
+- direct server-side Proxy probe of `/dashboard` on `127.0.0.1` succeeded
 
-**Next investigation** (only on isolated Supabase / disposable users): inspect safe cookie *metadata* and server/client session presence at the callback and redirected page; verify the Next.js Proxy cookie refresh behavior; use a focused reproducible test. Do not log raw cookies, auth codes, recovery URLs, token hashes, passwords, user identifiers, or access/refresh tokens. Keep this PR Draft until the recovery email-to-new-sign-in scenario passes and is independently reviewed.
+**Fix prepared:** callback uses a fixed, relative HTTP `Location: /reset-password` (or `/forgot-password?status=invalid`) with HTTP 303. The browser resolves this against its current origin, preserving exact hostname, protocol and port. No untrusted `Host`, `next`, or other external redirect target is accepted. Tests now assert exact hostname stability and Auth-cookie visibility.
+
+**Release gate:** the full email → verification → password update → fresh sign-in browser test and all CI jobs must PASS on the final commit. Earlier builds with broken redirects remain failed historical runs. Host-relative redirects and cookie compatibility require code review before production. Do not expose raw cookies, codes, recovery URLs, token hashes, passwords or user identifiers in CI logs.
 
 ## Checks
 
