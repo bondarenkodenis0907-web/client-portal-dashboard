@@ -105,9 +105,7 @@ test("local recovery email opens a one-time link and changes the password", asyn
     expect(new URL(page.url()).hostname).toBe(expectedHost);
 
     const canReadSessionCookie = await page.evaluate(() =>
-      document.cookie.split(";").some((entry) =>
-        entry.trim().split("=")[0].includes("-auth-token"),
-      ),
+      document.cookie.includes("-auth-token"),
     );
     expect(canReadSessionCookie).toBe(true);
 
