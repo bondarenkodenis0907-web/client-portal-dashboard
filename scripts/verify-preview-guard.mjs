@@ -8,7 +8,8 @@ const target = process.argv[2] ?? "vercel";
 if (!["vercel", "netlify", "unapproved"].includes(target)) {
   throw new Error("Specify vercel, netlify or unapproved");
 }
-const port = target === "netlify" ? 3012 : target === "unapproved" ? 3013 : 3011;
+const ports = { vercel: 3011, netlify: 3012, unapproved: 3013 };
+const port = ports[target];
 const origin = `http://127.0.0.1:${port}`;
 const routes = ["/", "/login", "/dashboard", "/dashboard/requests"];
 const server = spawn(
