@@ -11,7 +11,9 @@ test("recovery routes reject missing or invalid links", async ({ page }) => {
   ).toBeVisible();
 
   await page.goto("/reset-password");
-  await expect(page.getByRole("alert")).toContainText("invalid or expired");
+  await expect(
+    page.getByRole("alert").filter({ hasText: "Your reset link" }),
+  ).toContainText("invalid or expired");
 
   await page.goto("/auth/callback?next=https://example.test");
   await expect(page).toHaveURL(/\/forgot-password\?status=invalid$/);
@@ -47,31 +49,34 @@ test("local recovery email opens a one-time link and changes the password", asyn
       "If an account exists for this email",
     );
 
-    const inboxOrigin = "http://127.0.0.1:55324";
-    const mailbox = email.split("@")[0];
-    const inboxUrl =
-      inboxOrigin + "/api/v1/mailbox/" + encodeURIComponent(mailbox);
+    // The Supabase CLI currently uses Mailpit, not the retired Inbucket API.
+    const mailpit = "http://127.0.0.1:55324";
+    const searchUrl =
+      mailpit + "/api/v1/search?query=" + encodeURIComponent("to:" + email) + "&limit=1";
 
     await expect
       .poll(
         async () => {
-          const response = await fetch(inboxUrl);
-          if (!response.ok) throw new Error("Local Inbucket unavailable");
-          const messages = (await response.json()) as Array<{ id: string }>;
-          return messages.length;
+          const response = await fetch(searchUrl);
+          if (!response.ok) throw new Error("Local Mailpit unavailable");
+          const results = (await response.json()) as {
+            messages?: Array<{ ID: string }>;
+          };
+          return results.messages?.length ?? 0;
         },
         { timeout: 15_000 },
       )
       .toBeGreaterThan(0);
 
-    const messages = (await (await fetch(inboxUrl)).json()) as Array<{
-      id: string;
-    }>;
-    const messageUrl = inboxUrl + "/" + encodeURIComponent(messages[0].id);
-    const message = (await (await fetch(messageUrl)).json()) as {
-      body?: { text?: string; html?: string };
+    const results = (await (await fetch(searchUrl)).json()) as {
+      messages: Array<{ ID: string }>;
     };
-    const body = message.body?.text || message.body?.html || "";
+    const detailUrl = mailpit + "/api/v1/message/" + encodeURIComponent(results.messages[0].ID);
+    const message = (await (await fetch(detailUrl)).json()) as {
+      Text?: string;
+      HTML?: string;
+    };
+    const body = message.Text || message.HTML || "";
     const links = [...body.matchAll(/https?:\/\/[^\s<>"']+/g)].map((match) =>
       match[0].replaceAll("&amp;", "&"),
     );
@@ -98,9 +103,9 @@ test("local recovery email opens a one-time link and changes the password", asyn
     await page.getByLabel("New password", { exact: true }).fill(replacement);
     await page.getByLabel("Confirm new password").fill("different-value");
     await page.getByRole("button", { name: "Update password" }).click();
-    await expect(page.getByRole("alert")).toContainText(
-      "Passwords do not match",
-    );
+    await expect(
+      page.getByRole("alert").filter({ hasText: "Passwords do not match" }),
+    ).toBeVisible();
 
     await page.getByLabel("Confirm new password").fill(replacement);
     await page.getByRole("button", { name: "Update password" }).click();
