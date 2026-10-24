@@ -99,6 +99,11 @@ test("local recovery email opens a one-time link and changes the password", asyn
     });
     if (!action) throw new Error("Local reset email contains no recovery link");
 
+    page.on("console", (message) => {
+      if (message.text().startsWith("Recovery user state:")) {
+        console.log(message.text());
+      }
+    });
     page.on("response", (response) => {
       if (new URL(response.url()).pathname === "/auth/callback") {
         console.log("Recovery callback HTTP:", response.status());
