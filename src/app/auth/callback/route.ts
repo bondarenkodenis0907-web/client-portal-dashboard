@@ -1,43 +1,24 @@
-import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
-import type { Database } from "@/lib/supabase/database.types";
 
-export async function GET(request: NextRequest) {
+export function GET(request: NextRequest) {
   const code = request.nextUrl.searchParams.get("code");
+  const destination = request.nextUrl.clone();
 
   if (code) {
-    const destination = request.nextUrl.clone();
+    // Keep the one-time PKCE code on this origin. The browser client that
+    // initiated recovery will exchange it using its own code verifier.
     destination.pathname = "/reset-password";
     destination.search = "";
-
-    // Write Auth cookies on the actual redirect response. In Next.js route
-    // handlers this avoids losing the recovered session at the redirect.
-    const response = NextResponse.redirect(destination, {
-      headers: { "Cache-Control": "no-store" },
-    });
-    const supabase = createServerClient<Database>(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
-      {
-        cookies: {
-          getAll() {
-            return request.cookies.getAll();
-          },
-          setAll(cookiesToSet) {
-            cookiesToSet.forEach(({ name, value, options }) => {
-              response.cookies.set(name, value, options);
-            });
-          },
-        },
+    destination.searchParams.set("code", code);
+    return NextResponse.redirect(destination, {
+      headers: {
+        "Cache-Control": "no-store",
+        "Referrer-Policy": "no-referrer",
       },
-    );
-
-    const { error } = await supabase.auth.exchangeCodeForSession(code);
-    if (!error) return response;
+    });
   }
 
-  // Never use an externally supplied redirect or forward code/token parameters.
-  const destination = request.nextUrl.clone();
+  // Ignore untrusted redirect parameters and invalid/expired recovery links.
   destination.pathname = "/forgot-password";
   destination.search = "?status=invalid";
   return NextResponse.redirect(destination, {
