@@ -18,7 +18,7 @@ Users can request a password reset from `/login`, receive a generic response tha
 
 1. Login links to Forgot Password; request form works at mobile sizes.
 2. Unknown addresses receive the same generic success copy as known addresses; no user lookup is exposed.
-3. Local Supabase Inbucket receives the recovery email for a temporary verified test account.
+3. Local Supabase Mailpit receives the recovery email for a temporary verified test account.
 4. Email recovery link exchanges PKCE code and opens authenticated reset page.
 5. Mismatched passwords are rejected; a valid new password is accepted; user is signed out.
 6. Signing in with new password succeeds. A missing or bad reset link is rejected.
