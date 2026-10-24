@@ -22,6 +22,9 @@ export default function ResetPasswordPage() {
 
     async function validateRecovery() {
       const code = new URLSearchParams(window.location.search).get("code");
+      console.info("Recovery verifier before client call:", document.cookie
+        .split(";")
+        .some((part) => part.trim().split("=")[0].endsWith("-code-verifier")));
       try {
         // Browser SSR Auth may exchange the code during initialization.
         let { data, error: authError } = await supabase.auth.getUser();
