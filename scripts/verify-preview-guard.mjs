@@ -30,7 +30,9 @@ async function check(route, method = "GET") {
     signal: AbortSignal.timeout(2_000),
   });
   if (response.status !== 503) {
-    throw new Error(`${method} ${route}: expected 503; got ${response.status}`);
+    throw new Error(
+      `${method} ${route}: expected 503; got ${response.status}`,
+    );
   }
   const cacheControl = response.headers.get("cache-control") ?? "";
   if (!cacheControl.includes("no-store")) {
@@ -49,8 +51,10 @@ try {
       listening = true;
       break;
     } catch (error) {
-      if (String(error).includes("expected 503") ||
-          String(error).includes("missing no-store")) {
+      if (
+        String(error).includes("expected 503") ||
+        String(error).includes("missing no-store")
+      ) {
         throw error;
       }
       await delay(250);
