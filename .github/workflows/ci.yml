@@ -28,6 +28,12 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # Temporary: collect Prettier's exact diff for the new Auth Recovery files.
+      - name: Format Auth Recovery files for diagnostic output
+        run: |
+          npx prettier --write src/app/forgot-password/page.tsx src/app/reset-password/page.tsx tests/browser/password-recovery.spec.ts
+          git diff --no-ext-diff --no-color
+
       - name: Check code formatting
         run: npm run format:check
 
