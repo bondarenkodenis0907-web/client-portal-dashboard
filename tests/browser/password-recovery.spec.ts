@@ -52,7 +52,10 @@ test("local recovery email opens a one-time link and changes the password", asyn
     // The Supabase CLI currently uses Mailpit, not the retired Inbucket API.
     const mailpit = "http://127.0.0.1:55324";
     const searchUrl =
-      mailpit + "/api/v1/search?query=" + encodeURIComponent("to:" + email) + "&limit=1";
+      mailpit +
+      "/api/v1/search?query=" +
+      encodeURIComponent("to:" + email) +
+      "&limit=1";
 
     await expect
       .poll(
@@ -71,7 +74,8 @@ test("local recovery email opens a one-time link and changes the password", asyn
     const results = (await (await fetch(searchUrl)).json()) as {
       messages: Array<{ ID: string }>;
     };
-    const detailUrl = mailpit + "/api/v1/message/" + encodeURIComponent(results.messages[0].ID);
+    const detailUrl =
+      mailpit + "/api/v1/message/" + encodeURIComponent(results.messages[0].ID);
     const message = (await (await fetch(detailUrl)).json()) as {
       Text?: string;
       HTML?: string;
