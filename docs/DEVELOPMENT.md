@@ -52,6 +52,28 @@ where user_id = (
 
 Only an administrator can change this flag. Use `is_active = true` to restore access. Revocation takes effect for the next database operation; an already open screen can still display previously loaded information until it refreshes. Names on closed requests and the event history remain available to authorized viewers.
 
+## Preview safety (temporary)
+
+**No cloud Preview has a verified isolated Supabase backend.** Production is hosted on Vercel; Netlify is not an authorized production host. Vercel currently assigns the same `NEXT_PUBLIC_SUPABASE_URL` and publishable-key variables to Production, Preview and Development. Environment target assignment is not backend isolation.
+
+The Next.js `src/proxy.ts` denies application traffic by default with HTTP 503, `Cache-Control: no-store`, and `X-Robots-Tag: noindex, nofollow` **before** any Supabase Auth refresh unless one of these conditions holds:
+
+- `VERCEL_ENV=production` — the established Vercel Production deployment; or
+- localhost/127.0.0.1 with `NODE_ENV=development` (local development), or an explicit `CLIENT_PORTAL_LOCAL_TESTS=1` (isolated test runner only).
+
+This rejects Vercel Preview, Netlify Deploy Previews/branch deploys and other unapproved public hosts even if Netlify-specific environment variables (`NETLIFY`, `CONTEXT`) are absent at runtime. **Do not set `CLIENT_PORTAL_LOCAL_TESTS=1` on any hosted environment.** `scripts/browser-tests.mjs` sets it only after checking that the Supabase CLI API URL resolves to loopback.
+
+The CI `check` job builds with harmless public placeholders and verifies an unapproved host defaults to HTTP 503. The `preview-guard` job simulates both Vercel Preview and Netlify deploy-preview using placeholder public values, checking GET and POST application paths. `database-tests` starts a temporary local Supabase, runs SQL/RLS tests and full Playwright request lifecycle. CI never reads production Auth secrets.
+
+### External deployment limitations / unresolved release gates
+
+- **Vercel:** Deployment Protection is enabled. The connected integration cannot obtain a protected deployment's HTML (permission 403), so a real HTTP 503 app response is **not yet verified**. Restoring scoped Vercel access and running read-only GET checks is still required.
+- **Netlify:** Two sites were identified: `client-portal-dashboard.netlify.app` and `ornate-daffodil-920c83.netlify.app`, with PR #22 Preview URLs on both. A GitHub Actions read-only GET probe of `/login` returned **200** on `client-portal-dashboard.netlify.app` and **401** on the other Netlify site and both Preview URLs. HTTP 401 indicates protection against unauthenticated public access, not database isolation. The public HTTP 200 response is not proof that customer data is accessible, but it **blocks release** until the owner verifies whether that duplicate Netlify deployment connects to the real Supabase backend. Netlify build-scoped environment variables are not guaranteed in Functions/Edge runtime. Existing deployment URLs do not inherit new code; even passing CI cannot prove every historic deployment is protected. Before release, use **Netlify → Project configuration → Developer settings → Continuous deployment → Branches and deploy contexts** to disable future Deploy Previews if Netlify is not needed; separately protect or delete existing previews after confirming impact. Do not change the Netlify production site without explicit approval.
+- **Older deployments:** Vercel and Netlify may have immutable deployment URLs from before these guards. Vercel protection must remain enabled; do not create unprotected exceptions. Do not infer that all historical URLs are safe from the current commit's tests.
+- **Direct API:** A frontend HTTP 503 is a mitigation, not Supabase tenant isolation. Direct Supabase Auth/REST public endpoints remain reachable. RLS and proper Auth permissions must remain enforced independently.
+
+**Do not** run account registration, password recovery, request creation or staff tests on any cloud Preview until backend isolation is confirmed. Never copy production data into Preview. The guard must be removed only after a reviewed separate Supabase Preview backend and per-branch Vercel environment variables are verified.
+
 ## Verification
 
 ```bash

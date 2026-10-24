@@ -46,6 +46,77 @@ jobs:
           NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
           NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_ci_build_placeholder
 
+      - name: Verify unapproved cloud deployments are denied by default
+        run: node scripts/verify-preview-guard.mjs unapproved
+
+  preview-guard:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Never inject live Supabase credentials into this test.
+      - name: Build isolated Preview simulation
+        run: npm run build
+        env:
+          VERCEL_ENV: preview
+          NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
+          NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_ci_build_placeholder
+
+      - name: Verify Vercel Preview application routes are blocked
+        run: node scripts/verify-preview-guard.mjs vercel
+        env:
+          VERCEL_ENV: preview
+
+      - name: Build isolated Netlify deploy-preview simulation
+        run: npm run build
+        env:
+          NETLIFY: "true"
+          CONTEXT: deploy-preview
+          NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
+          NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_ci_build_placeholder
+
+      - name: Verify Netlify Preview application routes are blocked
+        run: node scripts/verify-preview-guard.mjs netlify
+        env:
+          NETLIFY: "true"
+          CONTEXT: deploy-preview
+
+  preview-host-smoke:
+    # Only evaluate the known PR #22 previews; never probe hosts on main.
+    if: github.event_name == 'pull_request' && github.event.pull_request.number == 22
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Inspect public Netlify bundle without printing keys
+        run: node scripts/fingerprint-public-netlify.mjs
+
+      - name: Read-only GET smoke against known Preview hosts
+        run: node scripts/probe-preview-hosts.mjs
+
   database-tests:
     runs-on: ubuntu-latest
     timeout-minutes: 20
