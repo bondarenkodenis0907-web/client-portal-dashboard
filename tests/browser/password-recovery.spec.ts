@@ -99,102 +99,18 @@ test("local recovery email opens a one-time link and changes the password", asyn
     });
     if (!action) throw new Error("Local reset email contains no recovery link");
 
-    // Isolated metadata-only cookie compatibility probe. Never print values,
-    // tokens, links, user identifiers or secret headers.
-    const transitions: Array<{ path: string; status: number; setCookie: boolean }> = [];
-    page.on("response", async (response) => {
-      const path = new URL(response.url()).pathname;
-      if (path === "/auth/callback" || path === "/reset-password") {
-        const headers = await response.headersArray();
-        transitions.push({
-          path,
-          status: response.status(),
-          setCookie: headers.some((h) => h.name.toLowerCase() === "set-cookie"),
-        });
-      }
-    });
-    // Local-only diagnostic: never log cookie values, tokens, identities or links.
-    const redirectResponse = await page.goto(action);
+    const expectedHost = new URL(action).hostname;
+    await page.goto(action);
     await expect(page).toHaveURL(/\/reset-password$/);
-    const sessionCookieParts = (await page.context().cookies()).filter(
-      (cookie) =>
-        cookie.name.includes("-auth-token") &&
-        !cookie.name.includes("code-verifier"),
-    );
-    const serialized = sessionCookieParts
-      .sort((a, b) => a.name.localeCompare(b.name))
-      .map((cookie) => cookie.value)
-      .join("");
-    let sessionStructure: "valid" | "invalid" | "missing" = "missing";
-    if (serialized) {
-      try {
-        const decoded = serialized.startsWith("base64-")
-          ? Buffer.from(serialized.slice(7), "base64url").toString("utf8")
-          : serialized;
-        const parsed = JSON.parse(decoded) as Record<string, unknown>;
-        sessionStructure =
-          typeof parsed.access_token === "string" &&
-          typeof parsed.refresh_token === "string"
-            ? "valid"
-            : "invalid";
-      } catch {
-        sessionStructure = "invalid";
-      }
-    }
-    const serverCheck = await page.context().request.get(
-      "http://127.0.0.1:3010/dashboard",
-      { maxRedirects: 0 },
-    );
-    console.log("Isolated recovery compatibility:", JSON.stringify({
-      callbackCookieHeader: Boolean(
-        (redirectResponse ? await redirectResponse.allHeaders() : {})["set-cookie"],
+    expect(new URL(page.url()).hostname).toBe(expectedHost);
+
+    const canReadSessionCookie = await page.evaluate(() =>
+      document.cookie.split(";").some((entry) =>
+        entry.trim().split("=")[0].includes("-auth-token"),
       ),
-      tokenCookieParts: sessionCookieParts.length,
-      cookieSessionStructure: sessionStructure,
-      serverDashboardStatus: serverCheck.status(),
-      resetFormVisible: await page.getByLabel("New password", { exact: true }).isVisible(),
-    }));
-    console.log("Recovery callback and final hosts:", JSON.stringify({
-      clickedHost: new URL(action).hostname,
-      finalHost: new URL(page.url()).hostname,
-    }));
-    const browserCookies = await page.context().cookies();
-    const authCookies = browserCookies.filter(
-      (c) => c.name.includes("-auth-token") && !c.name.includes("-code-verifier"),
     );
-    const documentCookies = await page.evaluate(() =>
-      document.cookie
-        .split(";")
-        .map((entry) => entry.trim().split("=")[0])
-        .filter(Boolean),
-    );
-    console.log("Recovery response cookie flags:", JSON.stringify(transitions));
-    console.log("Recovery auth cookie metadata:", JSON.stringify(
-      authCookies.map((c) => ({
-        domain: c.domain,
-        currentPageHost: new URL(page.url()).hostname,
-        domainMatchesPage: c.domain.replace(/^\./, "") === new URL(page.url()).hostname,
-        pathRoot: c.path === "/",
-        httpOnly: c.httpOnly,
-        secure: c.secure,
-        visibleToJS: documentCookies.includes(c.name),
-        lengthBand: c.value.length > 1024 ? "large" : c.value.length > 128 ? "medium" : "small",
-      })),
-    ));
-    console.log(
-      "Recovery cookie visibility counters:",
-      JSON.stringify({
-        documentTotal: documentCookies.length,
-        documentAuthTokenNames: documentCookies.filter((name) =>
-          name.includes("-auth-token"),
-        ).length,
-        contextAuthTokenNames: authCookies.length,
-      }),
-    );
-    const probe = await page.context().newPage();
-    await probe.goto("/dashboard");
-    console.log("Recovery session reaches Proxy:", new URL(probe.url()).pathname === "/dashboard");
-    await probe.close();
+    expect(canReadSessionCookie).toBe(true);
+
     await expect(
       page.getByLabel("New password", { exact: true }),
     ).toBeVisible();
