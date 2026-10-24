@@ -111,6 +111,9 @@ jobs:
         with:
           node-version: "22"
 
+      - name: Inspect public Netlify bundle without printing keys
+        run: node scripts/fingerprint-public-netlify.mjs
+
       - name: Read-only GET smoke against known Preview hosts
         run: node scripts/probe-preview-hosts.mjs
 
