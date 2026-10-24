@@ -5,10 +5,10 @@ import { setTimeout as delay } from "node:timers/promises";
 // Run against an isolated Vercel Preview or Netlify deploy-preview build.
 // Only dummy Supabase build credentials are allowed; never contact live Auth.
 const target = process.argv[2] ?? "vercel";
-if (!["vercel", "netlify"].includes(target)) {
-  throw new Error("Specify vercel or netlify");
+if (!["vercel", "netlify", "unapproved"].includes(target)) {
+  throw new Error("Specify vercel, netlify or unapproved");
 }
-const port = target === "netlify" ? 3012 : 3011;
+const port = target === "netlify" ? 3012 : target === "unapproved" ? 3013 : 3011;
 const origin = `http://127.0.0.1:${port}`;
 const routes = ["/", "/login", "/dashboard", "/dashboard/requests"];
 const server = spawn(
@@ -20,6 +20,7 @@ const server = spawn(
       VERCEL_ENV: target === "vercel" ? "preview" : "",
       NETLIFY: target === "netlify" ? "true" : "",
       CONTEXT: target === "netlify" ? "deploy-preview" : "",
+      CLIENT_PORTAL_LOCAL_TESTS: "",
     },
     stdio: ["ignore", "pipe", "pipe"],
   },
