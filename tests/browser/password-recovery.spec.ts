@@ -98,6 +98,12 @@ test("local recovery email opens a one-time link and changes the password", asyn
     });
     if (!action) throw new Error("Local reset email contains no recovery link");
 
+    page.on("console", (message) => {
+      if (message.text().startsWith("Recovery validation:") ||
+          message.text().startsWith("Recovery exchange:")) {
+        console.log(message.text());
+      }
+    });
     // Only log non-secret diagnostics (no tokens, codes, email, cookie values).
     const verifierCookieBefore = (await page.context().cookies()).some((cookie) =>
       cookie.name.endsWith("-code-verifier"),
