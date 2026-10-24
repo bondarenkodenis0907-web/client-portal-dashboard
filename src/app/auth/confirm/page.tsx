@@ -13,8 +13,7 @@ export default async function ConfirmRecoveryPage({
 }) {
   const { token_hash: tokenHash } = await searchParams;
   const valid =
-    typeof tokenHash === "string" &&
-    /^[A-Za-z0-9_-]{20,512}$/.test(tokenHash);
+    typeof tokenHash === "string" && /^[A-Za-z0-9_-]{20,512}$/.test(tokenHash);
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-[#f8fafc] px-5 py-12 text-slate-900">
