@@ -2,16 +2,25 @@ import { spawn } from "node:child_process";
 import { resolve } from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
 
-// Run after a build using placeholder public keys and VERCEL_ENV=preview.
-// The local server must reject requests before any Supabase access.
-const port = 3011;
+// Run against an isolated Vercel Preview or Netlify deploy-preview build.
+// Only dummy Supabase build credentials are allowed; never contact live Auth.
+const target = process.argv[2] ?? "vercel";
+if (!["vercel", "netlify"].includes(target)) {
+  throw new Error("Specify vercel or netlify");
+}
+const port = target === "netlify" ? 3012 : 3011;
 const origin = `http://127.0.0.1:${port}`;
 const routes = ["/", "/login", "/dashboard", "/dashboard/requests"];
 const server = spawn(
   process.execPath,
   [resolve("node_modules/next/dist/bin/next"), "start", "--port", String(port)],
   {
-    env: { ...process.env, VERCEL_ENV: "preview" },
+    env: {
+      ...process.env,
+      VERCEL_ENV: target === "vercel" ? "preview" : "",
+      NETLIFY: target === "netlify" ? "true" : "",
+      CONTEXT: target === "netlify" ? "deploy-preview" : "",
+    },
     stdio: ["ignore", "pipe", "pipe"],
   },
 );
@@ -64,7 +73,7 @@ try {
     await check(route);
   }
   await check("/dashboard/requests", "POST");
-  console.log("PASS: Preview app routes and POST return 503 (no-store)");
+  console.log(`PASS: ${target} Preview routes and POST return 503 (no-store)`);
 } finally {
   server.kill("SIGTERM");
 }
