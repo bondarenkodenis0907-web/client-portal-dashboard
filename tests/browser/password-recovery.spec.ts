@@ -80,7 +80,7 @@ test("local recovery email opens a one-time link and changes the password", asyn
       Text?: string;
       HTML?: string;
     };
-    const body = message.Text || message.HTML || "";
+    const body = message.HTML || message.Text || "";
     const links = [...body.matchAll(/https?:\/\/[^\s<>"']+/g)].map((match) =>
       match[0].replaceAll("&amp;", "&"),
     );
@@ -89,7 +89,8 @@ test("local recovery email opens a one-time link and changes the password", asyn
         const url = new URL(link);
         return (
           ["127.0.0.1", "localhost"].includes(url.hostname) &&
-          url.pathname.endsWith("/auth/v1/verify") &&
+          url.pathname === "/auth/callback" &&
+          url.searchParams.has("token_hash") &&
           url.searchParams.get("type") === "recovery"
         );
       } catch {
@@ -98,35 +99,7 @@ test("local recovery email opens a one-time link and changes the password", asyn
     });
     if (!action) throw new Error("Local reset email contains no recovery link");
 
-    page.on("console", (message) => {
-      if (message.text().startsWith("Recovery validation:") ||
-          message.text().startsWith("Recovery exchange:")) {
-        console.log(message.text());
-      }
-    });
-    // Only log non-secret diagnostics (no tokens, codes, email, cookie values).
-    const verifierCookieBefore = (await page.context().cookies()).some((cookie) =>
-      cookie.name.endsWith("-code-verifier"),
-    );
-    const observedPaths: string[] = [];
-    page.on("request", (request) => {
-      const url = new URL(request.url());
-      if (["/auth/callback", "/reset-password"].includes(url.pathname)) {
-        observedPaths.push(
-          url.pathname +
-            (url.searchParams.has("code") ? " with_code" : " no_code"),
-        );
-      }
-    });
-    page.on("response", (response) => {
-      const url = new URL(response.url());
-      if (url.pathname.endsWith("/auth/v1/token")) {
-        console.log("Auth exchange HTTP:", response.status());
-      }
-    });
     await page.goto(action);
-    console.log("Auth verifier cookie before link:", verifierCookieBefore);
-    console.log("Recovery route path flags:", observedPaths.join(" -> "));
     await expect(page).toHaveURL(/\/reset-password$/);
     await expect(
       page.getByLabel("New password", { exact: true }),
