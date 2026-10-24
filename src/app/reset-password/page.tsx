@@ -19,39 +19,14 @@ export default function ResetPasswordPage() {
 
   useEffect(() => {
     let active = true;
-
-    async function validateRecovery() {
-      const code = new URLSearchParams(window.location.search).get("code");
-      console.info("Recovery verifier before client call:", document.cookie
-        .split(";")
-        .some((part) => part.trim().split("=")[0].endsWith("-code-verifier")));
-      try {
-        // Browser SSR Auth may exchange the code during initialization.
-        let { data, error: authError } = await supabase.auth.getUser();
-        console.info("Recovery validation:", {
-          codePresent: Boolean(code),
-          userPresent: Boolean(data.user),
-          authErrorCode: authError?.code ?? "none",
-        });
-        if ((authError || !data.user) && code) {
-          // Otherwise exchange using the verifier stored by this browser.
-          const exchanged = await supabase.auth.exchangeCodeForSession(code);
-          console.info("Recovery exchange:", {
-            errorCode: exchanged.error?.code ?? "none",
-            sessionPresent: Boolean(exchanged.data.session),
-          });
-          if (exchanged.error) throw exchanged.error;
-          ({ data, error: authError } = await supabase.auth.getUser());
-        }
+    void supabase.auth
+      .getUser()
+      .then(({ data, error: authError }) => {
         if (active) setState(!authError && data.user ? "ready" : "invalid");
-      } catch {
+      })
+      .catch(() => {
         if (active) setState("invalid");
-      } finally {
-        if (code) window.history.replaceState(null, "", "/reset-password");
-      }
-    }
-
-    void validateRecovery();
+      });
     return () => {
       active = false;
     };
