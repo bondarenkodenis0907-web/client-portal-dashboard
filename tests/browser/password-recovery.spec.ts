@@ -116,12 +116,12 @@ test("local recovery email opens a one-time link and changes the password", asyn
     // Local-only diagnostic: never log cookie values, tokens, identities or links.
     const redirectResponse = await page.goto(action);
     await expect(page).toHaveURL(/\/reset-password$/);
-    const authCookies = (await page.context().cookies()).filter(
+    const sessionCookieParts = (await page.context().cookies()).filter(
       (cookie) =>
         cookie.name.includes("-auth-token") &&
         !cookie.name.includes("code-verifier"),
     );
-    const serialized = authCookies
+    const serialized = sessionCookieParts
       .sort((a, b) => a.name.localeCompare(b.name))
       .map((cookie) => cookie.value)
       .join("");
@@ -149,7 +149,7 @@ test("local recovery email opens a one-time link and changes the password", asyn
       callbackCookieHeader: Boolean(
         (redirectResponse ? await redirectResponse.allHeaders() : {})["set-cookie"],
       ),
-      tokenCookieParts: authCookies.length,
+      tokenCookieParts: sessionCookieParts.length,
       cookieSessionStructure: sessionStructure,
       serverDashboardStatus: serverCheck.status(),
       resetFormVisible: await page.getByLabel("New password", { exact: true }).isVisible(),
