@@ -73,10 +73,24 @@ jobs:
           NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
           NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_ci_build_placeholder
 
-      - name: Verify Preview application routes are blocked
-        run: node scripts/verify-preview-guard.mjs
+      - name: Verify Vercel Preview application routes are blocked
+        run: node scripts/verify-preview-guard.mjs vercel
         env:
           VERCEL_ENV: preview
+
+      - name: Build isolated Netlify deploy-preview simulation
+        run: npm run build
+        env:
+          NETLIFY: "true"
+          CONTEXT: deploy-preview
+          NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
+          NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_ci_build_placeholder
+
+      - name: Verify Netlify Preview application routes are blocked
+        run: node scripts/verify-preview-guard.mjs netlify
+        env:
+          NETLIFY: "true"
+          CONTEXT: deploy-preview
 
   database-tests:
     runs-on: ubuntu-latest
