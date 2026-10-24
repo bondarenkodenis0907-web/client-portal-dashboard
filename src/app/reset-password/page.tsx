@@ -25,9 +25,18 @@ export default function ResetPasswordPage() {
       try {
         // Browser SSR Auth may exchange the code during initialization.
         let { data, error: authError } = await supabase.auth.getUser();
+        console.info("Recovery validation:", {
+          codePresent: Boolean(code),
+          userPresent: Boolean(data.user),
+          authErrorCode: authError?.code ?? "none",
+        });
         if ((authError || !data.user) && code) {
           // Otherwise exchange using the verifier stored by this browser.
           const exchanged = await supabase.auth.exchangeCodeForSession(code);
+          console.info("Recovery exchange:", {
+            errorCode: exchanged.error?.code ?? "none",
+            sessionPresent: Boolean(exchanged.data.session),
+          });
           if (exchanged.error) throw exchanged.error;
           ({ data, error: authError } = await supabase.auth.getUser());
         }
