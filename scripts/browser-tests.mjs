@@ -11,6 +11,8 @@ const env = {
   NEXT_PUBLIC_SUPABASE_URL: status.API_URL,
   NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: status.PUBLISHABLE_KEY,
   TEST_SUPABASE_SECRET_KEY: status.SECRET_KEY,
+  // This flag is set only after proving the backend is loopback-only.
+  CLIENT_PORTAL_LOCAL_TESTS: "1",
 };
 function run(command) {
   const result = spawnSync(command, { shell: true, stdio: "inherit", env });
