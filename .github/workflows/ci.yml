@@ -46,6 +46,38 @@ jobs:
           NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
           NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_ci_build_placeholder
 
+  preview-guard:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Never inject live Supabase credentials into this test.
+      - name: Build isolated Preview simulation
+        run: npm run build
+        env:
+          VERCEL_ENV: preview
+          NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
+          NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_ci_build_placeholder
+
+      - name: Verify Preview application routes are blocked
+        run: node scripts/verify-preview-guard.mjs
+        env:
+          VERCEL_ENV: preview
+
   database-tests:
     runs-on: ubuntu-latest
     timeout-minutes: 20
