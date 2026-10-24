@@ -3,12 +3,17 @@ import { createClient } from "@supabase/supabase-js";
 import { randomUUID } from "node:crypto";
 
 test("recovery routes reject missing or invalid links", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/login");
   await page.getByRole("link", { name: "Forgot password?" }).click();
   await expect(page).toHaveURL(/\/forgot-password$/);
   await expect(
     page.getByRole("heading", { name: "Reset your password" }),
   ).toBeVisible();
+  const fitsViewport = await page.evaluate(
+    () => document.documentElement.scrollWidth <= window.innerWidth,
+  );
+  expect(fitsViewport).toBe(true);
 
   await page.goto("/reset-password");
   await expect(
@@ -129,6 +134,10 @@ test("local recovery email opens a one-time link and changes the password", asyn
     await page.getByLabel("Password", { exact: true }).fill(replacement);
     await page.getByRole("button", { name: "Sign in", exact: true }).click();
     await expect(page).toHaveURL(/\/dashboard$/);
+
+    // A recovery token must be single-use, even after a successful login.
+    await page.goto(action);
+    await expect(page).toHaveURL(/\/forgot-password\?status=invalid$/);
   } finally {
     await admin.auth.admin.deleteUser(created.user.id);
   }
