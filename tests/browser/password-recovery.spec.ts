@@ -6,7 +6,9 @@ test("recovery routes reject missing or invalid links", async ({ page }) => {
   await page.goto("/login");
   await page.getByRole("link", { name: "Forgot password?" }).click();
   await expect(page).toHaveURL(/\/forgot-password$/);
-  await expect(page.getByRole("heading", { name: "Reset your password" })).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Reset your password" }),
+  ).toBeVisible();
 
   await page.goto("/reset-password");
   await expect(page.getByRole("alert")).toContainText("invalid or expired");
@@ -23,19 +25,18 @@ test("local recovery email opens a one-time link and changes the password", asyn
   if (!["127.0.0.1", "localhost"].includes(backend.hostname))
     throw new Error("Password recovery tests require local Supabase.");
 
-  const admin = createClient(
-    api,
-    process.env.TEST_SUPABASE_SECRET_KEY!,
-    { auth: { persistSession: false } },
-  );
+  const admin = createClient(api, process.env.TEST_SUPABASE_SECRET_KEY!, {
+    auth: { persistSession: false },
+  });
   const email = "recovery-" + randomUUID() + "@example.test";
   const original = "old-" + randomUUID();
   const replacement = "new-" + randomUUID();
-  const { data: created, error: createError } = await admin.auth.admin.createUser({
-    email,
-    password: original,
-    email_confirm: true,
-  });
+  const { data: created, error: createError } =
+    await admin.auth.admin.createUser({
+      email,
+      password: original,
+      email_confirm: true,
+    });
   if (createError || !created.user) throw createError ?? new Error("No user");
 
   try {
@@ -48,14 +49,20 @@ test("local recovery email opens a one-time link and changes the password", asyn
 
     const inboxOrigin = "http://127.0.0.1:55324";
     const mailbox = email.split("@")[0];
-    const inboxUrl = inboxOrigin + "/api/v1/mailbox/" + encodeURIComponent(mailbox);
+    const inboxUrl =
+      inboxOrigin + "/api/v1/mailbox/" + encodeURIComponent(mailbox);
 
-    await expect.poll(async () => {
-      const response = await fetch(inboxUrl);
-      if (!response.ok) throw new Error("Local Inbucket unavailable");
-      const messages = (await response.json()) as Array<{ id: string }>;
-      return messages.length;
-    }, { timeout: 15_000 }).toBeGreaterThan(0);
+    await expect
+      .poll(
+        async () => {
+          const response = await fetch(inboxUrl);
+          if (!response.ok) throw new Error("Local Inbucket unavailable");
+          const messages = (await response.json()) as Array<{ id: string }>;
+          return messages.length;
+        },
+        { timeout: 15_000 },
+      )
+      .toBeGreaterThan(0);
 
     const messages = (await (await fetch(inboxUrl)).json()) as Array<{
       id: string;
@@ -65,8 +72,8 @@ test("local recovery email opens a one-time link and changes the password", asyn
       body?: { text?: string; html?: string };
     };
     const body = message.body?.text || message.body?.html || "";
-    const links = [...body.matchAll(/https?:\/\/[^\s<>"']+/g)].map(
-      (match) => match[0].replaceAll("&amp;", "&"),
+    const links = [...body.matchAll(/https?:\/\/[^\s<>"']+/g)].map((match) =>
+      match[0].replaceAll("&amp;", "&"),
     );
     const action = links.find((link) => {
       try {
@@ -84,12 +91,16 @@ test("local recovery email opens a one-time link and changes the password", asyn
 
     await page.goto(action);
     await expect(page).toHaveURL(/\/reset-password$/);
-    await expect(page.getByLabel("New password", { exact: true })).toBeVisible();
+    await expect(
+      page.getByLabel("New password", { exact: true }),
+    ).toBeVisible();
 
     await page.getByLabel("New password", { exact: true }).fill(replacement);
     await page.getByLabel("Confirm new password").fill("different-value");
     await page.getByRole("button", { name: "Update password" }).click();
-    await expect(page.getByRole("alert")).toContainText("Passwords do not match");
+    await expect(page.getByRole("alert")).toContainText(
+      "Passwords do not match",
+    );
 
     await page.getByLabel("Confirm new password").fill(replacement);
     await page.getByRole("button", { name: "Update password" }).click();
