@@ -23,7 +23,9 @@ test("recovery routes reject missing or invalid links", async ({ page }) => {
   await page.goto("/auth/callback?next=https://example.test");
   await expect(page).toHaveURL(/\/forgot-password\?status=invalid$/);
   await page.goto("/auth/confirm");
-  await expect(page.getByRole("alert")).toContainText("invalid");
+  await expect(
+    page.getByRole("alert").filter({ hasText: "This reset link" }),
+  ).toContainText("invalid");
 });
 
 test("local recovery email opens a one-time link and changes the password", async ({
@@ -127,10 +129,10 @@ test("local recovery email opens a one-time link and changes the password", asyn
     await expect(
       page.getByRole("button", { name: "Continue password reset" }),
     ).toBeVisible();
-    const sessionBeforeConfirmation = await page.evaluate(() =>
-      document.cookie.includes("-auth-token"),
-    );
-    expect(sessionBeforeConfirmation).toBe(false);
+    // GET must only show the confirmation screen, never the password form.
+    await expect(
+      page.getByLabel("New password", { exact: true }),
+    ).toHaveCount(0);
 
     // Multiple GETs and reloads must not consume the reset link.
     await page.reload();
