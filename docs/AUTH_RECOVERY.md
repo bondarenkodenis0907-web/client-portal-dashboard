@@ -9,7 +9,7 @@ Users can request a password reset from `/login`, receive a generic response tha
 ## Safe architecture
 
 - `/forgot-password` sends `resetPasswordForEmail` with a same-origin `/auth/callback` URL.
-- `/auth/callback` exchanges the short-lived PKCE authorization code on the server and redirects only to the fixed `/reset-password` path. User-provided external `next` URLs are ignored.
+- `/auth/callback` forwards the one-time PKCE code on the same origin to `/reset-password`. The browser client that requested recovery exchanges it; the code is then removed from the address bar. User-provided external `next` URLs are ignored. Recovery responses use no-store/no-referrer headers.
 - `/reset-password` validates the current user session, checks password confirmation, calls `updateUser`, and signs out after a successful change. The user must sign in again.
 - Never output email links, tokens, credentials, or full message bodies in CI.
 - Local Supabase Auth redirect allowlist accepts only loopback URLs for port 3000 and the Playwright server on 3010.
