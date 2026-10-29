@@ -1,23 +1,21 @@
 "use client";
 
-import { useRef, useState, type FormEvent } from "react";
+import { RequestProcessingForm } from "./RequestProcessingForm";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/client";
-import { inputLimits } from "@/lib/input-limits";
 import {
   formatRequestDate,
   type RequestEvent,
   type ServiceRequest,
   type StaffMember,
-  type RequestStatus,
 } from "@/lib/requests";
 import { PriorityBadge, StatusBadge } from "./StatusBadge";
 
 export function RequestDetail({
-  request,
-  events,
-  staff,
+  request: serverRequest,
+  events: serverEvents,
+  staff: serverStaff,
   isStaff,
 }: {
   request: ServiceRequest;
@@ -26,6 +24,36 @@ export function RequestDetail({
   isStaff: boolean;
 }) {
   const router = useRouter();
+  const [local, setLocal] = useState<{
+    request: ServiceRequest;
+    events: RequestEvent[];
+    staff: StaffMember[];
+  } | null>(null);
+  const server = {
+    request: serverRequest,
+    events: serverEvents,
+    staff: serverStaff,
+  };
+  const { request, events, staff } =
+    local && local.request.version >= serverRequest.version ? local : server;
+  function showSnapshot(
+    next: ServiceRequest,
+    history?: RequestEvent[],
+    directory?: StaffMember[],
+  ) {
+    setLocal((current) => {
+      const previous =
+        current && current.request.version >= serverRequest.version
+          ? current
+          : server;
+      if (next.version < previous.request.version) return current;
+      return {
+        request: next,
+        events: history ?? previous.events,
+        staff: directory ?? previous.staff,
+      };
+    });
+  }
   const currentAssignee =
     staff.find((member) => member.user_id === request.assigned_to)
       ?.display_name ??
@@ -136,203 +164,15 @@ export function RequestDetail({
                 Refresh status
               </button>
             </>
-          ) : request.status === "closed" ? (
-            <p className="mt-3 text-sm text-slate-600">
-              The resolution and history are saved. Closed requests cannot be
-              edited.
-            </p>
           ) : (
-            <RequestProcessingForm request={request} staff={staff} />
+            <RequestProcessingForm
+              request={request}
+              staff={staff}
+              onSnapshot={showSnapshot}
+            />
           )}
         </section>
       </div>
     </div>
-  );
-}
-
-function RequestProcessingForm({
-  request,
-  staff,
-}: {
-  request: ServiceRequest;
-  staff: StaffMember[];
-}) {
-  const [supabase] = useState(createClient);
-  const router = useRouter();
-  const busyRef = useRef(false);
-  const [saving, setSaving] = useState(false);
-  const serverAssignment = request.assigned_to ?? "";
-  const [assignment, setAssignment] = useState({
-    serverValue: serverAssignment,
-    value: serverAssignment,
-  });
-  if (assignment.serverValue !== serverAssignment) {
-    setAssignment({
-      serverValue: serverAssignment,
-      value:
-        assignment.value === assignment.serverValue
-          ? serverAssignment
-          : assignment.value,
-    });
-  }
-  const assignedTo = assignment.value;
-  const activeStaff = staff.filter((member) => member.is_active);
-  const selectedStaff = staff.find((member) => member.user_id === assignedTo);
-  const [resolution, setResolution] = useState("");
-  const [error, setError] = useState("");
-  const [message, setMessage] = useState("");
-
-  async function save(status: RequestStatus) {
-    if (busyRef.current) return;
-    setError("");
-    setMessage("");
-    if (!assignedTo) {
-      setError("Choose an engineer before saving.");
-      return;
-    }
-    if (!selectedStaff?.is_active) {
-      setError("Choose an active engineer before saving.");
-      return;
-    }
-    const completedWork = resolution.trim();
-    if (
-      status === "closed" &&
-      completedWork.length < inputLimits.resolutionMinimum
-    ) {
-      setError("Describe the completed work in at least 10 characters.");
-      return;
-    }
-    if (status === "closed" && completedWork.length > inputLimits.resolution) {
-      setError("Completed work must be 5,000 characters or fewer.");
-      return;
-    }
-    busyRef.current = true;
-    setSaving(true);
-    try {
-      const { data, error: updateError } = await supabase
-        .from("service_requests")
-        .update({
-          assigned_to: assignedTo,
-          status,
-          resolution: status === "closed" ? completedWork : null,
-        })
-        .eq("id", request.id)
-        .eq("updated_at", request.updated_at)
-        .select("id")
-        .maybeSingle();
-      if (updateError) throw updateError;
-      if (!data) {
-        setError(
-          "This request changed or your access was removed. Reload before saving again.",
-        );
-        return;
-      }
-      setMessage("Changes saved.");
-      router.refresh();
-    } catch {
-      setError(
-        "Saving could not be confirmed. Your edits are still here; reload the request before trying again.",
-      );
-    } finally {
-      busyRef.current = false;
-      setSaving(false);
-    }
-  }
-  function submit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    void save(request.status === "new" ? "in_progress" : "closed");
-  }
-  const fieldClass =
-    "mt-2 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm font-normal text-slate-900 focus:outline-blue-600";
-  return (
-    <form onSubmit={submit} aria-busy={saving} className="mt-5 space-y-5">
-      <fieldset disabled={saving} className="space-y-5">
-        <label className="block text-xs font-semibold text-slate-700">
-          Assigned engineer
-          <select
-            value={assignedTo}
-            onChange={(e) =>
-              setAssignment({
-                serverValue: serverAssignment,
-                value: e.target.value,
-              })
-            }
-            required
-            className={fieldClass}
-          >
-            <option value="">Choose an engineer</option>
-            {assignedTo && !selectedStaff?.is_active && (
-              <option value={assignedTo} disabled>
-                {selectedStaff
-                  ? `${selectedStaff.display_name} (inactive)`
-                  : "Previously selected engineer (unavailable)"}
-              </option>
-            )}
-            {activeStaff.map((member) => (
-              <option key={member.user_id} value={member.user_id}>
-                {member.display_name}
-              </option>
-            ))}
-          </select>
-        </label>
-        {assignedTo && !selectedStaff?.is_active && (
-          <p role="status" className="text-sm text-amber-800">
-            The selected engineer is no longer active. Choose an active engineer
-            to continue processing this request.
-          </p>
-        )}
-        {request.status === "in_progress" && (
-          <>
-            <button
-              type="button"
-              onClick={() => void save("in_progress")}
-              className="rounded-lg border border-slate-300 px-4 py-2.5 text-sm font-semibold"
-            >
-              Save assignment
-            </button>
-            <label className="block text-xs font-semibold text-slate-700">
-              Completed work
-              <textarea
-                value={resolution}
-                onChange={(e) => setResolution(e.target.value)}
-                required
-                minLength={inputLimits.resolutionMinimum}
-                maxLength={inputLimits.resolution}
-                rows={5}
-                placeholder="What was repaired and how was it checked?"
-                className={fieldClass}
-              />
-            </label>
-          </>
-        )}
-        <button
-          type="submit"
-          className="w-full rounded-lg bg-blue-700 px-4 py-3 text-sm font-semibold text-white disabled:opacity-60"
-        >
-          {saving
-            ? "Saving..."
-            : request.status === "new"
-              ? "Assign and start work"
-              : "Close request"}
-        </button>
-      </fieldset>
-      {error && (
-        <p role="alert" className="text-sm text-red-700">
-          {error}
-        </p>
-      )}
-      {message && (
-        <p role="status" className="text-sm text-emerald-700">
-          {message}
-        </p>
-      )}
-      <button
-        type="button"
-        onClick={() => router.refresh()}
-        className="text-sm font-semibold text-blue-700"
-      >
-        Reload request
-      </button>
-    </form>
   );
 }

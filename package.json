@@ -9,25 +9,52 @@
     "lint": "eslint",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "test:browser": "node scripts/browser-tests.mjs"
+    "test:browser": "node scripts/local-tests.mjs browser",
+    "test:local": "node scripts/local-tests.mjs all",
+    "test:local:start": "node scripts/local-tests.mjs start",
+    "test:local:verify": "node scripts/local-tests.mjs verify",
+    "test:local:sql": "node scripts/local-tests.mjs sql",
+    "test:local:reset": "node scripts/local-tests.mjs reset",
+    "test:local:stop": "node scripts/local-tests.mjs stop",
+    "test:local:safety": "node --test tests/local-test-safety.test.mjs",
+    "test:deployment-guard": "node --test tests/deployment-guard.test.mjs",
+    "test:preview-guard": "node scripts/verify-preview-guard.mjs",
+    "test:deployment-hosts": "node --test tests/deployment-hosts.test.mjs",
+    "check:preview-hosts": "node scripts/probe-preview-hosts.mjs",
+    "test:recovery-policy": "node --test tests/recovery-policy.test.mjs tests/recovery-actions.test.mjs tests/recovery-grant.test.mjs tests/recovery-logout.test.mjs",
+    "test:request-submission": "node --test tests/request-submission.test.mjs",
+    "test:backup-safety": "node --test tests/backup-safety.test.mjs tests/restore-preflight.test.mjs",
+    "test:restore": "node scripts/restore-drill.mjs drill",
+    "test:restore:stop": "node scripts/restore-drill.mjs stop",
+    "check:backup": "node scripts/restore-drill.mjs verify-backup",
+    "restore:backup": "node scripts/restore-backup.mjs",
+    "check:security": "node scripts/security-gates.mjs",
+    "test:security-policy": "node --test tests/security-policy.test.mjs",
+    "test:restore:preflight": "node scripts/test-restore-preflight.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "0.12.7",
     "@supabase/supabase-js": "2.117.3",
-    "next": "16.3.8",
+    "next": "16.4.3",
     "react": "19.2.8",
     "react-dom": "19.2.8"
   },
   "devDependencies": {
     "@playwright/test": "1.62.1",
-    "@tailwindcss/postcss": "^4",
-    "@types/node": "^20",
-    "@types/react": "^19",
-    "@types/react-dom": "^19",
-    "eslint": "^9",
-    "eslint-config-next": "16.3.8",
+    "@tailwindcss/postcss": "4.3.3",
+    "@types/node": "20.19.43",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "eslint": "9.39.5",
+    "eslint-config-next": "16.4.3",
     "prettier": "3.9.10",
-    "tailwindcss": "^4",
-    "typescript": "^5"
-  }
+    "supabase": "2.122.0",
+    "tailwindcss": "4.3.3",
+    "typescript": "5.9.3"
+  },
+  "engines": {
+    "node": "24.x",
+    "npm": "11.17.0"
+  },
+  "packageManager": "npm@11.17.0"
 }

@@ -15,18 +15,27 @@ jobs:
 
     steps:
       - name: Check out code
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # reviewed v4 commit, 2026-10-29
         with:
           persist-credentials: false
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # reviewed v4 commit, 2026-10-29
         with:
-          node-version: "22"
+          node-version-file: ".node-version"
           cache: npm
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Check repository security policy
+        run: npm run check:security
+
+      - name: Test security scanner and supply-chain policy
+        run: npm run test:security-policy
+
+      - name: Check dependency advisories
+        run: npm audit --audit-level=high
 
       - name: Check code formatting
         run: npm run format:check
@@ -40,11 +49,50 @@ jobs:
       - name: Type check
         run: npx tsc --noEmit
 
+      - name: Verify local test isolation safeguards
+        run: npm run test:local:safety
+
+      - name: Verify deployment access policy
+        run: npm run test:deployment-guard
+
+      - name: Verify retired-host classification
+        run: npm run test:deployment-hosts
+
+      - name: Verify recovery input and same-origin policy
+        run: npm run test:recovery-policy
+
+      - name: Verify pending request submission journal
+        run: npm run test:request-submission
+
+      - name: Verify backup encryption and restore isolation safeguards
+        run: npm run test:backup-safety
+
       - name: Build production bundle
         run: npm run build
         env:
           NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
           NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_ci_build_placeholder
+
+  preview-guard:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      matrix:
+        mode: [vercel, netlify, unapproved]
+    steps:
+      - name: Check out code
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # reviewed v4 commit, 2026-10-29
+        with:
+          persist-credentials: false
+      - name: Set up Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # reviewed v4 commit, 2026-10-29
+        with:
+          node-version-file: ".node-version"
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Build and verify denial before Auth on a loopback canary
+        run: node scripts/verify-preview-guard.mjs ${{ matrix.mode }}
 
   database-tests:
     runs-on: ubuntu-latest
@@ -52,25 +100,14 @@ jobs:
 
     steps:
       - name: Check out code
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # reviewed v4 commit, 2026-10-29
         with:
           persist-credentials: false
 
-      - name: Set up Supabase CLI
-        uses: supabase/setup-cli@v1
-        with:
-          version: latest
-
-      - name: Start local Supabase
-        run: supabase start
-
-      - name: Run database tests
-        run: supabase test db
-
       - name: Set up Node.js for browser tests
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # reviewed v4 commit, 2026-10-29
         with:
-          node-version: "22"
+          node-version-file: ".node-version"
           cache: npm
 
       - name: Install browser test dependencies
@@ -79,5 +116,52 @@ jobs:
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
 
-      - name: Verify the request lifecycle against local Supabase
-        run: npm run test:browser
+      - name: Verify migrations, SQL and browser regressions on the dedicated backend
+        run: npm run test:local
+
+      - name: Stop only this checkout's test backend
+        if: always()
+        run: npm run test:local:stop
+
+  restore-drill:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out code
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # reviewed v4 commit, 2026-10-29
+        with:
+          persist-credentials: false
+      - name: Set up Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # reviewed v4 commit, 2026-10-29
+        with:
+          node-version-file: ".node-version"
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Refuse unknown or populated restore targets before replacement
+        run: npm run test:restore:preflight
+      - name: Restore synthetic backup in an independent local backend
+        run: npm run test:restore
+      - name: Stop only the owned source and restore profiles
+        if: always()
+        run: npm run test:restore:stop
+      - name: Preserve sanitized restore reports
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # reviewed v4 commit, 2026-10-29
+        with:
+          name: restore-drill-reports
+          path: .local-backups/*/report.json
+          include-hidden-files: true
+          retention-days: 7
+
+  release-gates:
+    if: always()
+    needs: [check, preview-guard, database-tests, restore-drill]
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Require all security and regression jobs to succeed
+        env:
+          GATE_RESULTS: ${{ toJSON(needs.*.result) }}
+        run: |
+          node -e 'const r=JSON.parse(process.env.GATE_RESULTS); if(r.length!==4 || r.some(v=>v!=="success")) process.exit(1); console.log("All four local security gates passed; release approval is separate.");'

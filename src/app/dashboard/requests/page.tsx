@@ -13,6 +13,7 @@ import { createClient } from "@/lib/supabase/client";
 import { PortalIcon } from "@/components/portal/PortalIcon";
 import { PriorityBadge, StatusBadge } from "@/components/portal/StatusBadge";
 import { inputLimits } from "@/lib/input-limits";
+import { finishSubmission, pendingSubmission } from "@/lib/request-submission";
 import {
   isRequestPriority,
   isRequestStatus,
@@ -57,6 +58,11 @@ export default function ServiceRequestsPage() {
   const [submitting, setSubmitting] = useState(false);
   const [notice, setNotice] = useState<Notice>(null);
   const [loadError, setLoadError] = useState("");
+  const [savedSubmission, setSavedSubmission] = useState<{
+    id: string;
+    userId: string;
+    key: string;
+  } | null>(null);
 
   const loadRequests = useCallback(
     async (signal: AbortSignal) => {
@@ -166,20 +172,57 @@ export default function ServiceRequestsPage() {
         });
         return;
       }
+      // Persist before sending. Every uncertain retry keeps this same key.
+      const key = pendingSubmission(sessionStorage, user.id);
       const { data, error } = await supabase
-        .from("service_requests")
-        .insert({ user_id: user.id, ...input })
+        .rpc("create_service_request", {
+          p_operation_key: key,
+          p_site: input.site,
+          p_system: input.system,
+          p_description: input.description,
+          p_priority: input.priority,
+        })
         .select(listColumns)
         .single();
       if (error) {
+        if (error.code === "PT409") {
+          const { data: previous } = await supabase
+            .from("service_requests")
+            .select("id")
+            .eq("user_id", user.id)
+            .eq("operation_key", key)
+            .single();
+          if (previous) {
+            setSavedSubmission({ id: previous.id, userId: user.id, key });
+            setNotice({
+              kind: "error",
+              text: "Your earlier submission was saved with different details. Open it to check, or start a separate request with the details below.",
+            });
+            return;
+          }
+        }
         setNotice({
           kind: "error",
-          text: "Unable to create the request. Your details are still in the form; check them and try again.",
+          text: "Unable to confirm your request. Your details are still in the form. You can safely try again with the same details.",
         });
         return;
       }
       const createdRequest = parseServiceRequest(data);
-      setRequests((current) => [createdRequest, ...current]);
+      setRequests((current) => [
+        createdRequest,
+        ...current.filter((item) => item.id !== createdRequest.id),
+      ]);
+      setSavedSubmission({ id: createdRequest.id, userId: user.id, key });
+      try {
+        finishSubmission(sessionStorage, user.id, key);
+        setSavedSubmission(null);
+      } catch {
+        setNotice({
+          kind: "error",
+          text: "Your request was saved. Open it below to check. This tab cannot prepare another submission; restore browser storage and choose Start a separate request.",
+        });
+        return;
+      }
       setSite("");
       setSystem("");
       setDescription("");
@@ -193,11 +236,32 @@ export default function ServiceRequestsPage() {
     } catch {
       setNotice({
         kind: "error",
-        text: "Unable to confirm your request. Check your connection and reload the list before submitting again.",
+        text: "Unable to confirm your request. Check your connection and browser storage, then try again with the same details.",
       });
     } finally {
       submittingRef.current = false;
       setSubmitting(false);
+    }
+  }
+
+  function startSeparateRequest() {
+    if (!savedSubmission || submittingRef.current) return;
+    try {
+      finishSubmission(
+        sessionStorage,
+        savedSubmission.userId,
+        savedSubmission.key,
+      );
+      setSavedSubmission(null);
+      setNotice({
+        kind: "success",
+        text: "Ready for a separate request. Review the details before submitting.",
+      });
+    } catch {
+      setNotice({
+        kind: "error",
+        text: "Unable to prepare a separate request. Check your browser storage and try again.",
+      });
     }
   }
 
@@ -248,7 +312,10 @@ export default function ServiceRequestsPage() {
             className="space-y-4"
             aria-busy={submitting}
           >
-            <fieldset disabled={submitting} className="space-y-4">
+            <fieldset
+              disabled={submitting || !!savedSubmission}
+              className="space-y-4"
+            >
               <div>
                 <label htmlFor="request-site" className={labelClass}>
                   Site <span className="text-red-600">*</span>
@@ -328,6 +395,23 @@ export default function ServiceRequestsPage() {
               >
                 {notice.text}
               </p>
+            )}
+            {savedSubmission && (
+              <div className="flex flex-wrap items-center gap-3 text-sm">
+                <Link
+                  className="font-semibold text-blue-700 underline"
+                  href={`/dashboard/requests/${savedSubmission.id}`}
+                >
+                  Open saved request
+                </Link>
+                <button
+                  type="button"
+                  onClick={startSeparateRequest}
+                  className="rounded-lg border border-slate-300 px-3 py-2 font-semibold"
+                >
+                  Start a separate request
+                </button>
+              </div>
             )}
           </form>
         </section>

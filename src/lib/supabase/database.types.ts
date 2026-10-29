@@ -7,11 +7,6 @@ export type Json =
   | Json[];
 
 export type Database = {
-  // Allows to automatically instantiate createClient with right options
-  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
-  __InternalSupabase: {
-    PostgrestVersion: "14.5";
-  };
   public: {
     Tables: {
       profiles: {
@@ -23,6 +18,7 @@ export type Database = {
           job_title: string | null;
           updated_at: string;
         };
+        ComputedFields: never;
         Insert: {
           company?: string | null;
           created_at?: string;
@@ -51,6 +47,7 @@ export type Database = {
           resolution: string | null;
           status: string;
         };
+        ComputedFields: never;
         Insert: {
           actor_id?: string | null;
           assigned_name?: string | null;
@@ -85,7 +82,9 @@ export type Database = {
           closed_at: string | null;
           created_at: string;
           description: string;
+          expected_version: number | null;
           id: string;
+          operation_key: string | null;
           priority: string;
           resolution: string | null;
           site: string;
@@ -93,13 +92,17 @@ export type Database = {
           system: string;
           updated_at: string;
           user_id: string;
+          version: number;
         };
+        ComputedFields: never;
         Insert: {
           assigned_to?: string | null;
           closed_at?: string | null;
           created_at?: string;
           description: string;
+          expected_version?: number | null;
           id?: string;
+          operation_key?: string | null;
           priority?: string;
           resolution?: string | null;
           site: string;
@@ -107,13 +110,16 @@ export type Database = {
           system: string;
           updated_at?: string;
           user_id: string;
+          version?: number;
         };
         Update: {
           assigned_to?: string | null;
           closed_at?: string | null;
           created_at?: string;
           description?: string;
+          expected_version?: number | null;
           id?: string;
+          operation_key?: string | null;
           priority?: string;
           resolution?: string | null;
           site?: string;
@@ -121,6 +127,7 @@ export type Database = {
           system?: string;
           updated_at?: string;
           user_id?: string;
+          version?: number;
         };
         Relationships: [
           {
@@ -138,6 +145,7 @@ export type Database = {
           is_active: boolean;
           user_id: string;
         };
+        ComputedFields: never;
         Insert: {
           display_name: string;
           is_active?: boolean;
@@ -155,7 +163,70 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
-      [_ in never]: never;
+      create_service_request: {
+        Args: {
+          p_description: string;
+          p_operation_key: string;
+          p_priority: string;
+          p_site: string;
+          p_system: string;
+        };
+        Returns: {
+          assigned_to: string | null;
+          closed_at: string | null;
+          created_at: string;
+          description: string;
+          expected_version: number | null;
+          id: string;
+          operation_key: string | null;
+          priority: string;
+          resolution: string | null;
+          site: string;
+          status: string;
+          system: string;
+          updated_at: string;
+          user_id: string;
+          version: number;
+        }[];
+        SetofOptions: {
+          from: "*";
+          to: "service_requests";
+          isOneToOne: false;
+          isSetofReturn: true;
+        };
+      };
+      process_service_request: {
+        Args: {
+          p_assigned_to: string;
+          p_expected_version: number;
+          p_request_id: string;
+          p_resolution: string;
+          p_status: string;
+        };
+        Returns: {
+          assigned_to: string | null;
+          closed_at: string | null;
+          created_at: string;
+          description: string;
+          expected_version: number | null;
+          id: string;
+          operation_key: string | null;
+          priority: string;
+          resolution: string | null;
+          site: string;
+          status: string;
+          system: string;
+          updated_at: string;
+          user_id: string;
+          version: number;
+        }[];
+        SetofOptions: {
+          from: "*";
+          to: "service_requests";
+          isOneToOne: false;
+          isSetofReturn: true;
+        };
+      };
     };
     Enums: {
       [_ in never]: never;

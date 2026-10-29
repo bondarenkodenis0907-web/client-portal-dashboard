@@ -1,41 +1,31 @@
 # Client Portal Dashboard
 
-A building-systems service portal: report an issue, assign an engineer and return a recorded resolution to the client.
+A service portal for building systems: report a fault, assign an engineer and record the repair.
 
-[Live application](https://client-portal-dashboard-one.vercel.app) · [Checks](https://github.com/bondarenkodenis0907-web/client-portal-dashboard/actions) · [Discuss a similar project](https://t.me/BDenisD)
+[Live application](https://client-portal-dashboard-one.vercel.app) · [CI](https://github.com/bondarenkodenis0907-web/client-portal-dashboard/actions)
 
-## Completed work the client can verify
+![Completed request with repair notes and history](public/screenshots/request-completed.png)
 
-An offline loading-bay camera is reported, assigned and closed with a repair note. The client sees who handled it, what changed and when the request closed.
+Built with Next.js, React, TypeScript, Tailwind CSS and Supabase. Screenshots use fictional accounts and requests.
 
-![Completed request with the repair note and status history](public/screenshots/request-completed.png)
+## Features
 
-This is a portfolio project based on my experience supporting building systems. Screenshots show fictional accounts and requests against a local test backend.
+- Clients see their own requests; active staff share the service queue.
+- Requests move from new to in progress to closed, with a required repair note and database-recorded history.
+- Submission keys prevent duplicate requests; version checks reject concurrent edits.
+- Password recovery uses an email link, explicit confirmation and server-confirmed logout.
+- Preview access is blocked until an isolated backend is approved.
 
-## The workflow
+![Service queue](public/screenshots/staff-queue.png)
 
-| Step | What the application records |
-| --- | --- |
-| Report | Site, system, issue and priority; each client sees their own requests. |
-| Assign | Staff choose an active engineer and start work in the shared queue. |
-| Close | Completed-work text is required. PostgreSQL records the resolution, closure time and history together. |
-| Verify | The client reads the resolution and status history. Closed requests remain read-only. |
+<img src="public/screenshots/request-mobile.png" width="390" alt="Completed request on mobile" />
 
-![Staff queue for assigning and processing requests](public/screenshots/staff-queue.png)
+## Development
 
-![Assigned engineer, work controls and request history](public/screenshots/request-in-progress.png)
+Use Node 24.19.0, npm 11.17.0 and Docker. Run `npm ci`, then follow [local setup and tests](docs/DEVELOPMENT.md).
 
-<img src="public/screenshots/request-mobile.png" width="390" alt="Completed request on a mobile viewport" />
+Local changes are not released to the live application. See [verification](docs/evidence/verification.json), [environments](docs/ENVIRONMENT_REGISTER.md) and the [release checklist](docs/RELEASE_ROLLBACK_RUNBOOK.md). Publication still requires approval.
 
-## Engineering checks
+The next milestone is a pilot at one real site: [development plan](docs/PROJECT_MASTER_PLAN.md) · [decisions](docs/DECISIONS.md) · [acceptance criteria](docs/QA_ACCEPTANCE_MATRIX.md).
 
-- PostgreSQL RLS separates clients' requests and history. Administrator-managed staff membership grants access to one shared service queue.
-- Updates check the last observed modification time. Failed and conflicting saves preserve the draft; closed requests and revoked staff access block further processing.
-- SQL tests cover permissions, validation and lifecycle transitions. Browser regressions cover submission, assignment, closure, stale saves, draft preservation, staff deactivation and mobile layout.
-- CI runs formatting, lint, types, a production build and isolated database/browser checks without production credentials.
-
-Next.js, React, TypeScript and Tailwind CSS provide the interface; Supabase provides authentication and PostgreSQL. The application does not use a browser service-role key.
-
-[Development, staff access and verification](docs/DEVELOPMENT.md) · [Dependency notes](docs/DEPENDENCY_SECURITY.md)
-
-Current scope: intake, assignment, processing, closure and client-visible history. Attachments, notifications, SLA escalation, reopening, pagination and separate contractor teams are not implemented.
+Attachments, notifications, SLA escalation, reopening, pagination and separate contractor teams are not implemented.
