@@ -126,6 +126,9 @@ jobs:
       - name: Verify maintenance through the local API and concurrent transactions
         run: node scripts/test-maintenance.mjs
 
+      - name: Verify transactional canary keeps external writes closed
+        run: node scripts/test-release-canary.mjs
+
       - name: Rehearse maintenance installation before request migrations
         run: node scripts/test-release-order.mjs
 
