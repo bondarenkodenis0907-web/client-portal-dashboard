@@ -1,0 +1,91 @@
+{
+  "date": "2026-10-30",
+  "scope": "local synthetic preparation; no publication",
+  "baseCommit": "9d06996fe89fe28ba46013655611e4ebe6c28558",
+  "workingTreeUncommitted": true,
+  "productionChanged": false,
+  "remoteBranchChanged": false,
+  "checks": {
+    "releaseMigrationOrder": "PASS",
+    "releaseOrderEvidence": "release-order-20261030.json",
+    "rollbackBuildAndContinuity": "PASS",
+    "rollbackEvidence": "rollback-build-20261030.json",
+    "sqlAssertions": 230,
+    "unitPolicyTests": 36,
+    "rollbackBrowserScenarios": 24,
+    "builds": "rollback and current webpack PASS",
+    "lint": "PASS",
+    "changedCodeFormatting": "PASS",
+    "securityFindings": 0,
+    "archiveSqlSelection": {
+      "assertions": 200,
+      "files": 7,
+      "staleMaintenanceTestExcluded": true
+    },
+    "rawPostgresRestorePreflight": "PASS: disabled singleton accepted; enabled/missing/extra-column states refused",
+    "standardRestoreProfile": "BLOCKED_WINDOWS_RESERVED_PORTS_573xx",
+    "fullNewThenOldRestoreAfterFixes": "NOT_RUN"
+  },
+  "independentReadOnlyReview": {
+    "findingsFixed": [
+      "maintenance state restore preflight",
+      "archive-specific SQL test count/list",
+      "rollback evidence emitted only after cleanup"
+    ],
+    "remainingP1P2": 0,
+    "testsRepeatedByReviewer": false
+  },
+  "dependencyRepair": {
+    "npmCi": "PASS",
+    "lockUnchanged": true,
+    "npmAuditVulnerabilities": 0
+  },
+  "cleanup": {
+    "temporaryDatabasesRemaining": 0,
+    "releaseAccountsRemaining": 0,
+    "maintenanceEnabled": false,
+    "rollbackServerStopped": true,
+    "testBackendStoppedVolumesRetained": true
+  },
+  "prepared": [
+    "CI rehearsal steps",
+    "pinned rollback source archive; local backend build only",
+    "updated release/rollback runbook"
+  ],
+  "remaining": [
+    "new SHA and remote CI",
+    "full restore regression in a usable environment",
+    "hosted Production baseline build/deployment ID",
+    "controlled canary admission",
+    "hosted SMTP/recovery and direct Auth/JWT policy",
+    "D06/D07 ownership, retention and release window"
+  ],
+  "releaseDecision": "NO_GO",
+  "files": {
+    "docs/MAINTENANCE.md": "ed769b95c958fad3bece0560ab863859ed81d751b68e768e0df6243971da5ebb",
+    "docs/evidence/maintenance-20261030.json": "87d5365a0421ab4c9164fbcf711c6c4835457e8c8778f6f09becf1d945b13b12",
+    "docs/evidence/release-order-20261030.json": "dbb3a74cda19b1511d8ad5efe83564ae2c4314f05d8fcb04c6ae4d8972840479",
+    "docs/evidence/rollback-build-20261030.json": "64a23932e530cfa7b1d7d3d47f172a4d4f04271e6f5c14a09e7ef1f988d7de8a",
+    "scripts/test-maintenance.mjs": "c229223ed017339849051f8fb3d38a479fe23480312fb70da5cc2b1a74622b47",
+    "scripts/test-release-order.mjs": "6625c02b2b38135aba2453b29b94aef934a8f6b7d32ed706667ed4006d85b82d",
+    "scripts/test-rollback-build.mjs": "877b963032b1c6c19a00ffc8aacbd0694c99b99febd491456c5f9ed7a77bf53c",
+    "supabase/migrations/20261030113426_maintenance_write_gate.sql": "ebbac52e7754e75d08daaf289c93bd1138ed1f9e3827d5ccb8dae2b5b4373128",
+    "supabase/tests/maintenance.test.sql": "f85737b20cdea88b7cf02672ceb290bc1e5be3b277db4c46b6974033f64f57f5",
+    ".github/workflows/ci.yml": "c35732b026379caac67229b3af8346bc07308a10564cf3f2b416666af8e80b13",
+    ".gitignore": "b8a69d6dca796cbd9fec1d1821aa8033bf352906d80f2b488b9c49405c1b71f5",
+    "docs/DEVELOPMENT.md": "d308def8babe9cf82aa96f51201bb8278e46716737272c06e40ac7d17cda47de",
+    "docs/PROJECT_MASTER_PLAN.md": "ebd69cae5e6179c1977fac583fec5f1906b7709c572bf0f6e6b7c2e677e7bcf8",
+    "docs/RELEASE_ROLLBACK_RUNBOOK.md": "cfd0056cf931ae77f8e2d5b8e22eaad4ca7309f00d7c154d63571c57b397bfb1",
+    "eslint.config.mjs": "521803987c003f6a4a6c1818d7b4b92bccf4bbca29bab4d3a2467eb0b1e444c6",
+    "scripts/local-tests.mjs": "6e4f9a55b1996c1cbd926a529e3ca6a8c2f91107592f4d20fb1bc091d1a190d3",
+    "scripts/restore-backup.mjs": "4de4e35b8753b0265efef3251e76c49f7134671263f76acdd697a9b2e39bceb3",
+    "scripts/restore-drill.mjs": "2d7d71a7c886c38aa8b7461bac170c58e8d20c91013e0fa3560ec6b69a5eec0a",
+    "scripts/restore-preflight.mjs": "ee4a4adfd65a84161d90db86a628b05a0257247061fab4359c759e75bfdfe157",
+    "scripts/test-restore-preflight.mjs": "249d3f504ee49b66dc8bccb1771fd8eee90af09cabcbaa7772021067a4fed563",
+    "scripts/verify-preview-guard.mjs": "e9b750235b23509ae6dd945af1d9e45dde00292aad570726f2f54ead43eb3daa",
+    "src/proxy.ts": "b676fc747c8923bab1768025ca123ff9bf8f7ee47158ecff7c56db639f9cc79a",
+    "tests/local-test-safety.test.mjs": "3265595ff23c66fd723225617ee27a0afd83fb6343ec298a7359af6e610cefff",
+    "tests/restore-preflight.test.mjs": "bc9cca541c875371e64f2ccd4a218e7c5a8b0dc7647cee328d3e9983f42fcb9c",
+    "tsconfig.json": "d562d6488f2ad5c3520e0e35218b41bc60ea34f70fef7de26cfc4b50fbc8cef7"
+  }
+}

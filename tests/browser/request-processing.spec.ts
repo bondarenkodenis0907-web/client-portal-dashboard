@@ -193,10 +193,13 @@ test("client submits an issue, staff complete it, client sees the resolution", a
     await expect(staffPage.getByLabel("Completed work")).toHaveValue(
       completedWork,
     );
-    await staffPage.route("**/rest/v1/service_requests*", async (route) => {
-      if (route.request().method() === "PATCH") await route.abort();
-      else await route.continue();
-    });
+    await staffPage.route(
+      "**/rest/v1/rpc/process_service_request*",
+      async (route) => {
+        if (route.request().method() === "POST") await route.abort();
+        else await route.continue();
+      },
+    );
     await staffPage
       .getByRole("button", { name: "Close request", exact: true })
       .click();
@@ -208,8 +211,11 @@ test("client submits an issue, staff complete it, client sees the resolution", a
     await expect(staffPage.getByLabel("Completed work")).toHaveValue(
       completedWork,
     );
-    await staffPage.unroute("**/rest/v1/service_requests*");
+    await staffPage.unroute("**/rest/v1/rpc/process_service_request*");
     await staffPage.getByRole("button", { name: "Reload request" }).click();
+    await staffPage
+      .getByRole("button", { name: "Keep my edits and continue" })
+      .click();
     await expect(staffPage.getByLabel("Completed work")).toHaveValue(
       completedWork,
     );
@@ -393,13 +399,21 @@ test("deactivation revokes an existing staff session and preserves request histo
     for (const id of [closedId, openId]) {
       const { error } = await activeApi
         .from("service_requests")
-        .update({ assigned_to: ids[1], status: "in_progress" })
+        .update({
+          expected_version: 1,
+          assigned_to: ids[1],
+          status: "in_progress",
+        })
         .eq("id", id);
       if (error) throw error;
     }
     const { error: closureError } = await activeApi
       .from("service_requests")
-      .update({ status: "closed", resolution: completedWork })
+      .update({
+        expected_version: 2,
+        status: "closed",
+        resolution: completedWork,
+      })
       .eq("id", closedId);
     if (closureError) throw closureError;
 
@@ -528,7 +542,11 @@ test("deactivation revokes an existing staff session and preserves request histo
     ).toHaveCount(1);
     const inactiveAssignment = await activeApi
       .from("service_requests")
-      .update({ assigned_to: ids[1], status: "in_progress" })
+      .update({
+        expected_version: 1,
+        assigned_to: ids[1],
+        status: "in_progress",
+      })
       .eq("id", newId);
     expect(inactiveAssignment.error?.code).toBe("23514");
 

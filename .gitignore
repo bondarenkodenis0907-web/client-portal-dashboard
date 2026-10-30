@@ -46,3 +46,9 @@ next-env.d.ts
 /supabase/.temp/
 
 /supabase/.branches/
+
+# Dedicated test workdir; contains only disposable test state
+/.local-tests/
+/.local-restore/
+/.local-backups/
+/.local-release/

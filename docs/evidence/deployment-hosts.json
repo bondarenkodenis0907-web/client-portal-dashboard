@@ -1,0 +1,16 @@
+{
+  "reviewedAt": "2026-10-26",
+  "retired": [
+    "client-portal-dashboard.netlify.app",
+    "ornate-daffodil-920c83.netlify.app",
+    "deploy-preview-22--client-portal-dashboard.netlify.app",
+    "deploy-preview-22--ornate-daffodil-920c83.netlify.app",
+    "6adce8664e402e22191997d6--client-portal-dashboard.netlify.app",
+    "6adce866c6e5806d76904416--ornate-daffodil-920c83.netlify.app"
+  ],
+  "retirementEvidence": "NETLIFY_RETIREMENT_2026-10-26.md",
+  "activePreview": [
+    "client-portal-dashboard-git-chor-c3c9a6-bondarenkodenis0907-web.vercel.app"
+  ],
+  "limitation": "Known hosts only. Retirement evidence is dated, not live control-plane verification. Access protection does not prove backend isolation."
+}

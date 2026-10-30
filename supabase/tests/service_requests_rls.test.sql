@@ -142,6 +142,7 @@ select results_eq(
 select lives_ok(
   $$
     insert into public.service_requests (
+      operation_key,
       user_id,
       site,
       system,
@@ -149,6 +150,7 @@ select lives_ok(
       priority
     )
     values (
+      gen_random_uuid(),
       '33333333-3333-4333-8333-333333333333',
       'Office A',
       'Fire Alarm',

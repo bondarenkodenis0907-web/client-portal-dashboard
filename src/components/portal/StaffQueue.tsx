@@ -1,31 +1,62 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { PriorityBadge, StatusBadge } from "./StatusBadge";
-import type { ServiceRequest, StaffMember } from "@/lib/requests";
+import {
+  isRequestStatus,
+  type RequestStatus,
+  type ServiceRequest,
+  type StaffMember,
+} from "@/lib/requests";
+import { createClient } from "@/lib/supabase/client";
+import { getRequestPage, requestSearchLimit } from "@/lib/request-pages";
+import { RequestPages } from "./RequestPages";
 
 export function StaffQueue({
   requests,
   staff,
+  total: initialTotal,
 }: {
   requests: ServiceRequest[];
   staff: StaffMember[];
+  total: number;
 }) {
   const [search, setSearch] = useState("");
-  const [status, setStatus] = useState("open");
-  const query = search.trim().toLowerCase();
-  const items = requests.filter(
-    (request) =>
-      (status === "all" ||
-        (status === "open"
-          ? request.status !== "closed"
-          : request.status === status)) &&
-      (!query ||
-        `${request.site} ${request.system} ${request.description}`
-          .toLowerCase()
-          .includes(query)),
-  );
+  const [status, setStatus] = useState<RequestStatus | "all" | "open">("open");
+  const [client] = useState(createClient);
+  const [items, setItems] = useState(requests);
+  const [total, setTotal] = useState(initialTotal);
+  const [page, setPage] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [revision, setRevision] = useState(0);
+  useEffect(() => {
+    const controller = new AbortController();
+    const timer = setTimeout(async () => {
+      setLoading(true);
+      try {
+        const result = await getRequestPage(
+          client,
+          { page, search, status },
+          controller.signal,
+        );
+        if (controller.signal.aborted) return;
+        setItems(result.requests);
+        setTotal(result.total);
+        setError("");
+      } catch {
+        if (!controller.signal.aborted)
+          setError("The service queue could not be loaded. Please try again.");
+      } finally {
+        if (!controller.signal.aborted) setLoading(false);
+      }
+    }, 200);
+    return () => {
+      controller.abort();
+      clearTimeout(timer);
+    };
+  }, [client, page, search, status, revision]);
   return (
     <div className="space-y-6">
       <header>
@@ -43,7 +74,12 @@ export function StaffQueue({
             <input
               type="search"
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              maxLength={requestSearchLimit}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setPage(0);
+                setLoading(true);
+              }}
               placeholder="Site, system or issue"
               className="mt-2 block w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm font-normal"
             />
@@ -52,7 +88,18 @@ export function StaffQueue({
             Status
             <select
               value={status}
-              onChange={(e) => setStatus(e.target.value)}
+              onChange={(e) => {
+                const value = e.target.value;
+                if (
+                  value === "all" ||
+                  value === "open" ||
+                  isRequestStatus(value)
+                ) {
+                  setStatus(value);
+                  setPage(0);
+                  setLoading(true);
+                }
+              }}
               className="mt-2 block rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm font-normal"
             >
               <option value="open">Open requests</option>
@@ -63,10 +110,28 @@ export function StaffQueue({
             </select>
           </label>
           <p className="pb-3 text-xs text-slate-500">
-            {items.length} shown · {requests.length} total
+            {loading ? "Loading..." : `${items.length} shown · ${total} total`}
           </p>
         </div>
-        {items.length === 0 ? (
+        {loading ? (
+          <p role="status" className="p-8 text-sm">
+            Loading service requests...
+          </p>
+        ) : error ? (
+          <div className="p-8">
+            <p role="alert">{error}</p>
+            <button
+              type="button"
+              onClick={() => {
+                setRevision((value) => value + 1);
+                setLoading(true);
+              }}
+              className="mt-3 rounded border px-3 py-2"
+            >
+              Try again
+            </button>
+          </div>
+        ) : items.length === 0 ? (
           <p className="p-8 text-sm text-slate-600">
             No requests match these filters.
           </p>
@@ -114,6 +179,15 @@ export function StaffQueue({
             </table>
           </div>
         )}
+        <RequestPages
+          page={page}
+          total={total}
+          busy={loading}
+          onPage={(value) => {
+            setPage(value);
+            setLoading(true);
+          }}
+        />
       </section>
     </div>
   );

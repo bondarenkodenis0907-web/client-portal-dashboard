@@ -1,0 +1,30 @@
+{
+  "date": "2026-10-30T14:51:02.167Z",
+  "scope": "local synthetic, no hosted deployment",
+  "rollbackSource": "47865d5eb269833330793c5d36e725553e0f981d",
+  "archiveSha256": "98c94013a675166a53eef0b5e253ab46070229ed36779e1d4a7cdc28b18e23b9",
+  "sourceArchive": "../audit/rollback-builds/701a17a4-2e18-4709-a24f-383d47f2974c/rollback-source.tar",
+  "buildDirectory": "../audit/rollback-builds/701a17a4-2e18-4709-a24f-383d47f2974c/rollback-source",
+  "packageLockSha256": "90c8ef30015133381ff6f631fd991206a5d18ffff2c3b170b2008cff2a183bc7",
+  "schemaMigrations": 11,
+  "browserScenarios": 32,
+  "sequence": [
+    "rollback baseline",
+    "current uncommitted candidate",
+    "rollback baseline"
+  ],
+  "retainedRequest": true,
+  "retainedVersion": 3,
+  "retainedEvents": 3,
+  "idempotentReplay": true,
+  "databaseGateBlocksRollback": true,
+  "rollbackFrontendMaintenance": "INCLUDED; HTTP flag not exercised by this drill",
+  "productionChanged": false,
+  "hostedArtifact": "NOT_BUILT",
+  "result": "PASS",
+  "cleanup": {
+    "browserClosed": true,
+    "serverStopped": true,
+    "usersRemoved": true
+  }
+}
