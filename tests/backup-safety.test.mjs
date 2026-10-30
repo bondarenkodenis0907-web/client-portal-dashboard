@@ -2,6 +2,10 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { resolve, join } from "node:path";
 import { randomBytes } from "node:crypto";
+import { mkdtempSync, writeFileSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { readBundle } from "../scripts/backup-crypto.mjs";
+import { sha256 } from "../scripts/backup-safety.mjs";
 import {
   restoreIdentity,
   assertRestoreOwner,
@@ -94,5 +98,31 @@ test("encrypted backup authenticates the archive, key, tag and restore context",
     assert.throws(() =>
       openBackup(Buffer.from(JSON.stringify(changed)), key, context),
     );
+  }
+});
+
+test("saved CI archive needs its retained in-memory key; no key file or log transport", () => {
+  const directory = mkdtempSync(join(tmpdir(), "portal-ephemeral-"));
+  const key = randomBytes(32),
+    context = "synthetic-ci/run";
+  try {
+    const payload = { fixture: "synthetic only" };
+    const sealed = sealBackup(
+      Buffer.from(JSON.stringify(payload)),
+      key,
+      context,
+    );
+    writeFileSync(join(directory, "backup.aes-gcm"), sealed);
+    const manifest = {
+      keyMode: "ephemeral-ci",
+      context,
+      encryptedHash: sha256(sealed),
+    };
+    assert.throws(() => readBundle(directory, manifest), /ephemeral CI key/);
+    assert.throws(() => readBundle(directory, manifest, randomBytes(32)));
+    assert.deepEqual(readBundle(directory, manifest, key), payload);
+  } finally {
+    key.fill(0);
+    rmSync(directory, { recursive: true });
   }
 });

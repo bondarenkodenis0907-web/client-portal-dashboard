@@ -8,6 +8,7 @@ Only for the owned synthetic local profiles. This is not a production backup or 
 npm run test:backup-safety
 npm run test:restore:preflight
 npm run test:restore
+node scripts/test-saved-restore.mjs
 npm run check:backup -- <run-id>
 npm run restore:backup -- <run-id>
 npm run test:restore:stop
@@ -37,6 +38,8 @@ Windows wraps keys with DPAPI CurrentUser: losing the Windows profile/master key
 
 Local CLI API/admin defaults are shared between projects; user signing keys are separate. Use synthetic data only. User Storage files are not implemented/tested. Real DB role passwords, SMTP/OAuth/Vercel secrets, external jobs and provider config require a separate inventory/procedure.
 
-D06/D07 remain open: off-device destination, portable key custody, retention/schedule, RPO/RTO, incident owner and external alert channel. No paid service, recurring automation or external alert was enabled.
+`test-saved-restore.mjs` runs a fresh drill, then consumes its recorded encrypted archive with the source stopped. The Linux CI key is passed only in memory and wiped after the consumer; it is never published. CI preserves both sanitized reports. This proves ephemeral synthetic CI recovery, not long-term key custody. Old-format archive acceptance remains a separate check.
+
+C10 (30.10.2026) accepts F: for the real encrypted archive, E: for the separate portable key, a backup before each release and 14-day retention; target RPO 24 h and RTO 4 h require rehearsal. Daily copying is not automated, so the RPO target is not yet assured. D06/D07 remain open for full configuration/file scope, measured recovery, schedule/owner/support and external alert contact. No paid service, recurring automation or external alert was enabled.
 
 For an incident: preserve evidence and damaged source, stop affected writes, validate backup/key/versions, restore separately, compare data/rights and reconcile post-cutoff writes. Switching real users or restoring production needs separate approval. [Release/rollback](RELEASE_ROLLBACK_RUNBOOK.md) · [Verification](evidence/verification.json).

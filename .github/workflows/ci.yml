@@ -31,6 +31,9 @@ jobs:
       - name: Check repository security policy
         run: npm run check:security
 
+      - name: Run all unit and security regressions
+        run: node --test tests/*.test.mjs
+
       - name: Test security scanner and supply-chain policy
         run: npm run test:security-policy
 
@@ -150,8 +153,8 @@ jobs:
         run: npm ci
       - name: Refuse unknown or populated restore targets before replacement
         run: npm run test:restore:preflight
-      - name: Restore synthetic backup in an independent local backend
-        run: npm run test:restore
+      - name: Restore fresh and saved synthetic backups with source stopped for the consumer
+        run: node scripts/test-saved-restore.mjs
       - name: Stop only the owned source and restore profiles
         if: always()
         run: npm run test:restore:stop
@@ -160,7 +163,9 @@ jobs:
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # reviewed v4 commit, 2026-10-29
         with:
           name: restore-drill-reports
-          path: .local-backups/*/report.json
+          path: |
+            .local-backups/*/report.json
+            .local-backups/*/independent-restore-report.json
           include-hidden-files: true
           retention-days: 7
 

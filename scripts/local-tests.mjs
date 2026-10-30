@@ -319,6 +319,11 @@ function browser(status) {
       env,
     },
   );
+  execute(
+    process.execPath,
+    ["--test", join(root, "tests/server-auth.integration.mjs")],
+    { visible: true, env },
+  );
 }
 
 export async function runLocal(action = "all") {

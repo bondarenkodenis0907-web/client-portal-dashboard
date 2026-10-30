@@ -396,7 +396,7 @@ function backupDirectory(runId) {
   assertBackupPath(backupBase, directory);
   return directory;
 }
-async function main(action, argument) {
+export async function runRestoreDrill(action, argument) {
   if (action === "stop") {
     try {
       stopTarget();
@@ -703,13 +703,16 @@ async function main(action, argument) {
   }
   if (report.result !== "PASS")
     throw Error("Restore drill cleanup or shutdown failed");
+  return { runId, key: encrypted.key };
 }
 
 if (
   process.argv[1] &&
   resolve(process.argv[1]) === fileURLToPath(import.meta.url)
 )
-  main(process.argv[2] ?? "drill", process.argv[3]).catch((error) => {
-    console.error(error.message);
-    process.exitCode = 1;
-  });
+  runRestoreDrill(process.argv[2] ?? "drill", process.argv[3]).catch(
+    (error) => {
+      console.error(error.message);
+      process.exitCode = 1;
+    },
+  );

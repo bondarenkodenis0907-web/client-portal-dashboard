@@ -1,7 +1,8 @@
 // Restore a recorded synthetic backup without starting or connecting to its source.
 import assert from "node:assert/strict";
 import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
-import { join } from "node:path";
+import { join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import {
   root,
   restoreDir,
@@ -27,13 +28,13 @@ import {
 } from "./restore-drill.mjs";
 import { replaceEmptyRestoreEnvironment } from "./restore-preflight.mjs";
 
-async function restore(runId) {
+export async function restoreSavedBackup(runId, ephemeralKey) {
   if (!/^[0-9a-f-]{36}$/.test(runId ?? ""))
     throw Error("Use a recorded synthetic backup run ID");
   const directory = join(root, ".local-backups", runId);
   const manifest = JSON.parse(readFileSync(join(directory, "manifest.json")));
   assert.equal(manifest.context, `${projectId}/${runId}`);
-  const bundle = readBundle(directory, manifest);
+  const bundle = readBundle(directory, manifest, ephemeralKey);
   assert.equal(sha256(Buffer.from(bundle.dump, "base64")), manifest.dumpHash);
   for (const name of [
     "supabase/test.config.toml",
@@ -155,7 +156,11 @@ async function restore(runId) {
     `PASS: independent restore of ${runId}; source was not started or connected.`,
   );
 }
-restore(process.argv[2]).catch((error) => {
-  console.error(error.message);
-  process.exitCode = 1;
-});
+if (
+  process.argv[1] &&
+  resolve(process.argv[1]) === fileURLToPath(import.meta.url)
+)
+  restoreSavedBackup(process.argv[2]).catch((error) => {
+    console.error(error.message);
+    process.exitCode = 1;
+  });

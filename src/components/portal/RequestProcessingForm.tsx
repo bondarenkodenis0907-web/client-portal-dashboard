@@ -5,14 +5,16 @@ import { createClient } from "@/lib/supabase/client";
 import { inputLimits } from "@/lib/input-limits";
 import {
   parseServiceRequest,
-  parseRequestEvent,
   requestColumns,
-  type RequestEvent,
   type RequestStatus,
   type ServiceRequest,
   type StaffMember,
 } from "@/lib/requests";
 import { StatusBadge } from "./StatusBadge";
+import {
+  getRequestHistoryPage,
+  type RequestHistoryPage,
+} from "@/lib/request-history";
 
 type Phase = "editing" | "conflict" | "uncertain" | "review" | "unavailable";
 
@@ -25,7 +27,7 @@ export function RequestProcessingForm({
   staff: StaffMember[];
   onSnapshot: (
     request: ServiceRequest,
-    events?: RequestEvent[],
+    history?: RequestHistoryPage,
     staff?: StaffMember[],
   ) => void;
 }) {
@@ -43,7 +45,7 @@ export function RequestProcessingForm({
   const [review, setReview] = useState<{
     request: ServiceRequest;
     staff: StaffMember[];
-    events: RequestEvent[];
+    history: RequestHistoryPage;
   } | null>(null);
   const selectedStaff = directory.find(
     (member) => member.user_id === assignedTo,
@@ -105,14 +107,8 @@ export function RequestProcessingForm({
       // or replace this component and discard an unfinished resolution draft.
       onSnapshot(saved);
       try {
-        const history = await supabase
-          .from("request_events")
-          .select("id, status, assigned_name, resolution, created_at")
-          .eq("request_id", saved.id)
-          .order("id", { ascending: false })
-          .retry(false);
-        if (history.error) throw Error("History read failed");
-        onSnapshot(saved, history.data.map(parseRequestEvent));
+        const history = await getRequestHistoryPage(supabase, saved.id);
+        onSnapshot(saved, history);
       } catch {
         setMessage(
           "Changes saved. History could not be refreshed. Reload the request to try again.",
@@ -154,15 +150,9 @@ export function RequestProcessingForm({
           .select("user_id, display_name, is_active")
           .order("display_name")
           .retry(false),
-        supabase
-          .from("request_events")
-          .select("id, status, assigned_name, resolution, created_at")
-          .eq("request_id", snapshot.id)
-          .order("id", { ascending: false })
-          .retry(false),
+        getRequestHistoryPage(supabase, snapshot.id),
       ]);
-      if (latest.error || members.error || history.error)
-        throw Error("Read failed");
+      if (latest.error || members.error) throw Error("Read failed");
       if (
         !latest.data ||
         !members.data.some(
@@ -178,7 +168,7 @@ export function RequestProcessingForm({
       setReview({
         request: parseServiceRequest(latest.data),
         staff: members.data,
-        events: history.data.map(parseRequestEvent),
+        history,
       });
       setPhase("review");
       setMessage("Latest saved details loaded. Review them before continuing.");
@@ -205,7 +195,7 @@ export function RequestProcessingForm({
     if (!keepEdits) setResolution("");
     setSnapshot(review.request);
     setDirectory(review.staff);
-    onSnapshot(review.request, review.events, review.staff);
+    onSnapshot(review.request, review.history, review.staff);
     setReview(null);
     setPhase("editing");
     setError("");

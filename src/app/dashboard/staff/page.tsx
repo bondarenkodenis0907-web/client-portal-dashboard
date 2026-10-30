@@ -2,13 +2,19 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { StaffQueue } from "@/components/portal/StaffQueue";
 import { getRequestPage } from "@/lib/request-pages";
+import { isTransientAuthError } from "@/lib/auth-errors";
 
 export default async function StaffPage() {
   const supabase = await createClient();
   const {
     data: { user },
+    error: authError,
   } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
+  if (isTransientAuthError(authError))
+    throw new Error(
+      "Authentication is temporarily unavailable. Please try again.",
+    );
+  if (authError || !user) redirect("/login");
   const { data: membership, error } = await supabase
     .from("service_staff")
     .select("user_id")

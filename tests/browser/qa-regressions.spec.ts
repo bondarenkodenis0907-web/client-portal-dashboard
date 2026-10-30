@@ -3,6 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 import { randomUUID } from "node:crypto";
 import type { Database } from "../../src/lib/supabase/database.types";
 import { getRequestPage } from "../../src/lib/request-pages";
+import { getRequestHistoryPage } from "../../src/lib/request-history";
 
 test.use({ trace: "off" });
 async function fixture(count = 1) {
@@ -55,6 +56,234 @@ async function fixture(count = 1) {
         expect((await admin.auth.admin.deleteUser(user.id)).error).toBeNull();
     },
   };
+}
+
+test("history pages reach every event, survive errors and new inserts, and retain RLS", async ({
+  page,
+}) => {
+  const f = await fixture(2);
+  let requestId = "";
+  try {
+    expect(
+      (await f.client.auth.signInWithPassword(f.users[0])).error,
+    ).toBeNull();
+    for (const count of [0, 1, 1000, 1001, 2001]) {
+      const made = await f.admin
+        .from("service_requests")
+        .insert({
+          user_id: f.users[0].id,
+          operation_key: randomUUID(),
+          site: "History pagination",
+          system: "CCTV",
+          description: `History boundary ${count}`,
+        })
+        .select("id")
+        .single();
+      expect(made.error).toBeNull();
+      const id = made.data!.id;
+      if (count === 0)
+        expect(
+          (await f.admin.from("request_events").delete().eq("request_id", id))
+            .error,
+        ).toBeNull();
+      if (count > 1)
+        expect(
+          (
+            await f.admin.from("request_events").insert(
+              Array.from({ length: count - 1 }, (_, i) => ({
+                request_id: id,
+                actor_id: f.users[0].id,
+                status: "new",
+                assigned_name: `History ${i}`,
+              })),
+            )
+          ).error,
+        ).toBeNull();
+      const ids: number[] = [];
+      let before: number | undefined;
+      for (;;) {
+        const history = await getRequestHistoryPage(f.client, id, before);
+        expect(history.events.length).toBeLessThanOrEqual(50);
+        ids.push(...history.events.map((event) => event.id));
+        if (!history.hasMore) break;
+        before = history.events.at(-1)!.id;
+      }
+      expect(ids.length).toBe(count);
+      expect(new Set(ids).size).toBe(count);
+      expect(ids).toEqual([...ids].sort((a, b) => b - a));
+      if (count === 1001) requestId = id;
+    }
+    const foreign = await f.admin
+      .from("service_requests")
+      .insert({
+        user_id: f.users[1].id,
+        operation_key: randomUUID(),
+        site: "Private history",
+        system: "CCTV",
+        description: "Other owner",
+      })
+      .select("id")
+      .single();
+    expect(foreign.error).toBeNull();
+    expect(await getRequestHistoryPage(f.client, foreign.data!.id)).toEqual({
+      events: [],
+      hasMore: false,
+    });
+    await f.signIn(page);
+    await page.goto(`/dashboard/requests/${requestId}`);
+    const history = page.getByRole("region", {
+      name: "Request history",
+      exact: true,
+    });
+    const rows = history.locator("ol > li");
+    await expect(rows).toHaveCount(50);
+    let reads = 0,
+      fail = true;
+    await page.route("**/rest/v1/request_events?**", async (route) => {
+      if (
+        new URL(route.request().url()).searchParams.get("id")?.startsWith("lt.")
+      ) {
+        reads++;
+        if (fail)
+          return route.fulfill({
+            status: 503,
+            contentType: "application/json",
+            body: '{"message":"Synthetic read failure"}',
+          });
+      }
+      await route.continue();
+    });
+    const older = history.getByRole("button", {
+      name: "Load older events",
+      exact: true,
+    });
+    await older.click();
+    await expect(history.getByRole("alert")).toContainText(
+      "Older events could not be loaded",
+    );
+    await expect(rows).toHaveCount(50);
+    fail = false;
+    expect(
+      (
+        await f.admin.from("request_events").insert({
+          request_id: requestId,
+          actor_id: f.users[0].id,
+          status: "new",
+          assigned_name: "Late top event",
+        })
+      ).error,
+    ).toBeNull();
+    await older.evaluate((button) => {
+      (button as HTMLButtonElement).click();
+      (button as HTMLButtonElement).click();
+    });
+    await expect(rows).toHaveCount(100);
+    expect(reads).toBe(2);
+    for (let count = 150; count <= 1000; count += 50) {
+      await older.click();
+      await expect(rows).toHaveCount(count);
+    }
+    await older.click();
+    await expect(rows).toHaveCount(1001);
+    await expect(
+      history.getByText("All events loaded", { exact: false }),
+    ).toBeVisible();
+    await expect(older).toHaveCount(0);
+    await expect(
+      history.getByText("Engineer: History 0", { exact: true }),
+    ).toHaveCount(1);
+    await expect(
+      history.getByText("Engineer: Late top event", { exact: true }),
+    ).toHaveCount(0);
+    await page
+      .getByRole("button", { name: "Refresh status", exact: true })
+      .click();
+    await expect(rows).toHaveCount(50);
+    await expect(
+      history.getByText("Engineer: Late top event", { exact: true }),
+    ).toBeVisible();
+    expect(
+      (
+        await f.admin.from("service_staff").insert({
+          user_id: f.users[1].id,
+          display_name: "History engineer",
+        })
+      ).error,
+    ).toBeNull();
+    await f.signIn(page, 1);
+    await page.goto(`/dashboard/requests/${requestId}`);
+    await older.click();
+    await expect(rows).toHaveCount(100);
+    await page.getByLabel("Assigned engineer").selectOption(f.users[1].id);
+    await page
+      .getByRole("button", { name: "Assign and start work", exact: true })
+      .click();
+    await expect(rows).toHaveCount(50);
+    await expect(rows.first()).toContainText("History engineer");
+    await expect(older).toBeVisible();
+    await page
+      .getByRole("button", { name: "Reload request", exact: true })
+      .click();
+    await page
+      .getByRole("button", {
+        name: "Use saved details and discard my edits",
+        exact: true,
+      })
+      .click();
+    await older.click();
+    await expect(rows).toHaveCount(100);
+  } finally {
+    await f.cleanup();
+  }
+});
+
+for (const symbol of ["W", "Ж"]) {
+  test(`request detail wraps maximum-length unbroken ${symbol} names on narrow screens`, async ({
+    page,
+  }) => {
+    const f = await fixture();
+    const name = symbol.repeat(120);
+    try {
+      expect(
+        (await f.client.auth.signInWithPassword(f.users[0])).error,
+      ).toBeNull();
+      const made = await f.client.rpc("create_service_request", {
+        p_operation_key: randomUUID(),
+        p_site: name,
+        p_system: name,
+        p_description: symbol.repeat(5000),
+        p_priority: "medium",
+      });
+      expect(made.error).toBeNull();
+      await f.signIn(page);
+      await page.goto(`/dashboard/requests/${made.data![0].id}`);
+      for (const width of [320, 360, 390, 768]) {
+        await page.setViewportSize({ width, height: 900 });
+        const heading = page.getByRole("heading", { name, exact: true });
+        await expect(heading).toBeVisible();
+        await expect(heading).toHaveText(name);
+        await expect(page.locator("main")).toContainText(name + " · Submitted");
+        await expect
+          .poll(() =>
+            page.evaluate(
+              () => document.documentElement.scrollWidth - window.innerWidth,
+            ),
+          )
+          .toBeLessThanOrEqual(1);
+        const bounds = await heading.boundingBox();
+        expect(bounds!.x).toBeGreaterThanOrEqual(0);
+        expect(bounds!.x + bounds!.width).toBeLessThanOrEqual(width);
+      }
+      await page
+        .getByRole("button", { name: "Refresh status", exact: true })
+        .click();
+      await expect(
+        page.getByRole("heading", { name, exact: true }),
+      ).toBeVisible();
+    } finally {
+      await f.cleanup();
+    }
+  });
 }
 
 for (const timezoneId of ["UTC", "Europe/Moscow", "America/New_York"]) {

@@ -59,3 +59,7 @@ CI is prepared locally. Passing local tests does not mean remote CI or hosted ac
 Maintenance is disabled for ordinary tests. See [maintenance controls and checks](MAINTENANCE.md) for the database switch, frontend flag and local API/concurrency tests. Hosted settings remain unchanged.
 
 Browser tests run the server in UTC and explicitly exercise UTC, Europe/Moscow and America/New_York clients. Card/history timestamps are labelled UTC. Request search/count/paging runs on the server (50 rows per page), with literal search and RLS unchanged.
+
+After the browser suite, the same guarded command runs `tests/server-auth.integration.mjs` on a separate loopback server (3012). A test-only loader simulates server-to-Auth 503/401/403 responses: dashboard retry must reload server data, recovery must distinguish an outage from an invalid session, and the same grant must work after recovery. No fault loader is used by ordinary app startup.
+
+Request history uses 50-event cursor pages, shared by SSR and processing refreshes. Load older events follows descending event IDs, retains already loaded events on failure and resets when a newer initial history page arrives. This does not change database permissions or migrations.

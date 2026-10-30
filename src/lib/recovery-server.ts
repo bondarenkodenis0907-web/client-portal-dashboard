@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { cookies } from "next/headers";
+import { isTransientAuthError } from "@/lib/auth-errors";
 import {
   recoveryCookie,
   recoverySecret,
@@ -9,9 +10,13 @@ import {
 export async function recoveryClient() {
   const supabase = await createClient();
   const { data, error } = await supabase.auth.getClaims();
+  if (isTransientAuthError(error))
+    throw new Error("Recovery verification is temporarily unavailable");
   if (error || !data?.claims || typeof data.claims.session_id !== "string")
     return null;
   const user = await supabase.auth.getUser();
+  if (isTransientAuthError(user.error))
+    throw new Error("Recovery verification is temporarily unavailable");
   if (user.error || !user.data.user || user.data.user.id !== data?.claims.sub)
     return null;
   if (
