@@ -7,7 +7,7 @@ import {
   symlinkSync,
   existsSync,
 } from "node:fs";
-import { resolve, join } from "node:path";
+import { resolve, join, relative } from "node:path";
 import { randomUUID, randomBytes, createHash } from "node:crypto";
 import { setTimeout as delay } from "node:timers/promises";
 import { createClient } from "@supabase/supabase-js";
@@ -15,7 +15,7 @@ import { chromium } from "@playwright/test";
 import { runLocal, cleanEnvironment, projectId } from "./local-tests.mjs";
 
 const root = process.cwd();
-const rollbackSha = "9d06996fe89fe28ba46013655611e4ebe6c28558";
+const rollbackSha = "47865d5eb269833330793c5d36e725553e0f981d";
 const status = await runLocal("verify");
 const pack = resolve(root, "..", "audit", "rollback-builds", randomUUID());
 let stage = "archive";
@@ -73,6 +73,7 @@ const env = {
   CLIENT_PORTAL_LOCAL_TESTS: "1",
   RECOVERY_SIGNING_SECRET: randomBytes(32).toString("hex"),
   NEXT_TELEMETRY_DISABLED: "1",
+  TZ: "UTC",
   ...(channel ? { PLAYWRIGHT_CHANNEL: channel } : {}),
 };
 const next = join(root, "node_modules/next/dist/bin/next");
@@ -166,11 +167,28 @@ try {
       "test",
       "--config",
       config,
+      "--reporter=json",
     ],
-    { env },
+    {
+      env: {
+        ...env,
+        PLAYWRIGHT_JSON_OUTPUT_FILE: join(pack, "browser-report.json"),
+      },
+    },
   );
+  const browserStats = JSON.parse(
+    readFileSync(join(pack, "browser-report.json"), "utf8"),
+  ).stats;
+  assert.equal(
+    browserStats.expected,
+    32,
+    "Rollback must pass all QA scenarios",
+  );
+  assert.equal(browserStats.unexpected, 0);
+  assert.equal(browserStats.skipped, 0);
+  assert.equal(browserStats.flaky, 0);
   console.log(
-    "PASS: 24 browser scenarios against pinned rollback build on schema 11.",
+    "PASS: 32 browser scenarios including QA fixes against pinned rollback build on schema 11.",
   );
   for (const address of [email, `release-staff-${suffix}@example.test`]) {
     const r = await admin.auth.admin.createUser({
@@ -252,7 +270,7 @@ try {
     .eq("request_id", id);
   assert.equal(events.error, null);
   assert.equal(events.data.length, 3);
-  // The baseline has no frontend maintenance flag; verify its writes are still guarded by DB.
+  // Direct API writes must remain blocked independently of the frontend flag.
   const sql = (q) =>
     command(
       "docker",
@@ -286,11 +304,14 @@ try {
     scope: "local synthetic, no hosted deployment",
     rollbackSource: rollbackSha,
     archiveSha256: sha256(archive),
-    sourceArchive: join(pack, "rollback-source.tar"),
-    buildDirectory: source,
+    sourceArchive: relative(root, join(pack, "rollback-source.tar")).replaceAll(
+      "\\",
+      "/",
+    ),
+    buildDirectory: relative(root, source).replaceAll("\\", "/"),
     packageLockSha256: sha256(readFileSync("package-lock.json")),
     schemaMigrations: 11,
-    browserScenarios: 24,
+    browserScenarios: browserStats.expected,
     sequence: [
       "rollback baseline",
       "current uncommitted candidate",
@@ -301,7 +322,8 @@ try {
     retainedEvents: 3,
     idempotentReplay: true,
     databaseGateBlocksRollback: true,
-    rollbackFrontendMaintenance: false,
+    rollbackFrontendMaintenance:
+      "INCLUDED; HTTP flag not exercised by this drill",
     productionChanged: false,
     hostedArtifact: "NOT_BUILT",
     result: "PENDING_CLEANUP",
@@ -346,5 +368,5 @@ try {
 }
 if (failure) throw failure;
 console.log(
-  "PASS: pinned rollback build, 24 browser tests, retained request/version/history, DB maintenance denial and successful cleanup.",
+  "PASS: pinned rollback build, 32 browser tests, retained request/version/history, DB maintenance denial and successful cleanup.",
 );
