@@ -13,6 +13,7 @@ Built with Next.js, React, TypeScript, Tailwind CSS and Supabase. Screenshots us
 - Clients see their own requests; active staff share the service queue.
 - Requests move from new to in progress to closed, with a required repair note and database-recorded history.
 - Submission keys prevent duplicate requests; version checks reject concurrent edits.
+- Server-side request search and pages keep older records reachable.
 - Password recovery uses an email link, explicit confirmation and server-confirmed logout.
 - Preview access is blocked until an isolated backend is approved.
 
@@ -28,4 +29,4 @@ Local changes are not released to the live application. See [verification](docs/
 
 The next milestone is a pilot at one real site: [development plan](docs/PROJECT_MASTER_PLAN.md) · [decisions](docs/DECISIONS.md) · [acceptance criteria](docs/QA_ACCEPTANCE_MATRIX.md).
 
-Attachments, notifications, SLA escalation, reopening, pagination and separate contractor teams are not implemented.
+Attachments, notifications, SLA escalation, reopening and separate contractor teams are not implemented.

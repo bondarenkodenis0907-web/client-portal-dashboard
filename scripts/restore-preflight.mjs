@@ -45,6 +45,7 @@ const authTables = [
   "webauthn_credentials",
 ];
 const relations = new Map([
+  ["private.maintenance_state", { kind: "r", extension: null }],
   ...authTables.map((name) => [`auth.${name}`, { kind: "r", extension: null }]),
   ...["profiles", "service_requests", "service_staff", "request_events"].map(
     (name) => [`public.${name}`, { kind: "r", extension: null }],
@@ -113,15 +114,21 @@ export function assertEmptyRestoreEnvironment(query) {
   if (tables.length) {
     const checks = tables
       .map((r) =>
-        r.schema === "auth" && r.name === "flow_state"
-          ? // Auth leaves recovery PKCE artifacts after the synthetic user is
-            // deleted. Only these unusable, credential-free artifacts are allowed.
-            `exists(select 1 from auth.flow_state r where r.user_id is null
+        r.schema === "private" && r.name === "maintenance_state"
+          ? `((select count(*) from private.maintenance_state) <> 1
+            or exists(select 1 from private.maintenance_state where singleton is distinct from true or enabled is distinct from false)
+            or (select count(*) from pg_attribute where attrelid='private.maintenance_state'::regclass and attnum>0 and not attisdropped) <> 2
+            or exists(select 1 from pg_attribute where attrelid='private.maintenance_state'::regclass and attnum>0 and not attisdropped
+              and (attname not in ('singleton','enabled') or atttypid <> 'boolean'::regtype)))`
+          : r.schema === "auth" && r.name === "flow_state"
+            ? // Auth leaves recovery PKCE artifacts after the synthetic user is
+              // deleted. Only these unusable, credential-free artifacts are allowed.
+              `exists(select 1 from auth.flow_state r where r.user_id is null
             or r.provider_type is distinct from 'recovery'
             or nullif(r.provider_access_token,'') is not null
             or nullif(r.provider_refresh_token,'') is not null
             or exists(select 1 from auth.users u where u.id=r.user_id) limit 1)`
-          : `exists(select 1 from "${r.schema}"."${r.name}" limit 1)`,
+            : `exists(select 1 from "${r.schema}"."${r.name}" limit 1)`,
       )
       .join(" or ");
     if (query(`select (${checks})::text;`).trim() !== "false")

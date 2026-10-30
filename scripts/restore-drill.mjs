@@ -48,6 +48,34 @@ export function inventory(container) {
     ),
   );
 }
+export function restoredSqlTestPaths(files) {
+  const names = Object.keys(files).filter((name) =>
+    name.startsWith("supabase/tests/"),
+  );
+  if (
+    !names.length ||
+    names.some(
+      (name) =>
+        !/^supabase\/tests\/[A-Za-z0-9][A-Za-z0-9._-]*\.sql$/.test(name),
+    )
+  )
+    throw Error("Unverified restored SQL test paths");
+  return names.sort();
+}
+export function restoredSqlTestCount(files) {
+  const plans = restoredSqlTestPaths(files).map((name) => [name, files[name]]);
+  if (!plans.length) throw Error("No restored SQL tests");
+  return plans.reduce((sum, [, encoded]) => {
+    const matches = [
+      ...Buffer.from(encoded, "base64")
+        .toString("utf8")
+        .matchAll(/^\s*select\s+plan\((\d+)\);\s*$/gim),
+    ];
+    if (matches.length !== 1 || Number(matches[0][1]) < 1)
+      throw Error("Unverified restored SQL test plan");
+    return sum + Number(matches[0][1]);
+  }, 0);
+}
 const fingerprint = (object) => sha256(JSON.stringify(object));
 function filesForBackup() {
   const names = [
@@ -614,13 +642,20 @@ async function main(action, argument) {
     fixtureCleaned = true;
     const testsDirectory = join(restoreDir, "supabase/tests");
     mkdirSync(testsDirectory, { recursive: true });
-    for (const [name, encoded] of Object.entries(bundle.files)) {
-      if (/^supabase\/tests\/[^/]+\.sql$/.test(name))
-        writeFileSync(join(restoreDir, name), Buffer.from(encoded, "base64"));
-    }
-    const sqlResult = cli(restoreDir, ["test", "db", "--local"]);
+    const testNames = restoredSqlTestPaths(bundle.files);
+    for (const name of testNames)
+      writeFileSync(
+        join(restoreDir, name),
+        Buffer.from(bundle.files[name], "base64"),
+      );
+    const sqlResult = cli(restoreDir, [
+      "test",
+      "db",
+      "--local",
+      ...testNames.map((name) => join(restoreDir, name)),
+    ]);
     const count = /Tests=(\d+)/.exec(sqlResult);
-    if (!count || Number(count[1]) !== 200)
+    if (!count || Number(count[1]) !== restoredSqlTestCount(bundle.files))
       throw Error("Expected restored SQL regression did not pass");
     report.sqlRegressionTests = Number(count[1]);
     timings.restoreAndAcceptanceSeconds =

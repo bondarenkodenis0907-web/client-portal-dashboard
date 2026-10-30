@@ -17,7 +17,14 @@ import {
 import { projectId } from "./local-tests.mjs";
 import { readBundle } from "./backup-crypto.mjs";
 import { sha256 } from "./backup-safety.mjs";
-import { inventory, recoverFiles, cleanup, probes } from "./restore-drill.mjs";
+import {
+  inventory,
+  recoverFiles,
+  cleanup,
+  probes,
+  restoredSqlTestCount,
+  restoredSqlTestPaths,
+} from "./restore-drill.mjs";
 import { replaceEmptyRestoreEnvironment } from "./restore-preflight.mjs";
 
 async function restore(runId) {
@@ -101,12 +108,21 @@ async function restore(runId) {
     report.probes = await probes(status, bundle.fixture);
     await cleanup(status, bundle.fixture);
     mkdirSync(join(restoreDir, "supabase/tests"), { recursive: true });
-    for (const [name, value] of Object.entries(bundle.files))
-      if (/^supabase\/tests\/[^/]+\.sql$/.test(name))
-        writeFileSync(join(restoreDir, name), Buffer.from(value, "base64"));
-    const tests = cli(restoreDir, ["test", "db", "--local"]);
-    assert.equal(Number(/Tests=(\d+)/.exec(tests)?.[1]), 200);
-    report.sqlRegressionTests = 200;
+    const testNames = restoredSqlTestPaths(bundle.files);
+    for (const name of testNames)
+      writeFileSync(
+        join(restoreDir, name),
+        Buffer.from(bundle.files[name], "base64"),
+      );
+    const tests = cli(restoreDir, [
+      "test",
+      "db",
+      "--local",
+      ...testNames.map((name) => join(restoreDir, name)),
+    ]);
+    const expectedTests = restoredSqlTestCount(bundle.files);
+    assert.equal(Number(/Tests=(\d+)/.exec(tests)?.[1]), expectedTests);
+    report.sqlRegressionTests = expectedTests;
     report.result = "PASS";
   } finally {
     try {

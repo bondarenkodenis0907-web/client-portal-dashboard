@@ -111,6 +111,49 @@ try {
   query(`delete from auth.flow_state where id='${flowId}';`);
   flowCreated = false;
   assertEmptyRestoreEnvironment(query);
+  const privateCreated =
+    query(
+      "select not exists(select 1 from pg_namespace where nspname='private')",
+    ) === "t";
+  const switchCreated =
+    query("select to_regclass('private.maintenance_state') is null") === "t";
+  let columnAdded = false;
+  if (switchCreated)
+    query(
+      "create schema if not exists private; create table private.maintenance_state(singleton boolean primary key check(singleton),enabled boolean not null); insert into private.maintenance_state values(true,false);",
+    );
+  try {
+    assertEmptyRestoreEnvironment(query);
+    query("update private.maintenance_state set enabled=true;");
+    assert.throws(
+      () => replaceEmptyRestoreEnvironment(query, replace),
+      /contains application/,
+    );
+    query("delete from private.maintenance_state;");
+    assert.throws(
+      () => replaceEmptyRestoreEnvironment(query, replace),
+      /contains application/,
+    );
+    query(
+      "insert into private.maintenance_state values(true,false); alter table private.maintenance_state add column unexpected text;",
+    );
+    columnAdded = true;
+    assert.throws(
+      () => replaceEmptyRestoreEnvironment(query, replace),
+      /contains application/,
+    );
+    assert.equal(replacements, 0);
+  } finally {
+    if (switchCreated) query("drop table private.maintenance_state;");
+    else {
+      if (columnAdded)
+        query("alter table private.maintenance_state drop column unexpected;");
+      query(
+        "insert into private.maintenance_state select true,false where not exists(select 1 from private.maintenance_state); update private.maintenance_state set enabled=false where singleton;",
+      );
+    }
+    if (privateCreated) query("drop schema private;");
+  }
   console.log(
     "PASS: owned restore preflight accepts empty platform state; refuses unknown populated/empty tables, unknown schema and Auth data before replacement; fixture rows preserved.",
   );

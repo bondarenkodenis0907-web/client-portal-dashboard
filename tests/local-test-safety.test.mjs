@@ -42,6 +42,7 @@ test("cloud credentials and host flags are not inherited", () => {
       NETLIFY: "true",
       CONTEXT: "production",
       CLIENT_PORTAL_LOCAL_TESTS: "1",
+      CLIENT_PORTAL_MAINTENANCE: "1",
       RECOVERY_SIGNING_SECRET: "cloud-placeholder",
     }),
     { PATH: "tools" },

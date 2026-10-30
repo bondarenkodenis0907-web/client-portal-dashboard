@@ -48,10 +48,14 @@ npm run test:local:stop
 
 Run app builds and browser/Preview tests sequentially: they share `.next`. Use placeholder environment values for standalone builds. Never build with production credentials locally.
 
-`test:local` validates ten migrations, runs SQL tests, builds with webpack and runs browser tests. It creates a checkout-specific project under ignored `.local-tests`, using API/DB/Mailpit ports 56321/56322/56324. Node/CLI versions, ownership, migration snapshots and loopback API are checked before test writes. Only synthetic accounts are created. `test:browser` runs the same browser path; `test:local:reset` resets only the owned test profile after a reviewed migration change.
+`test:local` validates eleven migrations, runs SQL tests, builds with webpack and runs browser tests. It creates a checkout-specific project under ignored `.local-tests`, using API/DB/Mailpit ports 56321/56322/56324. Node/CLI versions, ownership, migration snapshots and loopback API are checked before test writes. Only synthetic accounts are created. `test:browser` runs the same browser path; `test:local:reset` resets only the owned test profile after a reviewed migration change.
 
 Next.js Proxy denies Preview/Netlify/unknown hosts before Auth. The local test exception requires port 56321 and no cloud flags; never enable it on hosted environments.
 
 [Recovery](AUTH_RECOVERY.md) · [Backup and restore](BACKUP_RESTORE_RUNBOOK.md) · [Dependencies](DEPENDENCY_SECURITY.md) · [Release](RELEASE_ROLLBACK_RUNBOOK.md).
 
 CI is prepared locally. Passing local tests does not mean remote CI or hosted acceptance has run.
+
+Maintenance is disabled for ordinary tests. See [maintenance controls and checks](MAINTENANCE.md) for the database switch, frontend flag and local API/concurrency tests. Hosted settings remain unchanged.
+
+Browser tests run the server in UTC and explicitly exercise UTC, Europe/Moscow and America/New_York clients. Card/history timestamps are labelled UTC. Request search/count/paging runs on the server (50 rows per page), with literal search and RLS unchanged.

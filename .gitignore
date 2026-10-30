@@ -51,3 +51,4 @@ next-env.d.ts
 /.local-tests/
 /.local-restore/
 /.local-backups/
+/.local-release/

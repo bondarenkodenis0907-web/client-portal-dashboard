@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { StaffQueue } from "@/components/portal/StaffQueue";
-import { requestColumns, parseServiceRequest } from "@/lib/requests";
+import { getRequestPage } from "@/lib/request-pages";
 
 export default async function StaffPage() {
   const supabase = await createClient();
@@ -19,20 +19,18 @@ export default async function StaffPage() {
     throw new Error("The service queue could not be loaded. Please try again.");
   if (!membership) redirect("/dashboard");
   const [requests, staff] = await Promise.all([
-    supabase
-      .from("service_requests")
-      .select(requestColumns)
-      .order("created_at", { ascending: false }),
+    getRequestPage(supabase, { page: 0, search: "", status: "open" }),
     supabase
       .from("service_staff")
       .select("user_id, display_name, is_active")
       .order("display_name"),
   ]);
-  if (requests.error || staff.error)
+  if (staff.error)
     throw new Error("The service queue could not be loaded. Please try again.");
   return (
     <StaffQueue
-      requests={(requests.data ?? []).map(parseServiceRequest)}
+      requests={requests.requests}
+      total={requests.total}
       staff={staff.data ?? []}
     />
   );

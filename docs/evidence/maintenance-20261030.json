@@ -1,0 +1,47 @@
+{
+  "date": "2026-10-30",
+  "scope": "local synthetic only",
+  "baseCommit": "9d06996fe89fe28ba46013655611e4ebe6c28558",
+  "workingTreeUncommitted": true,
+  "migrations": 11,
+  "checks": {
+    "sqlAssertions": 230,
+    "maintenanceSqlAssertions": 30,
+    "browserScenarios": 24,
+    "maintenanceHttpRequests": 48,
+    "apiAndConcurrentLockBarrier": "PASS",
+    "unitPolicyTests": 34,
+    "turbopackBuild": "PASS",
+    "webpackBuild": "PASS",
+    "typecheckViaBuild": "PASS",
+    "lint": "PASS",
+    "changedCodeFormatting": "PASS",
+    "securityFindings": 0
+  },
+  "databaseGateFinalState": "disabled",
+  "productionChanged": false,
+  "remoteCI": "NOT_RUN_FOR_NEW_CHANGES",
+  "releaseDecision": "NO_GO",
+  "limitations": [
+    "No canary bypass",
+    "No rollback build",
+    "Pre-SR06 gate installation rehearsal not run",
+    "Auth service tables outside auth.users not frozen",
+    "DB owner can disable protection"
+  ],
+  "files": {
+    "docs/MAINTENANCE.md": "97a473b41b6589282801ddedd4aa34d1cfeb49baa04129c7ed8210238e156e1d",
+    "scripts/test-maintenance.mjs": "c229223ed017339849051f8fb3d38a479fe23480312fb70da5cc2b1a74622b47",
+    "supabase/migrations/20261030113426_maintenance_write_gate.sql": "ebbac52e7754e75d08daaf289c93bd1138ed1f9e3827d5ccb8dae2b5b4373128",
+    "supabase/tests/maintenance.test.sql": "ff1201a679de7ea4f0219b13302d691b25ce4fec51fe1ba2df849e0f7bda84ac",
+    ".github/workflows/ci.yml": "f394295ce8c08820ace661a17cf9a10b266f1a085759787cb5b9ab3db269579a",
+    "docs/DEVELOPMENT.md": "d308def8babe9cf82aa96f51201bb8278e46716737272c06e40ac7d17cda47de",
+    "docs/PROJECT_MASTER_PLAN.md": "c3b513845713d16523c96e451bd7d69699d864d46cb864125a75838a9f98526d",
+    "docs/RELEASE_ROLLBACK_RUNBOOK.md": "91379ba547aad01b6fd63c50607d176ee1508e4eefc4dea13c86fed18fda632c",
+    "scripts/local-tests.mjs": "6e4f9a55b1996c1cbd926a529e3ca6a8c2f91107592f4d20fb1bc091d1a190d3",
+    "scripts/verify-preview-guard.mjs": "e9b750235b23509ae6dd945af1d9e45dde00292aad570726f2f54ead43eb3daa",
+    "src/proxy.ts": "b676fc747c8923bab1768025ca123ff9bf8f7ee47158ecff7c56db639f9cc79a",
+    "tests/local-test-safety.test.mjs": "3265595ff23c66fd723225617ee27a0afd83fb6343ec298a7359af6e610cefff"
+  },
+  "continuedBy": "release-preparation-20261030.json"
+}

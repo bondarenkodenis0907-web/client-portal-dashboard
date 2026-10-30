@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 
@@ -41,6 +41,27 @@ export function DashboardShell({
   const [navOpen, setNavOpen] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
   const [signOutError, setSignOutError] = useState("");
+  const navigation = useRef<HTMLElement>(null);
+  const opener = useRef<HTMLButtonElement>(null);
+  const closer = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (!navOpen) return;
+    const desktop = window.matchMedia("(min-width: 1024px)");
+    const resize = () => {
+      if (desktop.matches) setNavOpen(false);
+    };
+    desktop.addEventListener("change", resize);
+    const overflow = document.body.style.overflow;
+    const trigger = opener.current;
+    document.body.style.overflow = "hidden";
+    closer.current?.focus();
+    return () => {
+      desktop.removeEventListener("change", resize);
+      document.body.style.overflow = overflow;
+      if (trigger?.getClientRects().length) trigger.focus();
+    };
+  }, [navOpen]);
 
   useEffect(() => {
     let active = true;
@@ -127,6 +148,7 @@ export function DashboardShell({
         {navOpen && (
           <button
             type="button"
+            tabIndex={-1}
             className="fixed inset-0 z-40 bg-slate-950/30 lg:hidden"
             onClick={() => setNavOpen(false)}
             aria-label="Close navigation"
@@ -134,8 +156,40 @@ export function DashboardShell({
         )}
 
         <aside
+          id="portal-navigation"
+          ref={navigation}
+          role={navOpen ? "dialog" : undefined}
+          aria-label={navOpen ? "Navigation" : undefined}
+          aria-modal={navOpen || undefined}
+          onKeyDown={(event) => {
+            if (!navOpen) return;
+            if (event.key === "Escape") {
+              event.preventDefault();
+              setNavOpen(false);
+            }
+            if (event.key !== "Tab") return;
+            const links = Array.from(
+              navigation.current?.querySelectorAll<HTMLElement>(
+                "a[href],button:not([disabled])",
+              ) ?? [],
+            ).filter(
+              (el) =>
+                el.getClientRects().length &&
+                getComputedStyle(el).visibility !== "hidden",
+            );
+            const target = event.shiftKey ? links.at(-1) : links[0];
+            if (
+              document.activeElement ===
+              (event.shiftKey ? links[0] : links.at(-1))
+            ) {
+              event.preventDefault();
+              target?.focus();
+            }
+          }}
           className={`fixed inset-y-0 left-0 z-50 flex w-60 shrink-0 flex-col border-r border-slate-200 bg-white px-3 py-5 transition-transform lg:sticky lg:top-0 lg:h-screen lg:translate-x-0 ${
-            navOpen ? "translate-x-0" : "-translate-x-full"
+            navOpen
+              ? "visible translate-x-0"
+              : "invisible -translate-x-full lg:visible"
           }`}
         >
           <div className="flex items-center justify-between px-3 pb-8">
@@ -164,6 +218,7 @@ export function DashboardShell({
               className="rounded-md p-2 text-slate-600 lg:hidden"
               onClick={() => setNavOpen(false)}
               aria-label="Close menu"
+              ref={closer}
             >
               <PortalIcon name="close" />
             </button>
@@ -242,7 +297,7 @@ export function DashboardShell({
           </div>
         </aside>
 
-        <div className="flex min-w-0 flex-1 flex-col">
+        <div className="flex min-w-0 flex-1 flex-col" inert={navOpen}>
           <header className="sticky top-0 z-30 flex h-[68px] shrink-0 items-center justify-between gap-4 border-b border-slate-200 bg-white px-4 sm:px-7 lg:px-9">
             <div className="flex min-w-0 items-center gap-3">
               <button
@@ -250,6 +305,9 @@ export function DashboardShell({
                 className="-ml-1 rounded-lg p-2 text-slate-700 hover:bg-slate-100 lg:hidden"
                 onClick={() => setNavOpen(true)}
                 aria-label="Open navigation"
+                aria-controls="portal-navigation"
+                aria-expanded={navOpen}
+                ref={opener}
               >
                 <PortalIcon name="menu" />
               </button>
@@ -269,6 +327,7 @@ export function DashboardShell({
               {!isRequestsPage && (
                 <Link
                   href="/dashboard/requests#new-request"
+                  aria-label="New request"
                   className="inline-flex items-center gap-1.5 rounded-lg bg-[#315fd4] px-3.5 py-2.5 text-xs font-semibold text-white transition-colors hover:bg-blue-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700 sm:text-sm"
                 >
                   <PortalIcon name="plus" className="h-4 w-4" />

@@ -16,6 +16,20 @@ export async function proxy(request: NextRequest) {
       },
     );
   }
+  if (process.env.CLIENT_PORTAL_MAINTENANCE === "1") {
+    return new NextResponse(
+      "Portal temporarily unavailable. Please try again later.",
+      {
+        status: 503,
+        headers: {
+          "Cache-Control": "no-store, max-age=0",
+          "Content-Type": "text/plain; charset=utf-8",
+          "Retry-After": "60",
+          "X-Robots-Tag": "noindex, nofollow",
+        },
+      },
+    );
+  }
   // Guard assets too; only approved environments may skip Auth on static paths.
   const path = request.nextUrl.pathname;
   if (

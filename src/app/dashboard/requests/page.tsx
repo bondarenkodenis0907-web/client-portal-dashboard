@@ -10,9 +10,16 @@ import {
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
+import { isTransientAuthError } from "@/lib/auth-errors";
 import { PortalIcon } from "@/components/portal/PortalIcon";
 import { PriorityBadge, StatusBadge } from "@/components/portal/StatusBadge";
 import { inputLimits } from "@/lib/input-limits";
+import {
+  getRequestPage,
+  requestSearchLimit,
+  requestPageSize,
+} from "@/lib/request-pages";
+import { RequestPages } from "@/components/portal/RequestPages";
 import { finishSubmission, pendingSubmission } from "@/lib/request-submission";
 import {
   isRequestPriority,
@@ -46,6 +53,9 @@ export default function ServiceRequestsPage() {
   const submittingRef = useRef(false);
 
   const [requests, setRequests] = useState<ListedRequest[]>([]);
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(0);
+  const [revision, setRevision] = useState(0);
   const [site, setSite] = useState("");
   const [system, setSystem] = useState("");
   const [description, setDescription] = useState("");
@@ -72,23 +82,20 @@ export default function ServiceRequestsPage() {
           error: userError,
         } = await supabase.auth.getUser();
         if (signal.aborted) return;
+        if (isTransientAuthError(userError)) throw userError;
         if (userError || !user) {
           router.replace("/login");
           return;
         }
-        const { data, error } = await supabase
-          .from("service_requests")
-          .select(listColumns)
-          .eq("user_id", user.id)
-          .order("created_at", { ascending: false })
-          .abortSignal(signal);
+        const result = await getRequestPage(
+          supabase,
+          { page, search, status: statusFilter, userId: user.id },
+          signal,
+        );
         if (signal.aborted) return;
-        if (error) {
-          setLoadError("Unable to load your requests. Please try again.");
-        } else {
-          setRequests((data ?? []).map(parseServiceRequest));
-          setLoadError("");
-        }
+        setRequests(result.requests);
+        setTotal(result.total);
+        setLoadError("");
       } catch {
         if (!signal.aborted)
           setLoadError(
@@ -98,23 +105,25 @@ export default function ServiceRequestsPage() {
         if (!signal.aborted) setLoading(false);
       }
     },
-    [router, supabase],
+    [router, supabase, page, search, statusFilter],
   );
 
   useEffect(() => {
     const controller = new AbortController();
 
-    void Promise.resolve().then(() => {
+    const timer = setTimeout(() => {
       if (!controller.signal.aborted) {
-        return loadRequests(controller.signal);
+        setLoading(true);
+        void loadRequests(controller.signal);
       }
-    });
+    }, 200);
 
     return () => {
       controller.abort();
+      clearTimeout(timer);
       retryController.current?.abort();
     };
-  }, [loadRequests]);
+  }, [loadRequests, revision]);
   function retryLoad() {
     retryController.current?.abort();
     const controller = new AbortController();
@@ -165,6 +174,7 @@ export default function ServiceRequestsPage() {
         data: { user },
         error: userError,
       } = await supabase.auth.getUser();
+      if (isTransientAuthError(userError)) throw userError;
       if (userError || !user) {
         setNotice({
           kind: "error",
@@ -208,10 +218,17 @@ export default function ServiceRequestsPage() {
         return;
       }
       const createdRequest = parseServiceRequest(data);
-      setRequests((current) => [
-        createdRequest,
-        ...current.filter((item) => item.id !== createdRequest.id),
-      ]);
+      setSearch("");
+      setStatusFilter("all");
+      setPage(0);
+      setRevision((value) => value + 1);
+      setLoading(true);
+      setRequests((current) =>
+        [
+          createdRequest,
+          ...current.filter((item) => item.id !== createdRequest.id),
+        ].slice(0, requestPageSize),
+      );
       setSavedSubmission({ id: createdRequest.id, userId: user.id, key });
       try {
         finishSubmission(sessionStorage, user.id, key);
@@ -227,8 +244,6 @@ export default function ServiceRequestsPage() {
       setSystem("");
       setDescription("");
       setPriority("medium");
-      setSearch("");
-      setStatusFilter("all");
       setNotice({
         kind: "success",
         text: "Service request created. You can track it in the list.",
@@ -265,15 +280,6 @@ export default function ServiceRequestsPage() {
     }
   }
 
-  const query = search.trim().toLowerCase();
-  const filteredRequests = requests.filter(
-    (request) =>
-      (statusFilter === "all" || request.status === statusFilter) &&
-      (!query ||
-        `${request.site} ${request.system} ${request.description}`
-          .toLowerCase()
-          .includes(query)),
-  );
   const inputClass =
     "w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 outline-none transition-colors placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-slate-50 disabled:opacity-70";
   const labelClass = "mb-1.5 block text-xs font-semibold text-slate-700";
@@ -434,7 +440,7 @@ export default function ServiceRequestsPage() {
                 </p>
               </div>
               <span className="rounded-md bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600">
-                {loading ? "..." : `${requests.length} total`}
+                {loading ? "..." : `${total} total`}
               </span>
             </div>
             <div className="mt-5 flex flex-wrap gap-2.5">
@@ -447,7 +453,12 @@ export default function ServiceRequestsPage() {
                 <input
                   type="search"
                   value={search}
-                  onChange={(event) => setSearch(event.target.value)}
+                  maxLength={requestSearchLimit}
+                  onChange={(event) => {
+                    setSearch(event.target.value);
+                    setPage(0);
+                    setLoading(true);
+                  }}
                   placeholder="Search site, system or issue"
                   className="w-full rounded-lg border border-slate-200 py-2.5 pl-9 pr-3 text-xs text-slate-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
                 />
@@ -458,8 +469,11 @@ export default function ServiceRequestsPage() {
                   value={statusFilter}
                   onChange={(event) => {
                     const value = event.target.value;
-                    if (value === "all" || isRequestStatus(value))
+                    if (value === "all" || isRequestStatus(value)) {
                       setStatusFilter(value);
+                      setPage(0);
+                      setLoading(true);
+                    }
                   }}
                   className="rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-xs text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
                 >
@@ -472,7 +486,11 @@ export default function ServiceRequestsPage() {
             </div>
           </div>
           {loading ? (
-            <div role="status" aria-busy="true" className="space-y-3 p-5">
+            <div
+              role={notice?.kind === "success" ? undefined : "status"}
+              aria-busy="true"
+              className="space-y-3 p-5"
+            >
               <span className="sr-only">Loading service requests...</span>
               {[1, 2, 3].map((n) => (
                 <div
@@ -495,7 +513,9 @@ export default function ServiceRequestsPage() {
                 Try again
               </button>
             </div>
-          ) : requests.length === 0 ? (
+          ) : requests.length === 0 &&
+            !search.trim() &&
+            statusFilter === "all" ? (
             <div className="p-10 text-center">
               <span className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-slate-50 text-slate-500">
                 <PortalIcon name="requests" />
@@ -505,7 +525,7 @@ export default function ServiceRequestsPage() {
                 Use the form to report your first technical issue.
               </p>
             </div>
-          ) : filteredRequests.length === 0 ? (
+          ) : requests.length === 0 ? (
             <div className="p-10 text-center">
               <h3 className="text-sm font-semibold">No matching requests</h3>
               <p className="mt-1.5 text-sm text-slate-500">
@@ -516,6 +536,8 @@ export default function ServiceRequestsPage() {
                 onClick={() => {
                   setSearch("");
                   setStatusFilter("all");
+                  setPage(0);
+                  setLoading(true);
                 }}
                 className="mt-4 text-sm font-semibold text-blue-700"
               >
@@ -535,7 +557,7 @@ export default function ServiceRequestsPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {filteredRequests.map((request) => (
+                  {requests.map((request) => (
                     <tr
                       key={request.id}
                       className="align-top hover:bg-slate-50/60"
@@ -572,6 +594,15 @@ export default function ServiceRequestsPage() {
               </table>
             </div>
           )}
+          <RequestPages
+            page={page}
+            total={total}
+            busy={loading}
+            onPage={(value) => {
+              setPage(value);
+              setLoading(true);
+            }}
+          />
         </section>
       </div>
     </div>

@@ -27,7 +27,7 @@ export function cleanEnvironment(input) {
   return Object.fromEntries(
     Object.entries(input).filter(
       ([key]) =>
-        !/SUPABASE|^VERCEL|^NETLIFY|^CONTEXT$|^CLIENT_PORTAL_LOCAL_TESTS$|^RECOVERY_SIGNING_SECRET$/.test(
+        !/SUPABASE|^VERCEL|^NETLIFY|^CONTEXT$|^CLIENT_PORTAL_LOCAL_TESTS$|^CLIENT_PORTAL_MAINTENANCE$|^RECOVERY_SIGNING_SECRET$/.test(
           key.toUpperCase(),
         ),
     ),
@@ -193,7 +193,9 @@ function verify(recordSnapshot = false) {
     'submission_rpc', exists(select 1 from pg_proc where oid=to_regprocedure('public.create_service_request(uuid,text,text,text,text)') and not prosecdef and proconfig @> array['search_path=""']),
     'processing_rpc', exists(select 1 from pg_proc where oid=to_regprocedure('public.process_service_request(uuid,integer,uuid,text,text)') and not prosecdef and proconfig @> array['search_path=""']),
     'version_guard', exists(select 1 from pg_trigger where tgrelid='public.service_requests'::regclass and tgname='check_request_version' and tgenabled='O'),
-    'version_input', exists(select 1 from pg_constraint where conrelid='public.service_requests'::regclass and conname='service_requests_expected_version_transient')
+    'version_input', exists(select 1 from pg_constraint where conrelid='public.service_requests'::regclass and conname='service_requests_expected_version_transient'),
+    'maintenance_triggers', (select count(*) from pg_trigger where tgname='maintenance_write_gate' and tgenabled='O' and tgrelid in ('public.profiles'::regclass,'public.service_requests'::regclass,'public.request_events'::regclass,'public.service_staff'::regclass,'auth.users'::regclass)),
+    'maintenance_off', (select not enabled from private.maintenance_state where singleton)
   );`;
   const schema = JSON.parse(
     execute("docker", [
@@ -217,7 +219,9 @@ function verify(recordSnapshot = false) {
     !schema.submission_rpc ||
     !schema.processing_rpc ||
     !schema.version_guard ||
-    !schema.version_input
+    !schema.version_input ||
+    schema.maintenance_triggers !== 5 ||
+    !schema.maintenance_off
   )
     throw new Error(
       "Test schema differs from migrations; reset only the test profile.",
@@ -282,6 +286,7 @@ async function start(check = true, allowChangedSnapshot = false) {
 function browser(status) {
   assertTestStatus(status);
   const env = {
+    TZ: "UTC",
     NEXT_PUBLIC_SUPABASE_URL: status.API_URL,
     NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: status.PUBLISHABLE_KEY,
     TEST_SUPABASE_SECRET_KEY: status.SECRET_KEY,

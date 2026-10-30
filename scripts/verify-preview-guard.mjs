@@ -8,8 +8,13 @@ import { cleanEnvironment } from "./local-tests.mjs";
 
 const mode = process.argv[2] ?? "all";
 const modes = mode === "all" ? ["vercel", "netlify", "unapproved"] : [mode];
-if (modes.some((value) => !["vercel", "netlify", "unapproved"].includes(value)))
-  throw new Error("Use all, vercel, netlify or unapproved.");
+if (
+  modes.some(
+    (value) =>
+      !["vercel", "netlify", "unapproved", "maintenance"].includes(value),
+  )
+)
+  throw new Error("Use all, vercel, netlify, unapproved or maintenance.");
 const origin = "http://127.0.0.1:3011";
 const backend = "http://127.0.0.1:56331";
 const key = "sb_publishable_isolated_guard_test_placeholder";
@@ -78,7 +83,8 @@ async function verify(target) {
   const env = {
     ...cleanEnvironment(process.env),
     NODE_ENV: "production",
-    NEXT_PUBLIC_SUPABASE_URL: backend,
+    NEXT_PUBLIC_SUPABASE_URL:
+      target === "maintenance" ? "http://127.0.0.1:56321" : backend,
     NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: key,
     NEXT_TELEMETRY_DISABLED: "1",
     VERCEL: "",
@@ -86,6 +92,7 @@ async function verify(target) {
     NETLIFY: "",
     CONTEXT: "",
     CLIENT_PORTAL_LOCAL_TESTS: target === "unapproved" ? "" : "1",
+    CLIENT_PORTAL_MAINTENANCE: target === "maintenance" ? "1" : "",
   };
   if (target === "vercel") {
     env.VERCEL = "1";
@@ -142,7 +149,7 @@ async function verify(target) {
           503,
           "Guard must be active before any route is served",
         );
-        await response.body?.cancel();
+        if (!response.bodyUsed) await response.body?.cancel();
         ready = true;
         break;
       } catch (error) {
@@ -177,12 +184,21 @@ async function verify(target) {
           redirect: "manual",
           signal: AbortSignal.timeout(2000),
           headers: {
-            Host: "preview.example.test",
+            Host:
+              target === "maintenance" ? "127.0.0.1" : "preview.example.test",
             Cookie: `${cookie.name}=${cookie.value}`,
             "X-Forwarded-Host": "localhost",
           },
         });
         assert.equal(response.status, 503, `${target}: ${method} ${route}`);
+        if (target === "maintenance") {
+          assert.equal(response.headers.get("retry-after"), "60");
+          if (method !== "HEAD")
+            assert.match(
+              await response.text(),
+              /Portal temporarily unavailable/,
+            );
+        }
         assert.match(response.headers.get("cache-control") ?? "", /no-store/);
         assert.match(response.headers.get("x-robots-tag") ?? "", /noindex/);
         assert.equal(
@@ -190,7 +206,7 @@ async function verify(target) {
           null,
           "Denied requests must not refresh Auth cookies",
         );
-        await response.body?.cancel();
+        if (!response.bodyUsed) await response.body?.cancel();
         checked++;
       }
     }
@@ -200,7 +216,9 @@ async function verify(target) {
       "Denied requests must never reach Supabase Auth/REST",
     );
     console.log(
-      `PASS: ${target}, ${checked} HTTP checks, no Auth cookies, 0 backend calls`,
+      target === "maintenance"
+        ? `PASS: maintenance, ${checked} HTTP checks, Retry-After, no Auth cookies`
+        : `PASS: ${target}, ${checked} HTTP checks, no Auth cookies, 0 backend calls`,
     );
   } finally {
     if (server.exitCode === null) server.kill("SIGTERM");

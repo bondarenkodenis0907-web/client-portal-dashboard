@@ -78,7 +78,7 @@ jobs:
     timeout-minutes: 15
     strategy:
       matrix:
-        mode: [vercel, netlify, unapproved]
+        mode: [vercel, netlify, unapproved, maintenance]
     steps:
       - name: Check out code
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # reviewed v4 commit, 2026-10-29
@@ -103,6 +103,7 @@ jobs:
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # reviewed v4 commit, 2026-10-29
         with:
           persist-credentials: false
+          fetch-depth: 0
 
       - name: Set up Node.js for browser tests
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # reviewed v4 commit, 2026-10-29
@@ -118,6 +119,15 @@ jobs:
 
       - name: Verify migrations, SQL and browser regressions on the dedicated backend
         run: npm run test:local
+
+      - name: Verify maintenance through the local API and concurrent transactions
+        run: node scripts/test-maintenance.mjs
+
+      - name: Rehearse maintenance installation before request migrations
+        run: node scripts/test-release-order.mjs
+
+      - name: Verify pinned compatible rollback build and retained writes
+        run: node scripts/test-rollback-build.mjs
 
       - name: Stop only this checkout's test backend
         if: always()
