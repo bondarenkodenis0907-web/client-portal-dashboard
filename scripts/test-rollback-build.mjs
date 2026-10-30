@@ -15,7 +15,7 @@ import { chromium } from "@playwright/test";
 import { runLocal, cleanEnvironment, projectId } from "./local-tests.mjs";
 
 const root = process.cwd();
-const rollbackSha = "47865d5eb269833330793c5d36e725553e0f981d";
+const rollbackSha = "db0f9fb98acd6793c6bdacfc3c2e63fc2ca210ff";
 const status = await runLocal("verify");
 const pack = resolve(root, "..", "audit", "rollback-builds", randomUUID());
 let stage = "archive";
@@ -181,14 +181,14 @@ try {
   ).stats;
   assert.equal(
     browserStats.expected,
-    32,
+    35,
     "Rollback must pass all QA scenarios",
   );
   assert.equal(browserStats.unexpected, 0);
   assert.equal(browserStats.skipped, 0);
   assert.equal(browserStats.flaky, 0);
   console.log(
-    "PASS: 32 browser scenarios including QA fixes against pinned rollback build on schema 11.",
+    "PASS: 35 browser scenarios including QA fixes against pinned rollback build on schema 11.",
   );
   for (const address of [email, `release-staff-${suffix}@example.test`]) {
     const r = await admin.auth.admin.createUser({
@@ -368,5 +368,5 @@ try {
 }
 if (failure) throw failure;
 console.log(
-  "PASS: pinned rollback build, 32 browser tests, retained request/version/history, DB maintenance denial and successful cleanup.",
+  "PASS: pinned rollback build, 35 browser tests, retained request/version/history, DB maintenance denial and successful cleanup.",
 );
