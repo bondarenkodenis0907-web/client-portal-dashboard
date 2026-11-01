@@ -122,6 +122,16 @@ jobs:
 
       - name: Verify migrations, SQL and browser regressions on the dedicated backend
         run: npm run test:local
+        env:
+          CAPTURE_PORTFOLIO: "1"
+
+      - name: Preserve the completed-scenario screenshots from this run
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # reviewed v4 commit, 2026-10-29
+        with:
+          name: completed-scenario-screenshots
+          path: test-results/portfolio/*.png
+          if-no-files-found: error
+          retention-days: 7
 
       - name: Verify maintenance through the local API and concurrent transactions
         run: node scripts/test-maintenance.mjs

@@ -47,6 +47,8 @@ npm run test:local:stop
 
 The first test in [request-processing.spec.ts](../tests/browser/request-processing.spec.ts) creates temporary client/staff accounts against the guarded loopback backend, submits the issue, assigns work, closes it and checks the client view. It also checks the persisted status, engineer, repair note and closing timestamp, rejects a stale edit and checks browser errors and mobile overflow. Temporary accounts and requests are removed afterwards.
 
-To refresh the walkthrough screenshots, run the same isolated suite with `CAPTURE_PORTFOLIO=1`. Review the images before committing them: this option writes to `public/screenshots`. No public demo credentials are provided.
+To refresh the walkthrough screenshots locally, run the same isolated suite with `CAPTURE_PORTFOLIO=1`. Review the images before committing them: outside CI this option writes to `public/screenshots`. No public demo credentials are provided.
+
+GitHub Actions enables capture for the isolated browser suite. After that suite succeeds, download `completed-scenario-screenshots` from the CI run's Artifacts section (retained for seven days). The five PNGs show the created request, staff queue, work in progress, completed client view and mobile view. CI writes them to `test-results/portfolio`, so an artifact cannot silently reuse the screenshots committed in `public/screenshots`. Only fictional local test accounts and requests are used. A passing suite also verifies the database result; screenshots alone do not prove it. Review the new frames before updating portfolio images.
 
 The current test also exercises reassignment and failure recovery, so regenerated history can contain more events than these older screenshots. A new local browser run was not performed during the 1 November documentation review because Docker was unavailable; see the candidate CI results for execution evidence.

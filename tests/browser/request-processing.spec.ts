@@ -1,6 +1,7 @@
 import { test, expect, type Page } from "@playwright/test";
 import { createClient } from "@supabase/supabase-js";
 import { randomUUID } from "node:crypto";
+import { mkdir } from "node:fs/promises";
 import type { Database } from "../../src/lib/supabase/database.types";
 
 test("client submits an issue, staff complete it, client sees the resolution", async ({
@@ -41,12 +42,17 @@ test("client submits an issue, staff complete it, client sees the resolution", a
   }
   async function screenshot(page: Page, filename: string) {
     await page.evaluate(() => document.fonts.ready);
-    if (process.env.CAPTURE_PORTFOLIO === "1")
+    if (process.env.CAPTURE_PORTFOLIO === "1") {
+      const directory = process.env.CI
+        ? "test-results/portfolio"
+        : "public/screenshots";
+      await mkdir(directory, { recursive: true });
       await page.screenshot({
-        path: `public/screenshots/${filename}`,
+        path: `${directory}/${filename}`,
         fullPage: true,
         animations: "disabled",
       });
+    }
   }
   try {
     for (const email of [
@@ -136,6 +142,7 @@ test("client submits an issue, staff complete it, client sees the resolution", a
       clientPage.getByRole("heading", { name: "What happens next" }),
     ).toBeVisible();
     const requestUrl = clientPage.url();
+    await screenshot(clientPage, "request-created.png");
 
     await signIn(staffPage, staffEmail);
     await staffPage
