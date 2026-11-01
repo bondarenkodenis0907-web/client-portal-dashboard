@@ -18,6 +18,8 @@ npm audit signatures
 npm run check:security
 ```
 
-The security check enforces runtime/direct-version pins, registry origins, lockfile integrity and immutable Actions references. Its secret-pattern scan covers current Git candidate text files, not full history, binaries or provider secrets. npm lifecycle-script approval was not expanded; unrs-resolver emitted a pending postinstall warning while lint/build passed.
+The security check enforces runtime/direct-version pins, registry origins, lockfile integrity and immutable Actions references. Its secret-pattern scan covers current Git candidate text files, not full history, binaries or provider secrets. The 29 October local verification recorded an unrs-resolver pending-postinstall warning while lint/build passed; this is historical evidence, not a guarantee that later npm ci runs skip lifecycle scripts. The 1 November workspace install used --ignore-scripts; CI uses the committed npm ci workflow.
 
 Review upstream advisories and compatible parent updates, update the lockfile, then repeat the relevant tests. Never expose production credentials to install/build/test tooling. [Verification](evidence/verification.json) · [Release](RELEASE_ROLLBACK_RUNBOOK.md).
+
+[Current security status](SECURITY_STATUS.md) separates candidate CI, production-source identification and outstanding hosted acceptance.

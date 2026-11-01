@@ -54,9 +54,9 @@ Next.js Proxy denies Preview/Netlify/unknown hosts before Auth. The local test e
 
 [Recovery](AUTH_RECOVERY.md) · [Backup and restore](BACKUP_RESTORE_RUNBOOK.md) · [Dependencies](DEPENDENCY_SECURITY.md) · [Release](RELEASE_ROLLBACK_RUNBOOK.md).
 
-CI is prepared locally. Passing local tests does not mean remote CI or hosted acceptance has run.
+Remote CI has run: all eight jobs passed on candidate `7f20ae9` in [run 41317408116](https://github.com/bondarenkodenis0907-web/client-portal-dashboard/actions/runs/41317408116). Local/CI acceptance and hosted production acceptance remain separate; use the SHA and environment attached to each result. [Current security status](SECURITY_STATUS.md).
 
-Maintenance is disabled for ordinary tests. See [maintenance controls and checks](MAINTENANCE.md) for the database switch, frontend flag and local API/concurrency tests. Hosted settings remain unchanged.
+Maintenance is disabled for ordinary tests. See [maintenance controls and checks](MAINTENANCE.md) for the database switch, frontend flag and local API/concurrency tests. The production schema has its own [read-only comparison](PRODUCTION_SCHEMA_CHECK_20261101.md); local test success does not attest hosted runtime settings.
 
 Browser tests run the server in UTC and explicitly exercise UTC, Europe/Moscow and America/New_York clients. Card/history timestamps are labelled UTC. Request search/count/paging runs on the server (50 rows per page), with literal search and RLS unchanged.
 
