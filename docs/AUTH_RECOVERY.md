@@ -1,6 +1,6 @@
 # Password recovery
 
-Local implementation; hosted Auth/SMTP configuration is still pending.
+Implemented in the candidate and exercised by the isolated remote CI browser/server-Auth suites. The deployed uploaded source matches `a0c1af0`; hosted email delivery, recovery and signing-secret runtime acceptance are still unverified. This does not mean those settings are absent. See [current security status](SECURITY_STATUS.md) and [source identification](DEPLOYED_VERSION_20261101.md).
 
 1. Forgot-password requests an email with a fixed same-origin callback. Existing and unknown accounts receive the same generic success message.
 2. Callback/confirmation GETs do not consume the token. A bounded, same-origin form POST verifies the fixed recovery type; redirects are relative.

@@ -1,6 +1,6 @@
 # Режим обслуживания
 
-Реализован локально 30.10.2026; production не изменялся. Новая миграция `20261030113426_maintenance_write_gate.sql` добавлена к прежним десяти. Новый набор ещё не имеет удалённого CI/review и не разрешён к выпуску.
+Статус на 01.11.2026: миграция `20261030113426_maintenance_write_gate.sql` уже присутствует среди 11 production migrations. [Read-only сверка](PRODUCTION_SCHEMA_CHECK_20261101.md) подтвердила пять включённых maintenance-триггеров; при предыдущем чтении переключатель был false. Maintenance API/concurrency и HTTP guard прошли remote CI на изолированной базе. Это не проверка поведения production под записью и не разрешение включать обслуживание. [Текущий статус безопасности](SECURITY_STATUS.md).
 
 ## Блокировка записи
 
@@ -35,19 +35,19 @@ select enabled from private.maintenance_state where singleton;
 
 Ожидается одна строка enabled=true после успешного COMMIT. Затем независимо проверить отказ реального REST/RPC и отсутствие изменений, включить frontend-флаг. При таймауте или неизвестном исходе сначала проверить состояние; не начинать миграции.
 
-Для снятия блокировки после приёмки повторить транзакцию с `enabled = false`, подтвердить false и контрольную запись, затем открыть интерфейс. Сохранять историю действий и согласованный допуск canary. Обход для canary не реализован; краткое открытие всем пользователям вместо контролируемого canary запрещено.
+Для снятия блокировки после приёмки повторить транзакцию с `enabled = false`, подтвердить false и контрольную запись, затем открыть интерфейс. Сохранять историю действий и согласованный допуск canary. Постоянного bypass/allowlist нет. DB-only canary реализован транзакцией в `scripts/release-canary.sql` и проверен `scripts/test-release-canary.mjs` в изолированной CI-базе: внешняя запись остаётся закрытой. Production canary отдельно не принимался; краткое открытие всем пользователям его не заменяет.
 
-Включающий UPDATE и дальнейшие DDL нельзя держать в одной транзакции: завершить переключение, проверить API, только затем отдельные миграции. Существующий main с восемью миграциями ещё не содержит gate. Перед переходом SR06/SR07 потребуется отдельно reviewed установка gate на старую схему и репетиция такого порядка. Обычное применение всех файлов по дате устанавливает gate последним и само по себе не защищает окно миграций. Этот порядок теперь пройден локально скриптом `test-release-order.mjs`; выбор production-инструмента и регистрация history требуют отдельной проверки.
+Включающий UPDATE и дальнейшие DDL нельзя держать в одной транзакции. Однако production уже имеет все 11 версий: старую последовательность установки gate перед SR06/SR07 повторять нельзя. `test-release-order.mjs` остаётся синтетической регрессией исторического порядка, а не указанием заново устанавливать эти миграции в production. Любое будущее изменение схемы требует нового плана для подтверждённой разницы.
 
 ## Проверки
 
-- `npm run test:local:sql`: 230 assertions, включая 30 новых. Проверяется включение/снятие, прямые записи, RPC, service_role, Auth, неизменность истории и fail-closed.
+- `npm run test:local:sql`: 230 assertions на текущем baseline. Проверяется включение/снятие, прямые записи, RPC, service_role, Auth, неизменность истории и fail-closed.
 - `node scripts/test-maintenance.mjs`: реальный локальный REST/RPC HTTP 503, отказ Auth password update, чтение, повтор после открытия и межтранзакционный барьер. Создаётся и удаляется только синтетический аккаунт в проверенном профиле. Собственное уже открытое окно обслуживания тест не перехватывает.
 - `node scripts/verify-preview-guard.mjs maintenance`: production build с локальным backend, 48 HTTP GET/HEAD/POST проверок, Retry-After/no-store/noindex, отсутствие обновления Auth cookies. Проверка не аттестует hosted backend.
-- CI дополнен режимом maintenance и отдельным API/concurrency шагом. В облаке новые проверки ещё не запускались.
+- Remote [CI 41317408116](https://github.com/bondarenkodenis0907-web/client-portal-dashboard/actions/runs/41317408116) прошёл все восемь jobs, включая maintenance guard, API/concurrency, DB-only canary, порядок миграций и rollback. Тесты использовали изолированный backend runner, не production.
 
 Тестовый профиль проверяет 11 миграций, пять включённых триггеров и выключенный переключатель перед обычными тестами. Его reset допустим только штатным guarded script; существующую development базу не сбрасывать. Команды обычной разработки и форматирования — в [DEVELOPMENT.md](DEVELOPMENT.md).
 
-[Выпуск/откат](RELEASE_ROLLBACK_RUNBOOK.md). До production нужны независимое review Auth/DB-триггеров, новый SHA/CI, canary-допуск и совместимый rollback build.
+[Выпуск/откат](RELEASE_ROLLBACK_RUNBOOK.md). Перед следующим выпуском нужны актуальный SHA/CI, принятая hosted-проверка Auth, согласованный canary и конкретный совместимый cloud rollback.
 
-Репетиции подготовки: `node scripts/test-release-order.mjs`, затем `node scripts/test-rollback-build.mjs`. Совместимый baseline 9d06996 проверен на схеме 11, но не имеет frontend-флага обслуживания. Restore preflight допускает только выключенную строку переключателя без дополнительных столбцов; активное окно нельзя заменить восстановлением. Полный запуск restore-профиля на текущей Windows заблокирован зарезервированными портами 573xx. [Текущий допуск](RELEASE_ROLLBACK_RUNBOOK.md).
+Репетиции: `node scripts/test-release-order.mjs`, затем `node scripts/test-rollback-build.mjs`. Текущий rollback script закрепляет `db0f9fb98acd6793c6bdacfc3c2e63fc2ca210ff` и проверяет 35 browser scenarios, сохранение request/version/history и DB maintenance denial на схеме 11. Это исходный baseline для синтетической репетиции, не подтверждённый облачный deployment для отката. Старое ограничение Windows-портов относилось к тому локальному запуску; Linux CI fresh/saved restore прошёл. Restore preflight требует выключенный переключатель. [Выпуск](RELEASE_ROLLBACK_RUNBOOK.md).

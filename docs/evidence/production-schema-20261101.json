@@ -1,0 +1,1615 @@
+{
+  "structure": {
+    "tables": [
+      {
+        "schema": "private",
+        "name": "maintenance_state",
+        "rls": true,
+        "force_rls": false
+      },
+      {
+        "schema": "public",
+        "name": "profiles",
+        "rls": true,
+        "force_rls": false
+      },
+      {
+        "schema": "public",
+        "name": "request_events",
+        "rls": true,
+        "force_rls": false
+      },
+      {
+        "schema": "public",
+        "name": "service_requests",
+        "rls": true,
+        "force_rls": false
+      },
+      {
+        "schema": "public",
+        "name": "service_staff",
+        "rls": true,
+        "force_rls": false
+      }
+    ],
+    "columns": [
+      {
+        "schema": "private",
+        "table": "maintenance_state",
+        "name": "singleton",
+        "type": "boolean",
+        "not_null": true,
+        "identity": "",
+        "default": "true"
+      },
+      {
+        "schema": "private",
+        "table": "maintenance_state",
+        "name": "enabled",
+        "type": "boolean",
+        "not_null": true,
+        "identity": "",
+        "default": "false"
+      },
+      {
+        "schema": "public",
+        "table": "profiles",
+        "name": "id",
+        "type": "uuid",
+        "not_null": true,
+        "identity": "",
+        "default": null
+      },
+      {
+        "schema": "public",
+        "table": "profiles",
+        "name": "full_name",
+        "type": "text",
+        "not_null": false,
+        "identity": "",
+        "default": null
+      },
+      {
+        "schema": "public",
+        "table": "profiles",
+        "name": "company",
+        "type": "text",
+        "not_null": false,
+        "identity": "",
+        "default": null
+      },
+      {
+        "schema": "public",
+        "table": "profiles",
+        "name": "job_title",
+        "type": "text",
+        "not_null": false,
+        "identity": "",
+        "default": null
+      },
+      {
+        "schema": "public",
+        "table": "profiles",
+        "name": "created_at",
+        "type": "timestamp with time zone",
+        "not_null": true,
+        "identity": "",
+        "default": "now()"
+      },
+      {
+        "schema": "public",
+        "table": "profiles",
+        "name": "updated_at",
+        "type": "timestamp with time zone",
+        "not_null": true,
+        "identity": "",
+        "default": "now()"
+      },
+      {
+        "schema": "public",
+        "table": "request_events",
+        "name": "id",
+        "type": "bigint",
+        "not_null": true,
+        "identity": "a",
+        "default": null
+      },
+      {
+        "schema": "public",
+        "table": "request_events",
+        "name": "request_id",
+        "type": "uuid",
+        "not_null": true,
+        "identity": "",
+        "default": null
+      },
+      {
+        "schema": "public",
+        "table": "request_events",
+        "name": "actor_id",
+        "type": "uuid",
+        "not_null": false,
+        "identity": "",
+        "default": null
+      },
+      {
+        "schema": "public",
+        "table": "request_events",
+        "name": "status",
+        "type": "text",
+        "not_null": true,
+        "identity": "",
+        "default": null
+      },
+      {
+        "schema": "public",
+        "table": "request_events",
+        "name": "assigned_name",
+        "type": "text",
+        "not_null": false,
+        "identity": "",
+        "default": null
+      },
+      {
+        "schema": "public",
+        "table": "request_events",
+        "name": "resolution",
+        "type": "text",
+        "not_null": false,
+        "identity": "",
+        "default": null
+      },
+      {
+        "schema": "public",
+        "table": "request_events",
+        "name": "created_at",
+        "type": "timestamp with time zone",
+        "not_null": true,
+        "identity": "",
+        "default": "now()"
+      },
+      {
+        "schema": "public",
+        "table": "service_requests",
+        "name": "id",
+        "type": "uuid",
+        "not_null": true,
+        "identity": "",
+        "default": "gen_random_uuid()"
+      },
+      {
+        "schema": "public",
+        "table": "service_requests",
+        "name": "user_id",
+        "type": "uuid",
+        "not_null": true,
+        "identity": "",
+        "default": null
+      },
+      {
+        "schema": "public",
+        "table": "service_requests",
+        "name": "site",
+        "type": "text",
+        "not_null": true,
+        "identity": "",
+        "default": null
+      },
+      {
+        "schema": "public",
+        "table": "service_requests",
+        "name": "system",
+        "type": "text",
+        "not_null": true,
+        "identity": "",
+        "default": null
+      },
+      {
+        "schema": "public",
+        "table": "service_requests",
+        "name": "description",
+        "type": "text",
+        "not_null": true,
+        "identity": "",
+        "default": null
+      },
+      {
+        "schema": "public",
+        "table": "service_requests",
+        "name": "priority",
+        "type": "text",
+        "not_null": true,
+        "identity": "",
+        "default": "'medium'::text"
+      },
+      {
+        "schema": "public",
+        "table": "service_requests",
+        "name": "status",
+        "type": "text",
+        "not_null": true,
+        "identity": "",
+        "default": "'new'::text"
+      },
+      {
+        "schema": "public",
+        "table": "service_requests",
+        "name": "created_at",
+        "type": "timestamp with time zone",
+        "not_null": true,
+        "identity": "",
+        "default": "now()"
+      },
+      {
+        "schema": "public",
+        "table": "service_requests",
+        "name": "updated_at",
+        "type": "timestamp with time zone",
+        "not_null": true,
+        "identity": "",
+        "default": "now()"
+      },
+      {
+        "schema": "public",
+        "table": "service_requests",
+        "name": "assigned_to",
+        "type": "uuid",
+        "not_null": false,
+        "identity": "",
+        "default": null
+      },
+      {
+        "schema": "public",
+        "table": "service_requests",
+        "name": "resolution",
+        "type": "text",
+        "not_null": false,
+        "identity": "",
+        "default": null
+      },
+      {
+        "schema": "public",
+        "table": "service_requests",
+        "name": "closed_at",
+        "type": "timestamp with time zone",
+        "not_null": false,
+        "identity": "",
+        "default": null
+      },
+      {
+        "schema": "public",
+        "table": "service_requests",
+        "name": "operation_key",
+        "type": "uuid",
+        "not_null": false,
+        "identity": "",
+        "default": null
+      },
+      {
+        "schema": "public",
+        "table": "service_requests",
+        "name": "version",
+        "type": "integer",
+        "not_null": true,
+        "identity": "",
+        "default": "1"
+      },
+      {
+        "schema": "public",
+        "table": "service_requests",
+        "name": "expected_version",
+        "type": "integer",
+        "not_null": false,
+        "identity": "",
+        "default": null
+      },
+      {
+        "schema": "public",
+        "table": "service_staff",
+        "name": "user_id",
+        "type": "uuid",
+        "not_null": true,
+        "identity": "",
+        "default": null
+      },
+      {
+        "schema": "public",
+        "table": "service_staff",
+        "name": "display_name",
+        "type": "text",
+        "not_null": true,
+        "identity": "",
+        "default": null
+      },
+      {
+        "schema": "public",
+        "table": "service_staff",
+        "name": "is_active",
+        "type": "boolean",
+        "not_null": true,
+        "identity": "",
+        "default": "true"
+      }
+    ],
+    "constraints": [
+      {
+        "schema": "private",
+        "table": "maintenance_state",
+        "name": "maintenance_state_pkey",
+        "type": "p",
+        "validated": true,
+        "definition": "PRIMARY KEY (singleton)"
+      },
+      {
+        "schema": "private",
+        "table": "maintenance_state",
+        "name": "maintenance_state_singleton_check",
+        "type": "c",
+        "validated": true,
+        "definition": "CHECK (singleton)"
+      },
+      {
+        "schema": "public",
+        "table": "profiles",
+        "name": "profiles_company_length_check",
+        "type": "c",
+        "validated": true,
+        "definition": "CHECK ((char_length(company) <= 120))"
+      },
+      {
+        "schema": "public",
+        "table": "profiles",
+        "name": "profiles_full_name_length_check",
+        "type": "c",
+        "validated": true,
+        "definition": "CHECK ((char_length(full_name) <= 120))"
+      },
+      {
+        "schema": "public",
+        "table": "profiles",
+        "name": "profiles_id_fkey",
+        "type": "f",
+        "validated": true,
+        "definition": "FOREIGN KEY (id) REFERENCES auth.users(id) ON DELETE CASCADE"
+      },
+      {
+        "schema": "public",
+        "table": "profiles",
+        "name": "profiles_job_title_length_check",
+        "type": "c",
+        "validated": true,
+        "definition": "CHECK ((char_length(job_title) <= 120))"
+      },
+      {
+        "schema": "public",
+        "table": "profiles",
+        "name": "profiles_pkey",
+        "type": "p",
+        "validated": true,
+        "definition": "PRIMARY KEY (id)"
+      },
+      {
+        "schema": "public",
+        "table": "request_events",
+        "name": "request_events_actor_id_fkey",
+        "type": "f",
+        "validated": true,
+        "definition": "FOREIGN KEY (actor_id) REFERENCES auth.users(id) ON DELETE SET NULL"
+      },
+      {
+        "schema": "public",
+        "table": "request_events",
+        "name": "request_events_pkey",
+        "type": "p",
+        "validated": true,
+        "definition": "PRIMARY KEY (id)"
+      },
+      {
+        "schema": "public",
+        "table": "request_events",
+        "name": "request_events_request_id_fkey",
+        "type": "f",
+        "validated": true,
+        "definition": "FOREIGN KEY (request_id) REFERENCES service_requests(id) ON DELETE CASCADE"
+      },
+      {
+        "schema": "public",
+        "table": "request_events",
+        "name": "request_events_status_check",
+        "type": "c",
+        "validated": true,
+        "definition": "CHECK ((status = ANY (ARRAY['new'::text, 'in_progress'::text, 'closed'::text])))"
+      },
+      {
+        "schema": "public",
+        "table": "service_requests",
+        "name": "service_requests_assigned_to_fkey",
+        "type": "f",
+        "validated": true,
+        "definition": "FOREIGN KEY (assigned_to) REFERENCES service_staff(user_id)"
+      },
+      {
+        "schema": "public",
+        "table": "service_requests",
+        "name": "service_requests_description_input_check",
+        "type": "c",
+        "validated": true,
+        "definition": "CHECK (((char_length(description) <= 5000) AND (description ~ '[^\t-\r \u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000\ufeff]'::text)))"
+      },
+      {
+        "schema": "public",
+        "table": "service_requests",
+        "name": "service_requests_expected_version_transient",
+        "type": "c",
+        "validated": true,
+        "definition": "CHECK ((expected_version IS NULL))"
+      },
+      {
+        "schema": "public",
+        "table": "service_requests",
+        "name": "service_requests_pkey",
+        "type": "p",
+        "validated": true,
+        "definition": "PRIMARY KEY (id)"
+      },
+      {
+        "schema": "public",
+        "table": "service_requests",
+        "name": "service_requests_priority_check",
+        "type": "c",
+        "validated": true,
+        "definition": "CHECK ((priority = ANY (ARRAY['low'::text, 'medium'::text, 'high'::text])))"
+      },
+      {
+        "schema": "public",
+        "table": "service_requests",
+        "name": "service_requests_resolution_input_check",
+        "type": "c",
+        "validated": true,
+        "definition": "CHECK (((resolution IS NULL) OR ((char_length(resolution) <= 5000) AND (char_length(regexp_replace(resolution, '^[\t-\r \u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000\ufeff]+|[\t-\r \u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000\ufeff]+$'::text, ''::text, 'g'::text)) >= 10))))"
+      },
+      {
+        "schema": "public",
+        "table": "service_requests",
+        "name": "service_requests_site_input_check",
+        "type": "c",
+        "validated": true,
+        "definition": "CHECK (((char_length(site) <= 120) AND (site ~ '[^\t-\r \u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000\ufeff]'::text)))"
+      },
+      {
+        "schema": "public",
+        "table": "service_requests",
+        "name": "service_requests_status_check",
+        "type": "c",
+        "validated": true,
+        "definition": "CHECK ((status = ANY (ARRAY['new'::text, 'in_progress'::text, 'closed'::text])))"
+      },
+      {
+        "schema": "public",
+        "table": "service_requests",
+        "name": "service_requests_system_input_check",
+        "type": "c",
+        "validated": true,
+        "definition": "CHECK (((char_length(system) <= 120) AND (system ~ '[^\t-\r \u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000\ufeff]'::text)))"
+      },
+      {
+        "schema": "public",
+        "table": "service_requests",
+        "name": "service_requests_user_id_fkey",
+        "type": "f",
+        "validated": true,
+        "definition": "FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE"
+      },
+      {
+        "schema": "public",
+        "table": "service_requests",
+        "name": "service_requests_user_operation_key",
+        "type": "u",
+        "validated": true,
+        "definition": "UNIQUE (user_id, operation_key)"
+      },
+      {
+        "schema": "public",
+        "table": "service_requests",
+        "name": "service_requests_version_check",
+        "type": "c",
+        "validated": true,
+        "definition": "CHECK ((version > 0))"
+      },
+      {
+        "schema": "public",
+        "table": "service_staff",
+        "name": "service_staff_display_name_check",
+        "type": "c",
+        "validated": true,
+        "definition": "CHECK (((length(btrim(display_name)) >= 1) AND (length(btrim(display_name)) <= 120)))"
+      },
+      {
+        "schema": "public",
+        "table": "service_staff",
+        "name": "service_staff_pkey",
+        "type": "p",
+        "validated": true,
+        "definition": "PRIMARY KEY (user_id)"
+      },
+      {
+        "schema": "public",
+        "table": "service_staff",
+        "name": "service_staff_user_id_fkey",
+        "type": "f",
+        "validated": true,
+        "definition": "FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE"
+      }
+    ],
+    "indexes": [
+      {
+        "schema": "private",
+        "table": "maintenance_state",
+        "name": "maintenance_state_pkey",
+        "definition": "CREATE UNIQUE INDEX maintenance_state_pkey ON private.maintenance_state USING btree (singleton)"
+      },
+      {
+        "schema": "public",
+        "table": "profiles",
+        "name": "profiles_pkey",
+        "definition": "CREATE UNIQUE INDEX profiles_pkey ON public.profiles USING btree (id)"
+      },
+      {
+        "schema": "public",
+        "table": "request_events",
+        "name": "request_events_pkey",
+        "definition": "CREATE UNIQUE INDEX request_events_pkey ON public.request_events USING btree (id)"
+      },
+      {
+        "schema": "public",
+        "table": "request_events",
+        "name": "request_events_request_id_idx",
+        "definition": "CREATE INDEX request_events_request_id_idx ON public.request_events USING btree (request_id)"
+      },
+      {
+        "schema": "public",
+        "table": "service_requests",
+        "name": "service_requests_assigned_to_idx",
+        "definition": "CREATE INDEX service_requests_assigned_to_idx ON public.service_requests USING btree (assigned_to)"
+      },
+      {
+        "schema": "public",
+        "table": "service_requests",
+        "name": "service_requests_pkey",
+        "definition": "CREATE UNIQUE INDEX service_requests_pkey ON public.service_requests USING btree (id)"
+      },
+      {
+        "schema": "public",
+        "table": "service_requests",
+        "name": "service_requests_user_id_idx",
+        "definition": "CREATE INDEX service_requests_user_id_idx ON public.service_requests USING btree (user_id)"
+      },
+      {
+        "schema": "public",
+        "table": "service_requests",
+        "name": "service_requests_user_operation_key",
+        "definition": "CREATE UNIQUE INDEX service_requests_user_operation_key ON public.service_requests USING btree (user_id, operation_key)"
+      },
+      {
+        "schema": "public",
+        "table": "service_staff",
+        "name": "service_staff_pkey",
+        "definition": "CREATE UNIQUE INDEX service_staff_pkey ON public.service_staff USING btree (user_id)"
+      }
+    ]
+  },
+  "access": {
+    "policies": [
+      {
+        "schemaname": "public",
+        "tablename": "profiles",
+        "policyname": "Users can insert own profile",
+        "permissive": "PERMISSIVE",
+        "roles": [
+          "authenticated"
+        ],
+        "cmd": "INSERT",
+        "qual": null,
+        "with_check": "(( SELECT auth.uid() AS uid) = id)"
+      },
+      {
+        "schemaname": "public",
+        "tablename": "profiles",
+        "policyname": "Users can update own profile",
+        "permissive": "PERMISSIVE",
+        "roles": [
+          "authenticated"
+        ],
+        "cmd": "UPDATE",
+        "qual": "(( SELECT auth.uid() AS uid) = id)",
+        "with_check": "(( SELECT auth.uid() AS uid) = id)"
+      },
+      {
+        "schemaname": "public",
+        "tablename": "profiles",
+        "policyname": "Users can view own profile",
+        "permissive": "PERMISSIVE",
+        "roles": [
+          "authenticated"
+        ],
+        "cmd": "SELECT",
+        "qual": "(( SELECT auth.uid() AS uid) = id)",
+        "with_check": null
+      },
+      {
+        "schemaname": "public",
+        "tablename": "request_events",
+        "policyname": "Users can read events for visible requests",
+        "permissive": "PERMISSIVE",
+        "roles": [
+          "authenticated"
+        ],
+        "cmd": "SELECT",
+        "qual": "(EXISTS ( SELECT 1\n   FROM service_requests r\n  WHERE (r.id = request_events.request_id)))",
+        "with_check": null
+      },
+      {
+        "schemaname": "public",
+        "tablename": "service_requests",
+        "policyname": "Staff can process requests",
+        "permissive": "PERMISSIVE",
+        "roles": [
+          "authenticated"
+        ],
+        "cmd": "UPDATE",
+        "qual": "( SELECT private.is_service_staff() AS is_service_staff)",
+        "with_check": "( SELECT private.is_service_staff() AS is_service_staff)"
+      },
+      {
+        "schemaname": "public",
+        "tablename": "service_requests",
+        "policyname": "Staff can view the service queue",
+        "permissive": "PERMISSIVE",
+        "roles": [
+          "authenticated"
+        ],
+        "cmd": "SELECT",
+        "qual": "( SELECT private.is_service_staff() AS is_service_staff)",
+        "with_check": null
+      },
+      {
+        "schemaname": "public",
+        "tablename": "service_requests",
+        "policyname": "Users can create own service requests",
+        "permissive": "PERMISSIVE",
+        "roles": [
+          "authenticated"
+        ],
+        "cmd": "INSERT",
+        "qual": null,
+        "with_check": "((( SELECT auth.uid() AS uid) = user_id) AND (operation_key IS NOT NULL))"
+      },
+      {
+        "schemaname": "public",
+        "tablename": "service_requests",
+        "policyname": "Users can view own service requests",
+        "permissive": "PERMISSIVE",
+        "roles": [
+          "authenticated"
+        ],
+        "cmd": "SELECT",
+        "qual": "(( SELECT auth.uid() AS uid) = user_id)",
+        "with_check": null
+      },
+      {
+        "schemaname": "public",
+        "tablename": "service_staff",
+        "policyname": "Staff can read the service directory",
+        "permissive": "PERMISSIVE",
+        "roles": [
+          "authenticated"
+        ],
+        "cmd": "SELECT",
+        "qual": "( SELECT private.is_service_staff() AS is_service_staff)",
+        "with_check": null
+      }
+    ],
+    "table_grants": [
+      {
+        "schema_name": "private",
+        "table_name": "maintenance_state",
+        "role_name": "postgres",
+        "privilege_type": "DELETE",
+        "is_grantable": false
+      },
+      {
+        "schema_name": "private",
+        "table_name": "maintenance_state",
+        "role_name": "postgres",
+        "privilege_type": "INSERT",
+        "is_grantable": false
+      },
+      {
+        "schema_name": "private",
+        "table_name": "maintenance_state",
+        "role_name": "postgres",
+        "privilege_type": "MAINTAIN",
+        "is_grantable": false
+      },
+      {
+        "schema_name": "private",
+        "table_name": "maintenance_state",
+        "role_name": "postgres",
+        "privilege_type": "REFERENCES",
+        "is_grantable": false
+      },
+      {
+        "schema_name": "private",
+        "table_name": "maintenance_state",
+        "role_name": "postgres",
+        "privilege_type": "SELECT",
+        "is_grantable": false
+      },
+      {
+        "schema_name": "private",
+        "table_name": "maintenance_state",
+        "role_name": "postgres",
+        "privilege_type": "TRIGGER",
+        "is_grantable": false
+      },
+      {
+        "schema_name": "private",
+        "table_name": "maintenance_state",
+        "role_name": "postgres",
+        "privilege_type": "TRUNCATE",
+        "is_grantable": false
+      },
+      {
+        "schema_name": "private",
+        "table_name": "maintenance_state",
+        "role_name": "postgres",
+        "privilege_type": "UPDATE",
+        "is_grantable": false
+      },
+      {
+        "schema_name": "public",
+        "table_name": "profiles",
+        "role_name": "authenticated",
+        "privilege_type": "SELECT",
+        "is_grantable": false
+      },
+      {
+        "schema_name": "public",
+        "table_name": "profiles",
+        "role_name": "postgres",
+        "privilege_type": "DELETE",
+        "is_grantable": false
+      },
+      {
+        "schema_name": "public",
+        "table_name": "profiles",
+        "role_name": "postgres",
+        "privilege_type": "INSERT",
+        "is_grantable": false
+      },
+      {
+        "schema_name": "public",
+        "table_name": "profiles",
+        "role_name": "postgres",
+        "privilege_type": "MAINTAIN",
+        "is_grantable": false
+      },
+      {
+        "schema_name": "public",
+        "table_name": "profiles",
+        "role_name": "postgres",
+        "privilege_type": "REFERENCES",
+        "is_grantable": false
+      },
+      {
+        "schema_name": "public",
+        "table_name": "profiles",
+        "role_name": "postgres",
+        "privilege_type": "SELECT",
+        "is_grantable": false
+      },
+      {
+        "schema_name": "public",
+        "table_name": "profiles",
+        "role_name": "postgres",
+        "privilege_type": "TRIGGER",
+        "is_grantable": false
+      },
+      {
+        "schema_name": "public",
+        "table_name": "profiles",
+        "role_name": "postgres",
+        "privilege_type": "TRUNCATE",
+        "is_grantable": false
+      },
+      {
+        "schema_name": "public",
+        "table_name": "profiles",
+        "role_name": "postgres",
+        "privilege_type": "UPDATE",
+        "is_grantable": false
+      },
+      {
+        "schema_name": "public",
+        "table_name": "profiles",
+        "role_name": "service_role",
+        "privilege_type": "MAINTAIN",
+        "is_grantable": false
+      },
+      {
+        "schema_name": "public",
+        "table_name": "profiles",
+        "role_name": "service_role",
+        "privilege_type": "REFERENCES",
+        "is_grantable": false
+      },
+      {
+        "schema_name": "public",
+        "table_name": "profiles",
+        "role_name": "service_role",
+        "privilege_type": "TRIGGER",
+        "is_grantable": false
+      },
+      {
+        "schema_name": "public",
+        "table_name": "profiles",
+        "role_name": "service_role",
+        "privilege_type": "TRUNCATE",
+        "is_grantable": false
+      },
+      {
+        "schema_name": "public",
+        "table_name": "request_events",
+        "role_name": "authenticated",
+        "privilege_type": "SELECT",
+        "is_grantable": false
+      },
+      {
+        "schema_name": "public",
+        "table_name": "request_events",
+        "role_name": "postgres",
+        "privilege_type": "DELETE",
+        "is_grantable": false
+      },
+      {
+        "schema_name": "public",
+        "table_name": "request_events",
+        "role_name": "postgres",
+        "privilege_type": "INSERT",
+        "is_grantable": false
+      },
+      {
+        "schema_name": "public",
+        "table_name": "request_events",
+        "role_name": "postgres",
+        "privilege_type": "MAINTAIN",
+        "is_grantable": false
+      },
+      {
+        "schema_name": "public",
+        "table_name": "request_events",
+        "role_name": "postgres",
+        "privilege_type": "REFERENCES",
+        "is_grantable": false
+      },
+      {
+        "schema_name": "public",
+        "table_name": "request_events",
+        "role_name": "postgres",
+        "privilege_type": "SELECT",
+        "is_grantable": false
+      },
+      {
+        "schema_name": "public",
+        "table_name": "request_events",
+        "role_name": "postgres",
+        "privilege_type": "TRIGGER",
+        "is_grantable": false
+      },
+      {
+        "schema_name": "public",
+        "table_name": "request_events",
+        "role_name": "postgres",
+        "privilege_type": "TRUNCATE",
+        "is_grantable": false
+      },
+      {
+        "schema_name": "public",
+        "table_name": "request_events",
+        "role_name": "postgres",
+        "privilege_type": "UPDATE",
+        "is_grantable": false
+      },
+      {
+        "schema_name": "public",
+        "table_name": "request_events",
+        "role_name": "service_role",
+        "privilege_type": "MAINTAIN",
+        "is_grantable": false
+      },
+      {
+        "schema_name": "public",
+        "table_name": "request_events",
+        "role_name": "service_role",
+        "privilege_type": "REFERENCES",
+        "is_grantable": false
+      },
+      {
+        "schema_name": "public",
+        "table_name": "request_events",
+        "role_name": "service_role",
+        "privilege_type": "TRIGGER",
+        "is_grantable": false
+      },
+      {
+        "schema_name": "public",
+        "table_name": "request_events",
+        "role_name": "service_role",
+        "privilege_type": "TRUNCATE",
+        "is_grantable": false
+      },
+      {
+        "schema_name": "public",
+        "table_name": "service_requests",
+        "role_name": "authenticated",
+        "privilege_type": "SELECT",
+        "is_grantable": false
+      },
+      {
+        "schema_name": "public",
+        "table_name": "service_requests",
+        "role_name": "postgres",
+        "privilege_type": "DELETE",
+        "is_grantable": false
+      },
+      {
+        "schema_name": "public",
+        "table_name": "service_requests",
+        "role_name": "postgres",
+        "privilege_type": "INSERT",
+        "is_grantable": false
+      },
+      {
+        "schema_name": "public",
+        "table_name": "service_requests",
+        "role_name": "postgres",
+        "privilege_type": "MAINTAIN",
+        "is_grantable": false
+      },
+      {
+        "schema_name": "public",
+        "table_name": "service_requests",
+        "role_name": "postgres",
+        "privilege_type": "REFERENCES",
+        "is_grantable": false
+      },
+      {
+        "schema_name": "public",
+        "table_name": "service_requests",
+        "role_name": "postgres",
+        "privilege_type": "SELECT",
+        "is_grantable": false
+      },
+      {
+        "schema_name": "public",
+        "table_name": "service_requests",
+        "role_name": "postgres",
+        "privilege_type": "TRIGGER",
+        "is_grantable": false
+      },
+      {
+        "schema_name": "public",
+        "table_name": "service_requests",
+        "role_name": "postgres",
+        "privilege_type": "TRUNCATE",
+        "is_grantable": false
+      },
+      {
+        "schema_name": "public",
+        "table_name": "service_requests",
+        "role_name": "postgres",
+        "privilege_type": "UPDATE",
+        "is_grantable": false
+      },
+      {
+        "schema_name": "public",
+        "table_name": "service_requests",
+        "role_name": "service_role",
+        "privilege_type": "MAINTAIN",
+        "is_grantable": false
+      },
+      {
+        "schema_name": "public",
+        "table_name": "service_requests",
+        "role_name": "service_role",
+        "privilege_type": "REFERENCES",
+        "is_grantable": false
+      },
+      {
+        "schema_name": "public",
+        "table_name": "service_requests",
+        "role_name": "service_role",
+        "privilege_type": "TRIGGER",
+        "is_grantable": false
+      },
+      {
+        "schema_name": "public",
+        "table_name": "service_requests",
+        "role_name": "service_role",
+        "privilege_type": "TRUNCATE",
+        "is_grantable": false
+      },
+      {
+        "schema_name": "public",
+        "table_name": "service_staff",
+        "role_name": "authenticated",
+        "privilege_type": "SELECT",
+        "is_grantable": false
+      },
+      {
+        "schema_name": "public",
+        "table_name": "service_staff",
+        "role_name": "postgres",
+        "privilege_type": "DELETE",
+        "is_grantable": false
+      },
+      {
+        "schema_name": "public",
+        "table_name": "service_staff",
+        "role_name": "postgres",
+        "privilege_type": "INSERT",
+        "is_grantable": false
+      },
+      {
+        "schema_name": "public",
+        "table_name": "service_staff",
+        "role_name": "postgres",
+        "privilege_type": "MAINTAIN",
+        "is_grantable": false
+      },
+      {
+        "schema_name": "public",
+        "table_name": "service_staff",
+        "role_name": "postgres",
+        "privilege_type": "REFERENCES",
+        "is_grantable": false
+      },
+      {
+        "schema_name": "public",
+        "table_name": "service_staff",
+        "role_name": "postgres",
+        "privilege_type": "SELECT",
+        "is_grantable": false
+      },
+      {
+        "schema_name": "public",
+        "table_name": "service_staff",
+        "role_name": "postgres",
+        "privilege_type": "TRIGGER",
+        "is_grantable": false
+      },
+      {
+        "schema_name": "public",
+        "table_name": "service_staff",
+        "role_name": "postgres",
+        "privilege_type": "TRUNCATE",
+        "is_grantable": false
+      },
+      {
+        "schema_name": "public",
+        "table_name": "service_staff",
+        "role_name": "postgres",
+        "privilege_type": "UPDATE",
+        "is_grantable": false
+      },
+      {
+        "schema_name": "public",
+        "table_name": "service_staff",
+        "role_name": "service_role",
+        "privilege_type": "MAINTAIN",
+        "is_grantable": false
+      },
+      {
+        "schema_name": "public",
+        "table_name": "service_staff",
+        "role_name": "service_role",
+        "privilege_type": "REFERENCES",
+        "is_grantable": false
+      },
+      {
+        "schema_name": "public",
+        "table_name": "service_staff",
+        "role_name": "service_role",
+        "privilege_type": "TRIGGER",
+        "is_grantable": false
+      },
+      {
+        "schema_name": "public",
+        "table_name": "service_staff",
+        "role_name": "service_role",
+        "privilege_type": "TRUNCATE",
+        "is_grantable": false
+      }
+    ],
+    "column_grants": [
+      {
+        "schema_name": "public",
+        "table_name": "profiles",
+        "column_name": "company",
+        "role_name": "authenticated",
+        "privilege_type": "INSERT"
+      },
+      {
+        "schema_name": "public",
+        "table_name": "profiles",
+        "column_name": "company",
+        "role_name": "authenticated",
+        "privilege_type": "UPDATE"
+      },
+      {
+        "schema_name": "public",
+        "table_name": "profiles",
+        "column_name": "full_name",
+        "role_name": "authenticated",
+        "privilege_type": "INSERT"
+      },
+      {
+        "schema_name": "public",
+        "table_name": "profiles",
+        "column_name": "full_name",
+        "role_name": "authenticated",
+        "privilege_type": "UPDATE"
+      },
+      {
+        "schema_name": "public",
+        "table_name": "profiles",
+        "column_name": "id",
+        "role_name": "authenticated",
+        "privilege_type": "INSERT"
+      },
+      {
+        "schema_name": "public",
+        "table_name": "profiles",
+        "column_name": "job_title",
+        "role_name": "authenticated",
+        "privilege_type": "INSERT"
+      },
+      {
+        "schema_name": "public",
+        "table_name": "profiles",
+        "column_name": "job_title",
+        "role_name": "authenticated",
+        "privilege_type": "UPDATE"
+      },
+      {
+        "schema_name": "public",
+        "table_name": "profiles",
+        "column_name": "updated_at",
+        "role_name": "authenticated",
+        "privilege_type": "UPDATE"
+      },
+      {
+        "schema_name": "public",
+        "table_name": "service_requests",
+        "column_name": "assigned_to",
+        "role_name": "authenticated",
+        "privilege_type": "UPDATE"
+      },
+      {
+        "schema_name": "public",
+        "table_name": "service_requests",
+        "column_name": "description",
+        "role_name": "authenticated",
+        "privilege_type": "INSERT"
+      },
+      {
+        "schema_name": "public",
+        "table_name": "service_requests",
+        "column_name": "expected_version",
+        "role_name": "authenticated",
+        "privilege_type": "UPDATE"
+      },
+      {
+        "schema_name": "public",
+        "table_name": "service_requests",
+        "column_name": "operation_key",
+        "role_name": "authenticated",
+        "privilege_type": "INSERT"
+      },
+      {
+        "schema_name": "public",
+        "table_name": "service_requests",
+        "column_name": "priority",
+        "role_name": "authenticated",
+        "privilege_type": "INSERT"
+      },
+      {
+        "schema_name": "public",
+        "table_name": "service_requests",
+        "column_name": "resolution",
+        "role_name": "authenticated",
+        "privilege_type": "UPDATE"
+      },
+      {
+        "schema_name": "public",
+        "table_name": "service_requests",
+        "column_name": "site",
+        "role_name": "authenticated",
+        "privilege_type": "INSERT"
+      },
+      {
+        "schema_name": "public",
+        "table_name": "service_requests",
+        "column_name": "status",
+        "role_name": "authenticated",
+        "privilege_type": "UPDATE"
+      },
+      {
+        "schema_name": "public",
+        "table_name": "service_requests",
+        "column_name": "system",
+        "role_name": "authenticated",
+        "privilege_type": "INSERT"
+      },
+      {
+        "schema_name": "public",
+        "table_name": "service_requests",
+        "column_name": "user_id",
+        "role_name": "authenticated",
+        "privilege_type": "INSERT"
+      }
+    ],
+    "schema_grants": [
+      {
+        "nspname": "private",
+        "role_name": "authenticated",
+        "privilege_type": "USAGE"
+      },
+      {
+        "nspname": "private",
+        "role_name": "postgres",
+        "privilege_type": "CREATE"
+      },
+      {
+        "nspname": "private",
+        "role_name": "postgres",
+        "privilege_type": "USAGE"
+      },
+      {
+        "nspname": "public",
+        "role_name": "PUBLIC",
+        "privilege_type": "USAGE"
+      },
+      {
+        "nspname": "public",
+        "role_name": "anon",
+        "privilege_type": "USAGE"
+      },
+      {
+        "nspname": "public",
+        "role_name": "authenticated",
+        "privilege_type": "USAGE"
+      },
+      {
+        "nspname": "public",
+        "role_name": "pg_database_owner",
+        "privilege_type": "CREATE"
+      },
+      {
+        "nspname": "public",
+        "role_name": "pg_database_owner",
+        "privilege_type": "USAGE"
+      },
+      {
+        "nspname": "public",
+        "role_name": "postgres",
+        "privilege_type": "USAGE"
+      },
+      {
+        "nspname": "public",
+        "role_name": "service_role",
+        "privilege_type": "USAGE"
+      }
+    ]
+  },
+  "functions": {
+    "functions": [
+      {
+        "schema_name": "private",
+        "proname": "check_request_version",
+        "identity_arguments": "",
+        "result": "trigger",
+        "lanname": "plpgsql",
+        "prosecdef": false,
+        "provolatile": "v",
+        "proconfig": [
+          "search_path=\"\""
+        ],
+        "prosrc": "\r\nbegin\r\n  if not private.is_service_staff() then\r\n    raise insufficient_privilege using message = 'Only service staff can process requests';\r\n  end if;\r\n  if new.expected_version is null or new.expected_version < 1 then\r\n    raise invalid_parameter_value using message = 'Expected version required';\r\n  end if;\r\n  if new.expected_version <> old.version then\r\n    raise sqlstate 'PT409' using message = 'This request changed. Load the latest saved details before trying again.';\r\n  end if;\r\n  new.version := old.version + 1;\r\n  new.expected_version := null;\r\n  return new;\r\nend;\r\n",
+        "owner": "postgres",
+        "anon_execute": false,
+        "authenticated_execute": false
+      },
+      {
+        "schema_name": "private",
+        "proname": "enforce_maintenance",
+        "identity_arguments": "",
+        "result": "trigger",
+        "lanname": "plpgsql",
+        "prosecdef": true,
+        "provolatile": "v",
+        "proconfig": [
+          "search_path=\"\""
+        ],
+        "prosrc": "\r\ndeclare\r\n  blocked boolean;\r\nbegin\r\n  select enabled into blocked from private.maintenance_state\r\n    where singleton for share;\r\n  if blocked is distinct from false then\r\n    raise sqlstate 'PT503' using message = 'Portal temporarily unavailable. Please try again later.';\r\n  end if;\r\n  return null;\r\nend;\r\n",
+        "owner": "postgres",
+        "anon_execute": false,
+        "authenticated_execute": false
+      },
+      {
+        "schema_name": "private",
+        "proname": "is_service_staff",
+        "identity_arguments": "",
+        "result": "boolean",
+        "lanname": "sql",
+        "prosecdef": true,
+        "provolatile": "s",
+        "proconfig": [
+          "search_path=\"\""
+        ],
+        "prosrc": "\n  select auth.uid() is not null and exists (\n    select 1 from public.service_staff\n    where user_id = auth.uid() and is_active\n  );\n",
+        "owner": "postgres",
+        "anon_execute": false,
+        "authenticated_execute": true
+      },
+      {
+        "schema_name": "private",
+        "proname": "record_request_event",
+        "identity_arguments": "",
+        "result": "trigger",
+        "lanname": "plpgsql",
+        "prosecdef": true,
+        "provolatile": "v",
+        "proconfig": [
+          "search_path=\"\""
+        ],
+        "prosrc": "\nbegin\n  if auth.uid() is null and tg_op = 'UPDATE' then\n    raise exception 'A signed-in actor is required' using errcode = '42501';\n  end if;\n  if tg_op = 'UPDATE' and new.status is not distinct from old.status\n     and new.assigned_to is not distinct from old.assigned_to\n     and new.resolution is not distinct from old.resolution then\n    return new;\n  end if;\n  insert into public.request_events(request_id, actor_id, status, assigned_name, resolution)\n  values (new.id, coalesce(auth.uid(), new.user_id), new.status,\n    (select display_name from public.service_staff where user_id = new.assigned_to),\n    new.resolution);\n  return new;\nend;\n",
+        "owner": "postgres",
+        "anon_execute": false,
+        "authenticated_execute": false
+      },
+      {
+        "schema_name": "private",
+        "proname": "validate_request_processing",
+        "identity_arguments": "",
+        "result": "trigger",
+        "lanname": "plpgsql",
+        "prosecdef": false,
+        "provolatile": "v",
+        "proconfig": [
+          "search_path=\"\""
+        ],
+        "prosrc": "\nbegin\n  if not private.is_service_staff() then\n    raise exception 'Only service staff can process requests' using errcode = '42501';\n  end if;\n  if old.status = 'closed' then\n    raise exception 'Closed requests cannot be changed' using errcode = '23514';\n  end if;\n  if new.status <> old.status and not (\n    (old.status = 'new' and new.status = 'in_progress') or\n    (old.status = 'in_progress' and new.status = 'closed')\n  ) then\n    raise exception 'Requests must move from new to in progress to closed' using errcode = '23514';\n  end if;\n  if new.status in ('in_progress', 'closed') and new.assigned_to is null then\n    raise exception 'Assign a staff member before starting work' using errcode = '23514';\n  end if;\n  if new.assigned_to is not null and not exists (\n    select 1 from public.service_staff\n    where user_id = new.assigned_to and is_active\n  ) then\n    raise exception 'Assign an active staff member before processing the request' using errcode = '23514';\n  end if;\n  new.resolution := nullif(btrim(new.resolution), '');\n  if new.status = 'closed' and (new.resolution is null or length(new.resolution) < 10) then\n    raise exception 'Describe the completed work in at least 10 characters' using errcode = '23514';\n  end if;\n  if new.status <> 'closed' and new.resolution is not null then\n    raise exception 'A resolution is recorded when closing the request' using errcode = '23514';\n  end if;\n  new.updated_at := clock_timestamp();\n  new.closed_at := case when new.status = 'closed' then new.updated_at else null end;\n  return new;\nend;\n",
+        "owner": "postgres",
+        "anon_execute": false,
+        "authenticated_execute": false
+      },
+      {
+        "schema_name": "public",
+        "proname": "create_service_request",
+        "identity_arguments": "p_operation_key uuid, p_site text, p_system text, p_description text, p_priority text",
+        "result": "SETOF service_requests",
+        "lanname": "plpgsql",
+        "prosecdef": false,
+        "provolatile": "v",
+        "proconfig": [
+          "search_path=\"\""
+        ],
+        "prosrc": "\r\ndeclare\r\n  owner_id uuid := auth.uid();\r\n  stored_request public.service_requests%rowtype;\r\nbegin\r\n  if owner_id is null then\r\n    raise insufficient_privilege using message = 'Authentication required';\r\n  end if;\r\n  if p_operation_key is null then\r\n    raise invalid_parameter_value using message = 'Submission key required';\r\n  end if;\r\n\r\n  select * into stored_request from public.service_requests\r\n    where user_id = owner_id and operation_key = p_operation_key;\r\n  if not found then\r\n    insert into public.service_requests\r\n      (user_id, operation_key, site, system, description, priority)\r\n    values (owner_id, p_operation_key, p_site, p_system, p_description, p_priority)\r\n    on conflict (user_id, operation_key) do nothing\r\n    returning * into stored_request;\r\n\r\n    if not found then\r\n      -- A concurrent insert may have committed after the previous snapshot.\r\n      -- This separate statement gets a fresh snapshot at READ COMMITTED.\r\n      select * into stored_request from public.service_requests\r\n        where user_id = owner_id and operation_key = p_operation_key;\r\n      if not found then\r\n        raise serialization_failure using message = 'Retry the same submission';\r\n      end if;\r\n    end if;\r\n  end if;\r\n\r\n  if stored_request.site is distinct from p_site\r\n    or stored_request.system is distinct from p_system\r\n    or stored_request.description is distinct from p_description\r\n    or stored_request.priority is distinct from p_priority then\r\n    raise sqlstate 'PT409' using message = 'Submission already saved with different details';\r\n  end if;\r\n  -- A replay never updates the row or emits another creation event.\r\n  return next stored_request;\r\nend;\r\n",
+        "owner": "postgres",
+        "anon_execute": false,
+        "authenticated_execute": true
+      },
+      {
+        "schema_name": "public",
+        "proname": "handle_new_user",
+        "identity_arguments": "",
+        "result": "trigger",
+        "lanname": "plpgsql",
+        "prosecdef": true,
+        "provolatile": "v",
+        "proconfig": [
+          "search_path=\"\""
+        ],
+        "prosrc": "\r\nbegin\r\n  insert into public.profiles (id, full_name)\r\n  values (\r\n    new.id,\r\n    new.raw_user_meta_data ->> 'full_name'\r\n  )\r\n  on conflict (id) do nothing;\r\n\r\n  return new;\r\nend;\r\n",
+        "owner": "postgres",
+        "anon_execute": false,
+        "authenticated_execute": false
+      },
+      {
+        "schema_name": "public",
+        "proname": "process_service_request",
+        "identity_arguments": "p_request_id uuid, p_expected_version integer, p_assigned_to uuid, p_status text, p_resolution text",
+        "result": "SETOF service_requests",
+        "lanname": "plpgsql",
+        "prosecdef": false,
+        "provolatile": "v",
+        "proconfig": [
+          "search_path=\"\""
+        ],
+        "prosrc": "\r\ndeclare\r\n  saved_request public.service_requests%rowtype;\r\nbegin\r\n  if not private.is_service_staff() then\r\n    raise insufficient_privilege using message = 'Only service staff can process requests';\r\n  end if;\r\n  if p_expected_version is null or p_expected_version < 1 then\r\n    raise invalid_parameter_value using message = 'Expected version required';\r\n  end if;\r\n  update public.service_requests\r\n    set expected_version = p_expected_version,\r\n        assigned_to = p_assigned_to,\r\n        status = p_status,\r\n        resolution = p_resolution\r\n    where id = p_request_id\r\n    returning * into saved_request;\r\n  if not found then\r\n    raise sqlstate 'PT404' using message = 'Request not available';\r\n  end if;\r\n  return next saved_request;\r\nend;\r\n",
+        "owner": "postgres",
+        "anon_execute": false,
+        "authenticated_execute": true
+      },
+      {
+        "schema_name": "public",
+        "proname": "rls_auto_enable",
+        "identity_arguments": "",
+        "result": "event_trigger",
+        "lanname": "plpgsql",
+        "prosecdef": true,
+        "provolatile": "v",
+        "proconfig": [
+          "search_path=pg_catalog"
+        ],
+        "prosrc": "\nDECLARE\n  cmd record;\nBEGIN\n  FOR cmd IN\n    SELECT *\n    FROM pg_event_trigger_ddl_commands()\n    WHERE command_tag IN ('CREATE TABLE', 'CREATE TABLE AS', 'SELECT INTO')\n      AND object_type IN ('table','partitioned table')\n  LOOP\n     IF cmd.schema_name IS NOT NULL AND cmd.schema_name IN ('public') AND cmd.schema_name NOT IN ('pg_catalog','information_schema') AND cmd.schema_name NOT LIKE 'pg_toast%' AND cmd.schema_name NOT LIKE 'pg_temp%' THEN\n      BEGIN\n        EXECUTE format('alter table if exists %s enable row level security', cmd.object_identity);\n        RAISE LOG 'rls_auto_enable: enabled RLS on %', cmd.object_identity;\n      EXCEPTION\n        WHEN OTHERS THEN\n          RAISE LOG 'rls_auto_enable: failed to enable RLS on %', cmd.object_identity;\n      END;\n     ELSE\n        RAISE LOG 'rls_auto_enable: skip % (either system schema or not in enforced list: %.)', cmd.object_identity, cmd.schema_name;\n     END IF;\n  END LOOP;\nEND;\n",
+        "owner": "postgres",
+        "anon_execute": false,
+        "authenticated_execute": false
+      }
+    ],
+    "triggers": [
+      {
+        "schema_name": "auth",
+        "table_name": "users",
+        "tgname": "maintenance_write_gate",
+        "tgenabled": "O",
+        "definition": "CREATE TRIGGER maintenance_write_gate BEFORE INSERT OR DELETE OR UPDATE OR TRUNCATE ON auth.users FOR EACH STATEMENT EXECUTE FUNCTION private.enforce_maintenance()"
+      },
+      {
+        "schema_name": "auth",
+        "table_name": "users",
+        "tgname": "on_auth_user_created",
+        "tgenabled": "O",
+        "definition": "CREATE TRIGGER on_auth_user_created AFTER INSERT ON auth.users FOR EACH ROW EXECUTE FUNCTION handle_new_user()"
+      },
+      {
+        "schema_name": "public",
+        "table_name": "profiles",
+        "tgname": "maintenance_write_gate",
+        "tgenabled": "O",
+        "definition": "CREATE TRIGGER maintenance_write_gate BEFORE INSERT OR DELETE OR UPDATE OR TRUNCATE ON public.profiles FOR EACH STATEMENT EXECUTE FUNCTION private.enforce_maintenance()"
+      },
+      {
+        "schema_name": "public",
+        "table_name": "request_events",
+        "tgname": "maintenance_write_gate",
+        "tgenabled": "O",
+        "definition": "CREATE TRIGGER maintenance_write_gate BEFORE INSERT OR DELETE OR UPDATE OR TRUNCATE ON public.request_events FOR EACH STATEMENT EXECUTE FUNCTION private.enforce_maintenance()"
+      },
+      {
+        "schema_name": "public",
+        "table_name": "service_requests",
+        "tgname": "check_request_version",
+        "tgenabled": "O",
+        "definition": "CREATE TRIGGER check_request_version BEFORE UPDATE ON public.service_requests FOR EACH ROW EXECUTE FUNCTION private.check_request_version()"
+      },
+      {
+        "schema_name": "public",
+        "table_name": "service_requests",
+        "tgname": "maintenance_write_gate",
+        "tgenabled": "O",
+        "definition": "CREATE TRIGGER maintenance_write_gate BEFORE INSERT OR DELETE OR UPDATE OR TRUNCATE ON public.service_requests FOR EACH STATEMENT EXECUTE FUNCTION private.enforce_maintenance()"
+      },
+      {
+        "schema_name": "public",
+        "table_name": "service_requests",
+        "tgname": "record_request_event",
+        "tgenabled": "O",
+        "definition": "CREATE TRIGGER record_request_event AFTER INSERT OR UPDATE ON public.service_requests FOR EACH ROW EXECUTE FUNCTION private.record_request_event()"
+      },
+      {
+        "schema_name": "public",
+        "table_name": "service_requests",
+        "tgname": "validate_request_processing",
+        "tgenabled": "O",
+        "definition": "CREATE TRIGGER validate_request_processing BEFORE UPDATE ON public.service_requests FOR EACH ROW EXECUTE FUNCTION private.validate_request_processing()"
+      },
+      {
+        "schema_name": "public",
+        "table_name": "service_staff",
+        "tgname": "maintenance_write_gate",
+        "tgenabled": "O",
+        "definition": "CREATE TRIGGER maintenance_write_gate BEFORE INSERT OR DELETE OR UPDATE OR TRUNCATE ON public.service_staff FOR EACH STATEMENT EXECUTE FUNCTION private.enforce_maintenance()"
+      }
+    ]
+  },
+  "index_health": [
+    {
+      "schema_name": "private",
+      "table_name": "maintenance_state",
+      "index_name": "maintenance_state_pkey",
+      "indisvalid": true,
+      "indisready": true
+    },
+    {
+      "schema_name": "public",
+      "table_name": "profiles",
+      "index_name": "profiles_pkey",
+      "indisvalid": true,
+      "indisready": true
+    },
+    {
+      "schema_name": "public",
+      "table_name": "request_events",
+      "index_name": "request_events_pkey",
+      "indisvalid": true,
+      "indisready": true
+    },
+    {
+      "schema_name": "public",
+      "table_name": "request_events",
+      "index_name": "request_events_request_id_idx",
+      "indisvalid": true,
+      "indisready": true
+    },
+    {
+      "schema_name": "public",
+      "table_name": "service_requests",
+      "index_name": "service_requests_assigned_to_idx",
+      "indisvalid": true,
+      "indisready": true
+    },
+    {
+      "schema_name": "public",
+      "table_name": "service_requests",
+      "index_name": "service_requests_pkey",
+      "indisvalid": true,
+      "indisready": true
+    },
+    {
+      "schema_name": "public",
+      "table_name": "service_requests",
+      "index_name": "service_requests_user_id_idx",
+      "indisvalid": true,
+      "indisready": true
+    },
+    {
+      "schema_name": "public",
+      "table_name": "service_requests",
+      "index_name": "service_requests_user_operation_key",
+      "indisvalid": true,
+      "indisready": true
+    },
+    {
+      "schema_name": "public",
+      "table_name": "service_staff",
+      "index_name": "service_staff_pkey",
+      "indisvalid": true,
+      "indisready": true
+    }
+  ],
+  "constraint_definition_hex": [
+    {
+      "conname": "service_requests_description_input_check",
+      "definition_hex": "434845434b20282828636861725f6c656e677468286465736372697074696f6e29203c3d20353030302920414e4420286465736372697074696f6e207e20275b5e092d0d20c2a0e19a80e280802de2808ae280a8e280a9e280afe2819fe38080efbbbf5d273a3a74657874292929"
+    },
+    {
+      "conname": "service_requests_resolution_input_check",
+      "definition_hex": "434845434b202828287265736f6c7574696f6e204953204e554c4c29204f52202828636861725f6c656e677468287265736f6c7574696f6e29203c3d20353030302920414e442028636861725f6c656e677468287265676578705f7265706c616365287265736f6c7574696f6e2c20275e5b092d0d20c2a0e19a80e280802de2808ae280a8e280a9e280afe2819fe38080efbbbf5d2b7c5b092d0d20c2a0e19a80e280802de2808ae280a8e280a9e280afe2819fe38080efbbbf5d2b24273a3a746578742c2027273a3a746578742c202767273a3a746578742929203e3d20313029292929"
+    },
+    {
+      "conname": "service_requests_site_input_check",
+      "definition_hex": "434845434b20282828636861725f6c656e677468287369746529203c3d203132302920414e44202873697465207e20275b5e092d0d20c2a0e19a80e280802de2808ae280a8e280a9e280afe2819fe38080efbbbf5d273a3a74657874292929"
+    },
+    {
+      "conname": "service_requests_system_input_check",
+      "definition_hex": "434845434b20282828636861725f6c656e6774682873797374656d29203c3d203132302920414e44202873797374656d207e20275b5e092d0d20c2a0e19a80e280802de2808ae280a8e280a9e280afe2819fe38080efbbbf5d273a3a74657874292929"
+    }
+  ],
+  "checked_at": "2026-11-01",
+  "project_id": "xdpewqewdeiaoyotpawv",
+  "baseline_commit": "a0c1af06b842e52e0b98d015adae15433fa2922d",
+  "scope": "Application catalog only; no user-row reads or writes, no DDL; separate catalog queries, not one transaction snapshot"
+}
