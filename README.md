@@ -4,6 +4,8 @@ A service portal for building systems: report a fault, assign an engineer and re
 
 [Live application](https://client-portal-dashboard-one.vercel.app) · [CI](https://github.com/bondarenkodenis0907-web/client-portal-dashboard/actions)
 
+[Follow a completed repair](docs/COMPLETED_SCENARIO.md): client reports an offline CCTV camera → engineer takes the job → repair is recorded → client reads the result and history.
+
 ![Completed request with repair notes and history](public/screenshots/request-completed.png)
 
 Built with Next.js, React, TypeScript, Tailwind CSS and Supabase. Screenshots use fictional accounts and requests.
