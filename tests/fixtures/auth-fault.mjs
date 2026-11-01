@@ -16,13 +16,15 @@ globalThis.fetch = async (input, init) => {
     typeof input === "string" ? input : input.url || String(input),
   );
   const marker = process.env.TEST_AUTH_FAULT_FILE;
-  if (
-    url.origin === "http://127.0.0.1:56321" &&
-    url.pathname === "/auth/v1/user" &&
-    marker &&
-    existsSync(marker)
-  ) {
-    const status = Number(readFileSync(marker, "utf8"));
+  if (url.origin === "http://127.0.0.1:56321" && marker && existsSync(marker)) {
+    const value = readFileSync(marker, "utf8");
+    const refresh = value.startsWith("refresh:");
+    const matches = refresh
+      ? url.pathname === "/auth/v1/token" &&
+        url.searchParams.get("grant_type") === "refresh_token"
+      : url.pathname === "/auth/v1/user";
+    if (!matches) return original(input, init);
+    const status = Number(refresh ? value.slice("refresh:".length) : value);
     if (![401, 403, 503].includes(status))
       throw Error("Invalid synthetic Auth status");
     return new Response(

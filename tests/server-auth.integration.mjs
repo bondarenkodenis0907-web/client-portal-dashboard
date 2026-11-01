@@ -12,7 +12,7 @@ import { runLocal, cleanEnvironment } from "../scripts/local-tests.mjs";
 
 test(
   "SSR Auth failures remain retryable; recovery grants survive outages and reject invalid sessions",
-  { timeout: 90000 },
+  { timeout: 120000 },
   async () => {
     const status = await runLocal("verify");
     const directory = mkdtempSync(
@@ -153,6 +153,93 @@ test(
         } finally {
           await context.close();
         }
+      }
+      // An expired access token with a valid refresh credential must survive
+      // an outage of the token endpoint, not become a rejected login session.
+      const refreshContext = await browser.newContext();
+      try {
+        const api = createClient(status.API_URL, status.PUBLISHABLE_KEY, {
+          auth: { persistSession: false, autoRefreshToken: false },
+        });
+        const login = await api.auth.signInWithPassword({
+          email: users[0].email,
+          password: users[0].password,
+        });
+        assert.ok(
+          !login.error && login.data.session,
+          "Local refresh fixture failed",
+        );
+        const session = login.data.session;
+        const [header, body, signature] = session.access_token.split(".");
+        const claims = JSON.parse(Buffer.from(body, "base64url").toString());
+        const expired = [
+          header,
+          Buffer.from(JSON.stringify({ ...claims, exp: 1 })).toString(
+            "base64url",
+          ),
+          signature,
+        ].join(".");
+        const value =
+          "base64-" +
+          Buffer.from(
+            JSON.stringify({
+              ...session,
+              access_token: expired,
+              expires_at: 1,
+            }),
+          ).toString("base64url");
+        await refreshContext.addCookies([
+          { name: "sb-127-auth-token", value, url: origin, sameSite: "Lax" },
+        ]);
+        writeFileSync(marker, "refresh:503");
+        const unavailable = await refreshContext.request.get(
+          origin + "/dashboard/requests",
+          { maxRedirects: 0, timeout: 60000 },
+        );
+        assert.equal(unavailable.status(), 503);
+        assert.equal(unavailable.headers().location, undefined);
+        assert.match(
+          unavailable.headers()["cache-control"],
+          /private.*no-store/,
+        );
+        assert.equal(unavailable.headers()["retry-after"], "5");
+        assert.ok(
+          !(unavailable.headers()["set-cookie"] ?? "").includes("Max-Age=0"),
+          "A temporary refresh failure must not clear the session",
+        );
+        const retained = (await refreshContext.cookies()).find(
+          (cookie) => cookie.name === "sb-127-auth-token",
+        );
+        assert.ok(
+          retained?.value === value,
+          "Expired session must remain retryable",
+        );
+        rmSync(marker);
+        const recovered = await refreshContext.request.get(
+          origin + "/dashboard/requests",
+          { maxRedirects: 0 },
+        );
+        assert.equal(recovered.status(), 200);
+        assert.equal(recovered.headers().location, undefined);
+        const rotated = (await refreshContext.cookies())
+          .filter((cookie) => /^sb-127-auth-token(?:\.\d+)?$/.test(cookie.name))
+          .sort((a, b) => a.name.localeCompare(b.name))
+          .map((cookie) => cookie.value)
+          .join("");
+        const restored = JSON.parse(
+          Buffer.from(rotated.slice("base64-".length), "base64url").toString(),
+        );
+        assert.ok(
+          restored.access_token !== expired,
+          "Refresh must issue a new access token",
+        );
+        assert.ok(
+          restored.expires_at > Date.now() / 1000,
+          "Refreshed token must be current",
+        );
+      } finally {
+        rmSync(marker, { force: true });
+        await refreshContext.close();
       }
       const context = await browser.newContext();
       const page = await context.newPage();
