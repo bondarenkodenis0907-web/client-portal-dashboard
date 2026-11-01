@@ -26,3 +26,9 @@ Review compatible upstream fixes for minimatch and a supported ESLint major. The
 The weekly Dependabot configuration becomes active once merged into the default branch. Review generated PRs and rerun CI. This change does not merge PR #24, apply migrations, change provider configuration or release production. The release gates and environment isolation requirements in the release runbook remain open.
 
 References: [Next.js Proxy location](https://nextjs.org/docs/app/api-reference/file-conventions/proxy), [ESLint version support](https://eslint.org/version-support/), [minimatch advisory](https://github.com/advisories/GHSA-g3hv-75wg-m249).
+
+## Follow-up: remote screenshot capture
+
+On 1 November, candidate `2ee311ac5a742eef723cbc9b6b5f6129e2656f9c` ran the browser/SQL suite on GitHub Actions' isolated backend. The screenshot upload step succeeded in [CI run 41316584189](https://github.com/bondarenkodenis0907-web/client-portal-dashboard/actions/runs/41316584189), producing artifact `completed-scenario-screenshots` (ID 13087154364). Its five PNGs were downloaded and visually reviewed: request created, staff queue, work in progress, completed client view and mobile. The walkthrough images were refreshed from those exact bytes. They contain fictional test data and no visible pointer.
+
+The browser test verifies the saved database outcome as well as the screens. It also exercises reassignment from Alex Morgan to Taylor Lee, failure recovery and stale-write rejection. This follow-up supersedes the earlier screenshot freshness limitation; it does not turn the isolated CI run into hosted production acceptance.

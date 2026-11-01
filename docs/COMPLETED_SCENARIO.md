@@ -2,7 +2,7 @@
 
 A site coordinator reports an offline loading-bay CCTV camera. An engineer takes the request, records the repair and closes it. The coordinator can then read the result and its history.
 
-This walkthrough uses existing application screenshots with fictional accounts and site data. It is a recorded example, not a claim that the live deployment contains every change in the release candidate.
+This walkthrough uses application screenshots captured on 1 November 2026 by [the isolated CI browser suite](https://github.com/bondarenkodenis0907-web/client-portal-dashboard/actions/runs/41316584189), on candidate `2ee311a`. Accounts and site data are fictional. It is a recorded example, not a claim that the live deployment contains every change in the release candidate.
 
 ## 1. Report the fault
 
@@ -15,6 +15,8 @@ As a client, open Service requests and submit:
 
 The request starts as New. The client sees their own requests; active staff can see it in the service queue.
 
+![Client view of the newly created request](../public/screenshots/request-created.png)
+
 ![Staff queue containing the reported fault](../public/screenshots/staff-queue.png)
 
 ## 2. Assign an engineer and start work
@@ -26,6 +28,8 @@ Open the request from the staff queue, choose an active engineer and select Assi
 ## 3. Record the repair and close the request
 
 Enter the completed work: “Replaced the damaged PoE connector, restored the video feed and checked recording playback.” Select Close request.
+
+The test also reassigns the work from Alex Morgan to Taylor Lee before closing it. Both assignments remain visible in history.
 
 The completed request shows the repair note, responsible engineer, closed status and history. A client can reopen the request page to read the result.
 
@@ -51,4 +55,4 @@ To refresh the walkthrough screenshots locally, run the same isolated suite with
 
 GitHub Actions enables capture for the isolated browser suite. After that suite succeeds, download `completed-scenario-screenshots` from the CI run's Artifacts section (retained for seven days). The five PNGs show the created request, staff queue, work in progress, completed client view and mobile view. CI writes them to `test-results/portfolio`, so an artifact cannot silently reuse the screenshots committed in `public/screenshots`. Only fictional local test accounts and requests are used. A passing suite also verifies the database result; screenshots alone do not prove it. Review the new frames before updating portfolio images.
 
-The current test also exercises reassignment and failure recovery, so regenerated history can contain more events than these older screenshots. A new local browser run was not performed during the 1 November documentation review because Docker was unavailable; see the candidate CI results for execution evidence.
+The test also exercises failure recovery and a rejected stale edit. Docker was unavailable in the review workspace; the fresh screenshots and browser execution came from GitHub Actions, without using the owner's computer.
