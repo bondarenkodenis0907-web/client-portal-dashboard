@@ -753,8 +753,25 @@ export async function runRestoreDrill(action, argument) {
     restored = true;
     const after = inventory(destination);
     for (const name of Object.keys(before)) {
-      if (fingerprint(before[name]) !== fingerprint(after[name]))
+      if (fingerprint(before[name]) !== fingerprint(after[name])) {
+        if (name === "constraints") {
+          // Schema definitions only: never log table contents or Auth sessions.
+          const key = (row) =>
+            JSON.stringify([row.schema, row.table_name, row.name]);
+          const prior = new Map(before[name].map((row) => [key(row), row]));
+          const restored = new Map(after[name].map((row) => [key(row), row]));
+          for (const id of new Set([...prior.keys(), ...restored.keys()])) {
+            if (
+              JSON.stringify(prior.get(id)) !== JSON.stringify(restored.get(id))
+            )
+              console.error("Constraint mismatch", {
+                before: prior.get(id),
+                after: restored.get(id),
+              });
+          }
+        }
         throw Error(`Restored inventory mismatch: ${name}`);
+      }
     }
     report.inventoryEqual = Object.fromEntries(
       Object.keys(before).map((name) => [name, true]),
