@@ -22,6 +22,10 @@ Screenshots show the candidate on an isolated backend with fictional data. The n
 
 A separate feature branch prepares persisted sites, buildings and explicit client admission with server-rendered directory pages. Clients see only assigned sites; active staff can read the company directory. Provisioning is administrative; there is no customer self-enrolment. See the [scope and acceptance criteria](docs/FACILITY_DIRECTORY.md). This feature is not in production or the #24 baseline; its twelfth migration is only for isolated development until reviewed and approved.
 
+## Site and contract management development
+
+A separately stacked branch adds explicitly admitted managers, site editing with conflict checks, versioned contract cards and private PDF download, and deliberate publication to admitted clients. The bounded pilot uses PostgreSQL-backed PDF files (up to 2 MiB) so metadata and bytes are atomic and restored together; the planned Storage bucket is not yet implemented. See the [management scope, access model and tests](docs/SITE_CONTRACT_MANAGEMENT.md). This feature is not deployed.
+
 ## Features
 
 - Clients see their own requests; active staff share the service queue.
