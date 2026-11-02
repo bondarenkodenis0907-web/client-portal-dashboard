@@ -129,10 +129,10 @@ test("restored SQL count follows the archived test suite and rejects missing or 
         ).toString("base64"),
       ]),
   );
-  assert.equal(restoredSqlTestCount(files), 334);
+  assert.equal(restoredSqlTestCount(files), 346);
   assert.equal(restoredSqlTestPaths(files).length, 10);
   delete files["supabase/tests/maintenance.test.sql"];
-  assert.equal(restoredSqlTestCount(files), 304);
+  assert.equal(restoredSqlTestCount(files), 316);
   assert.equal(restoredSqlTestPaths(files).length, 9);
   assert(
     !restoredSqlTestPaths(files).includes(

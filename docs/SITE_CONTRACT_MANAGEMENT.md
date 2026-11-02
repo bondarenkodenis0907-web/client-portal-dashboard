@@ -1,6 +1,6 @@
 # Управление объектом и контрактом
 
-02.11.2026. Отдельный срез от #29 (`e60b209`), PREPARED до review/CI/приёмки. Production остаётся на 11 миграциях; эта ветка содержит 13. Она не включается автоматически в #29, #24 или main. Hosted recovery в этом цикле не выполняется.
+02.11.2026. Отдельный срез от #29 (`e60b209`), PREPARED до review/CI/приёмки. Production остаётся на 11 миграциях; эта ветка содержит 14. Она не включается автоматически в #29, #24 или main. Hosted recovery в этом цикле не выполняется.
 
 ## Функциональный объём
 
@@ -29,7 +29,7 @@ facility_managers назначает только доверенный адми�
 
 ## Архитектурное решение для первого среза
 
-В отличие от исходного направления с private Storage bucket, для ограниченного пилота выбран **закрытый PostgreSQL bytea**: один основной PDF до **2 MiB** на версию. Это позволяет сохранить метаданные, байты, digest и audit атомарно и включить файл в уже проверяемый DB backup/restore. Исходный план Storage не считается реализованным. Решение и предел требуют принятия до выпуска; приложения/сканы/Office и большие файлы остаются следующим этапом.
+В отличие от исходного направления с private Storage bucket, для ограниченного пилота согласован владельцем 02.11.2026 **закрытый PostgreSQL bytea**: один основной PDF до **2 MiB** на версию. Это позволяет сохранить метаданные, байты, digest и audit атомарно и включить файл в уже проверяемый DB backup/restore. Исходный план Storage не считается реализованным. Решение и предел согласованы владельцем; приложения/сканы/Office и большие файлы остаются следующим этапом.
 
 Файл лежит в private.contract_files, RLS включён. Схема private не экспонируется Data API. Публичный invoker download RPC читает только файл версии, доступной по RLS. Доступ проверяется на карточке и байтах. Server runtime использует пользовательскую SSR-сессию/publishable key; service-role ключ приложению не добавляется.
 
@@ -62,8 +62,14 @@ Authenticated получает SELECT, но не прямые DML для эти�
 - M07: lost acknowledgement не создаёт дубликат; форма сохраняет стабильный ID и не делает автоматический повтор.
 - M08: maintenance не обходится private mutation; свежий и independent saved restore возвращают PDF/digest/права; rollback старого frontend сохраняет контракт и файл.
 
-Suite: 46 unit/policy, 334 SQL / 10 файлов, 41 browser cases плюс расширенная server integration; counts — состав suite, PASS фиксируется только по фактическому CI конкретного SHA. SQL/browser/restore локально без Docker не запускались. CI использует owned ephemeral synthetic данные и PDF, без production credentials.
+Suite: 46 unit/policy, 346 SQL / 10 файлов, 41 browser cases плюс расширенная server integration; counts — состав suite, PASS фиксируется только по фактическому CI конкретного SHA. SQL/browser/restore локально без Docker не запускались. CI использует owned ephemeral synthetic данные и PDF, без production credentials.
 
 Fresh/saved restore fixtures теперь содержат две версии-контракта с PDF: один опубликован для клиента своего объекта, второй внутренний. Сверяются байты/digest, доступ клиента/outsider/staff/manager. Cleanup удаляет только owned fixture events → bytes → versions → contract в транзакции, затем manager admissions и прежние данные; циклические FK не обходятся отключением constraints. Preflight принимает новые таблицы только пустыми. Старый frontend rollback проверяет сохранность PDF через защищённый RPC, хотя сам старый frontend не показывает каталог.
 
 Открыто перед выпуском: независимый review прав/definer RPC и выбранного binary storage, ручная приёмка, реальные роли/форматы/лимиты, собственный rollout/backup/rollback plan. Production и существующие recovery endpoints этим срезом не меняются. Следующее развитие — приложения/документы здания/private Storage и связь заявок с building_id, с сохранением legacy privacy.
+
+## Исправление replay после security review
+
+Миграция `20261102140100_contract_replay_identity.sql` заменяет только private save_contract_version, сохраняя ACL и manager-проверку. Exact replay сравнивает нормализованные входные поля без вычисленных имён плюс filename/digest. Любой действующий manager может подтвердить точный повтор: это чтение результата без изменения автора, revision, PDF и audit. Для новой версии активность ответственного и новые имена проверяются/фиксируются заново. Прежние миграции не переписываются.
+
+Добавлены 12 SQL assertions: rename/deactivation/replay, сохранение исходных имён/revision/audit, отказ изменённого payload, запрет новой версии с неактивным responsible, прямой private RPC без manager, публикация существующей версии другого контракта, скачивание unpublished PDF после manager revoke. В составе suite 346 assertions; новый CI должен подтвердить результат. Отдельная конкурентная публикация в двух транзакциях этим изменением не добавлена; существующая CAS-проверка сохранена.

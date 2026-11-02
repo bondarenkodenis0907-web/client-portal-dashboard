@@ -1,6 +1,6 @@
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(63);
+select plan(75);
 insert into auth.users(id,email) values
  ('13000000-0000-4000-8000-000000000001','contract-client-a@example.test'),
  ('13000000-0000-4000-8000-000000000002','contract-client-b@example.test'),
@@ -30,6 +30,7 @@ select throws_ok($$select pg_temp.sv('13000000-0000-4000-8000-000000000041',0,'H
 select throws_ok($$select public.publish_contract('13000000-0000-4000-8000-000000000031',1,null)$$,'42501',null,'Client cannot publish');
 set local request.jwt.claim.sub='13000000-0000-4000-8000-000000000004';
 select is(public.can_manage_facilities(),false,'Ordinary active staff cannot manage');
+select throws_ok($$select private.publish_contract('13000000-0000-4000-8000-000000000031',1,null)$$,'42501',null,'Direct private mutation cannot bypass manager admission');
 select throws_ok($$select public.save_site('13000000-0000-4000-8000-000000000011',1,pg_temp.sd('Hacked'))$$,'42501',null,'Staff queue admission is insufficient');
 set local request.jwt.claim.sub='13000000-0000-4000-8000-000000000003';
 select is(public.can_manage_facilities(),true,'Explicit active manager admitted');
@@ -44,6 +45,26 @@ select throws_ok($$select public.save_site('13000000-0000-4000-8000-000000000011
 select lives_ok($$select pg_temp.sv('13000000-0000-4000-8000-000000000041',0,'First title')$$,'Atomic first contract and PDF');
 select lives_ok($$select pg_temp.sv('13000000-0000-4000-8000-000000000041',0,'First title')$$,'Same contract operation replay accepted');
 select is((select count(*)::int from public.contract_versions),1,'Replay has one version');
+reset role;
+update public.service_staff set display_name='Renamed Manager A' where user_id='13000000-0000-4000-8000-000000000003';
+set local role authenticated;
+select lives_ok($$select pg_temp.sv('13000000-0000-4000-8000-000000000041',0,'First title')$$,'Exact replay survives author/responsible rename');
+select is((select details->>'author_name' from public.contract_versions where id='13000000-0000-4000-8000-000000000041'),'Manager A','Replay preserves original author snapshot');
+select is((select details->>'responsible_name' from public.contract_versions where id='13000000-0000-4000-8000-000000000041'),'Manager A','Replay preserves original responsible snapshot');
+set local request.jwt.claim.sub='13000000-0000-4000-8000-000000000005';
+reset role;
+update public.service_staff set is_active=false where user_id='13000000-0000-4000-8000-000000000003';
+set local role authenticated;
+select lives_ok($$select pg_temp.sv('13000000-0000-4000-8000-000000000041',0,'First title')$$,'Another admitted manager acknowledges exact replay after responsible deactivation');
+select is((select revision from public.contracts where id='13000000-0000-4000-8000-000000000031'),1,'Replay retains contract revision');
+select is((select count(*)::int from public.contract_events),1,'Replay retains a single audit event');
+select throws_ok($$select pg_temp.sv('13000000-0000-4000-8000-000000000041',0,'Changed after rename')$$,'PT409',null,'Changed payload still conflicts after rename');
+select throws_ok($$select pg_temp.sv('13000000-0000-4000-8000-000000000049',1,'New with inactive responsible')$$,'22023',null,'New version still requires active responsible');
+reset role;
+update public.service_staff set is_active=true,display_name='Manager A' where user_id='13000000-0000-4000-8000-000000000003';
+set local role authenticated;
+set local request.jwt.claim.sub='13000000-0000-4000-8000-000000000003';
+
 select throws_ok($$select pg_temp.sv('13000000-0000-4000-8000-000000000041',0,'Changed payload')$$,'PT409',null,'Operation ID cannot change payload');
 select throws_ok($$select pg_temp.sv('13000000-0000-4000-8000-000000000042',0,'Stale')$$,'PT409',null,'Stale contract revision rejected');
 select lives_ok($$select pg_temp.sv('13000000-0000-4000-8000-000000000042',1,'Second title')$$,'New snapshot version added');
@@ -52,6 +73,16 @@ select throws_ok($$update public.contract_versions set filename='changed.pdf'$$,
 select throws_ok($$delete from private.contract_files$$,'42501',null,'Manager cannot delete immutable file bytes');
 select throws_ok($$select public.publish_contract('13000000-0000-4000-8000-000000000031',1,'13000000-0000-4000-8000-000000000041')$$,'PT409',null,'Stale publication rejected');
 select throws_ok($$select public.publish_contract('13000000-0000-4000-8000-000000000031',2,'13000000-0000-4000-8000-000000000099')$$,'PT404',null,'Unknown version cannot be published');
+select lives_ok($$select public.save_contract_version('13000000-0000-4000-8000-000000000032','13000000-0000-4000-8000-000000000012','13000000-0000-4000-8000-000000000048',0,pg_temp.cd('Other contract'),'other.pdf',encode(convert_to('%PDF-X','UTF8'),'base64'))$$,'Create existing foreign-contract version');
+select throws_ok($$select public.publish_contract('13000000-0000-4000-8000-000000000031',2,'13000000-0000-4000-8000-000000000048')$$,'PT404',null,'Existing foreign-contract version cannot be published');
+reset role;
+delete from public.contract_events where contract_id='13000000-0000-4000-8000-000000000032';
+delete from private.contract_files where version_id='13000000-0000-4000-8000-000000000048';
+delete from public.contract_versions where id='13000000-0000-4000-8000-000000000048';
+delete from public.contracts where id='13000000-0000-4000-8000-000000000032';
+set local role authenticated;
+set local request.jwt.claim.sub='13000000-0000-4000-8000-000000000003';
+
 set local request.jwt.claim.sub='13000000-0000-4000-8000-000000000001';
 select is((select count(*)::int from public.contracts),0,'Unpublished contract hidden even from site member');
 select is((select count(*)::int from private.contract_files),0,'Unpublished private file hidden');
@@ -93,6 +124,7 @@ update public.facility_managers set is_active=false where user_id='13000000-0000
 set local role authenticated;
 set local request.jwt.claim.sub='13000000-0000-4000-8000-000000000003';
 select is(public.can_manage_facilities(),false,'Management revoke takes effect with unchanged claims');
+select is((select count(*)::int from public.download_contract_file('13000000-0000-4000-8000-000000000042')),0,'Revoked manager cannot download unpublished PDF with unchanged claims');
 select throws_ok($$select public.publish_contract('13000000-0000-4000-8000-000000000031',5,'13000000-0000-4000-8000-000000000041')$$,'42501',null,'Revoked manager cannot publish');
 reset role;
 update public.service_staff set is_active=false where user_id='13000000-0000-4000-8000-000000000005';
