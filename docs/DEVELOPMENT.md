@@ -48,7 +48,7 @@ npm run test:local:stop
 
 Run app builds and browser/Preview tests sequentially: they share `.next`. Use placeholder environment values for standalone builds. Never build with production credentials locally.
 
-`test:local` validates eleven migrations, runs SQL tests, builds with webpack and runs browser tests. It creates a checkout-specific project under ignored `.local-tests`, using API/DB/Mailpit ports 56321/56322/56324. Node/CLI versions, ownership, migration snapshots and loopback API are checked before test writes. Only synthetic accounts are created. `test:browser` runs the same browser path; `test:local:reset` resets only the owned test profile after a reviewed migration change.
+On the facility feature branch, `test:local` validates twelve migrations, runs SQL tests, builds with webpack and runs browser tests. It creates a checkout-specific project under ignored `.local-tests`, using API/DB/Mailpit ports 56321/56322/56324. Node/CLI versions, ownership, migration snapshots and loopback API are checked before test writes. Only synthetic accounts are created. `test:browser` runs the same browser path; `test:local:reset` resets only the owned test profile after a reviewed migration change.
 
 Next.js Proxy denies Preview/Netlify/unknown hosts before Auth. The local test exception requires port 56321 and no cloud flags; never enable it on hosted environments.
 
@@ -63,3 +63,5 @@ Browser tests run the server in UTC and explicitly exercise UTC, Europe/Moscow a
 After the browser suite, the same guarded command runs `tests/server-auth.integration.mjs` on a separate loopback server (3012). A test-only loader simulates server-to-Auth 503/401/403 responses: dashboard retry must reload server data, recovery must distinguish an outage from an invalid session, and the same grant must work after recovery. No fault loader is used by ordinary app startup.
 
 Request history uses 50-event cursor pages, shared by SSR and processing refreshes. Load older events follows descending event IDs, retains already loaded events on failure and resets when a newer initial history page arrives. This does not change database permissions or migrations.
+
+The facility feature branch adds sites/buildings/site_memberships and tests 7 public RLS tables / 8 maintenance triggers. Production remains on eleven migrations. [Directory scope and test matrix](FACILITY_DIRECTORY.md). Provisioning fixtures and schema writes run only against the owned synthetic backend; do not apply the new migration or run its mutating tests against production.

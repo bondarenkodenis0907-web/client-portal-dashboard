@@ -91,6 +91,9 @@ const suffix = randomUUID(),
   email = `release-switch-${suffix}@example.test`;
 const operation = randomUUID();
 let server, browser, report, failure;
+const facilitySite = randomUUID(),
+  facilityBuilding = randomUUID();
+let facilitySeeded = false;
 const cleanup = {
   browserClosed: false,
   serverStopped: false,
@@ -144,13 +147,27 @@ async function seeRequest(id, text) {
     await page.waitForURL("**/dashboard");
     await page.goto(`http://127.0.0.1:3010/dashboard/requests/${id}`);
     await page.getByText(text, { exact: true }).first().waitFor();
+    const site = await client
+      .from("sites")
+      .select("id, name")
+      .eq("id", facilitySite)
+      .single();
+    assert.equal(site.error, null);
+    assert.equal(site.data.name, "Rollback retained site");
+    const building = await client
+      .from("buildings")
+      .select("id, site_id")
+      .eq("id", facilityBuilding)
+      .single();
+    assert.equal(building.error, null);
+    assert.equal(building.data.site_id, facilitySite);
   } finally {
     await context.close();
   }
 }
 try {
   console.log(
-    "Building pinned rollback source against the eleven-migration local backend.",
+    "Building pinned rollback source against the current-schema local backend.",
   );
   stage = "rollback-build";
   command(process.execPath, [next, "build", "--webpack"], { cwd: source, env });
@@ -188,7 +205,7 @@ try {
   assert.equal(browserStats.skipped, 0);
   assert.equal(browserStats.flaky, 0);
   console.log(
-    "PASS: 35 browser scenarios including QA fixes against pinned rollback build on schema 11.",
+    "PASS: 35 browser scenarios including QA fixes against pinned rollback build on the current additive schema.",
   );
   for (const address of [email, `release-staff-${suffix}@example.test`]) {
     const r = await admin.auth.admin.createUser({
@@ -217,6 +234,33 @@ try {
         email: `release-staff-${suffix}@example.test`,
         password,
       })
+    ).error,
+    null,
+  );
+  assert.equal(
+    (
+      await admin
+        .from("sites")
+        .insert({ id: facilitySite, name: "Rollback retained site" })
+    ).error,
+    null,
+  );
+  facilitySeeded = true;
+  assert.equal(
+    (
+      await admin.from("buildings").insert({
+        id: facilityBuilding,
+        site_id: facilitySite,
+        name: "Rollback retained building",
+      })
+    ).error,
+    null,
+  );
+  assert.equal(
+    (
+      await admin
+        .from("site_memberships")
+        .insert({ site_id: facilitySite, user_id: ids[0] })
     ).error,
     null,
   );
@@ -310,7 +354,9 @@ try {
     ),
     buildDirectory: relative(root, source).replaceAll("\\", "/"),
     packageLockSha256: sha256(readFileSync("package-lock.json")),
-    schemaMigrations: 11,
+    schemaMigrations: Number(
+      sql("select count(*) from supabase_migrations.schema_migrations;"),
+    ),
     browserScenarios: browserStats.expected,
     sequence: [
       "rollback baseline",
@@ -318,6 +364,7 @@ try {
       "rollback baseline",
     ],
     retainedRequest: true,
+    retainedFacilityDirectory: true,
     retainedVersion: 3,
     retainedEvents: 3,
     idempotentReplay: true,
@@ -342,6 +389,23 @@ try {
     cleanup.serverStopped = true;
   } catch {
     failure ??= Error("Server cleanup failed");
+  }
+  if (facilitySeeded) {
+    try {
+      for (const table of ["site_memberships", "buildings"]) {
+        assert.equal(
+          (await admin.from(table).delete().eq("site_id", facilitySite)).error,
+          null,
+        );
+      }
+      assert.equal(
+        (await admin.from("sites").delete().eq("id", facilitySite)).error,
+        null,
+      );
+    } catch {
+      cleanup.usersRemoved = false;
+      failure ??= Error("Facility continuity fixture cleanup failed");
+    }
   }
   // Delete request owner first so assigned engineers are no longer referenced.
   for (const id of ids) {

@@ -2,6 +2,8 @@
 
 Статус на 02.11.2026: миграция `20261030113426_maintenance_write_gate.sql` уже присутствует среди 11 production migrations. [Read-only сверка](PRODUCTION_SCHEMA_CHECK_20261101.md) подтвердила пять включённых maintenance-триггеров; при read-only проверке 02.11 переключатель был false. Maintenance API/concurrency и HTTP guard прошли remote CI на изолированной базе. Это не проверка поведения production под записью и не разрешение включать обслуживание. [Текущий статус безопасности](SECURITY_STATUS.md).
 
+Feature-ветка объектов добавляет 3 triggers на sites/buildings/site_memberships: её isolated schema содержит 12 миграций и 8 triggers. Это не состояние production; новая миграция там не применялась. Подробнее — [facility directory](FACILITY_DIRECTORY.md).
+
 ## Блокировка записи
 
 Единственный переключатель записи — `private.maintenance_state`. Роли anon, authenticated и service_role не могут читать или менять его. Приватная SECURITY DEFINER trigger-функция с пустым search_path только читает и блокирует строку переключателя; она не предоставляет клиенту право записи и не доступна для прямого вызова.
@@ -41,7 +43,7 @@ select enabled from private.maintenance_state where singleton;
 
 ## Проверки
 
-- `npm run test:local:sql`: 230 assertions на текущем baseline. Проверяется включение/снятие, прямые записи, RPC, service_role, Auth, неизменность истории и fail-closed.
+- `npm run test:local:sql`: 271 assertions на facility branch; базовый #24 содержит 230. Проверяется включение/снятие, прямые записи, RPC, service_role, Auth, неизменность истории и fail-closed.
 - `node scripts/test-maintenance.mjs`: реальный локальный REST/RPC HTTP 503, отказ Auth password update, чтение, повтор после открытия и межтранзакционный барьер. Создаётся и удаляется только синтетический аккаунт в проверенном профиле. Собственное уже открытое окно обслуживания тест не перехватывает.
 - `node scripts/verify-preview-guard.mjs maintenance`: production build с локальным backend, 48 HTTP GET/HEAD/POST проверок, Retry-After/no-store/noindex, отсутствие обновления Auth cookies. Проверка не аттестует hosted backend.
 - Remote [CI 41327554868](https://github.com/bondarenkodenis0907-web/client-portal-dashboard/actions/runs/41327554868) прошёл все восемь jobs, включая maintenance guard, API/concurrency, DB-only canary, порядок миграций и rollback. Тесты использовали изолированный backend runner, не production.

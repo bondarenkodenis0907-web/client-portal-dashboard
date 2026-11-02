@@ -9,6 +9,86 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      sites: {
+        Row: { id: string; name: string; address: string; created_at: string };
+        ComputedFields: never;
+        Insert: {
+          id?: string;
+          name: string;
+          address?: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          name?: string;
+          address?: string;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      buildings: {
+        Row: {
+          id: string;
+          site_id: string;
+          name: string;
+          address: string;
+          created_at: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          id?: string;
+          site_id: string;
+          name: string;
+          address?: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          site_id?: string;
+          name?: string;
+          address?: string;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "buildings_site_id_fkey";
+            columns: ["site_id"];
+            isOneToOne: false;
+            referencedRelation: "sites";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      site_memberships: {
+        Row: {
+          site_id: string;
+          user_id: string;
+          is_active: boolean;
+          created_at: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          site_id: string;
+          user_id: string;
+          is_active?: boolean;
+          created_at?: string;
+        };
+        Update: {
+          site_id?: string;
+          user_id?: string;
+          is_active?: boolean;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "site_memberships_site_id_fkey";
+            columns: ["site_id"];
+            isOneToOne: false;
+            referencedRelation: "sites";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       profiles: {
         Row: {
           company: string | null;

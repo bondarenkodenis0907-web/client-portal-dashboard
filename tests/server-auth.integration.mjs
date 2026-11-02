@@ -115,6 +115,7 @@ test(
       for (const [i, path, heading] of [
         [0, `/dashboard/requests/${made.data.id}`, "Auth retry"],
         [1, "/dashboard/staff", "Service queue"],
+        [0, "/dashboard/sites", "Sites"],
       ]) {
         const context = await browser.newContext();
         const page = await context.newPage();
@@ -141,6 +142,23 @@ test(
           await expect(
             page.getByRole("heading", { name: heading, exact: true }),
           ).toBeVisible();
+          if (path === "/dashboard/sites") {
+            writeFileSync(marker, "sites:503");
+            await page.reload();
+            await expect(
+              page.getByRole("heading", { name: "Unable to load this page" }),
+            ).toBeVisible();
+            await expect(
+              page.getByRole("heading", { name: "No sites available" }),
+            ).toHaveCount(0);
+            rmSync(marker);
+            await page
+              .getByRole("button", { name: "Try again", exact: true })
+              .click();
+            await expect(
+              page.getByRole("heading", { name: "Sites", exact: true }),
+            ).toBeVisible();
+          }
           for (const code of [401, 403]) {
             writeFileSync(marker, String(code));
             const rejected = await context.request.get(origin + path, {

@@ -33,6 +33,10 @@
 
 **Q29 — Временный отказ Proxy/refresh.** Истёкший access token и действующий refresh token при ответе token endpoint 503 получают retryable HTTP 503, private/no-store, без login redirect и очистки cookies. После восстановления повторный запрос обновляет сессию без нового входа. Cookies, уже обновлённые до отказа последующей верификации, передаются браузеру. Guest/явный 400 invalid refresh/401/403 сохраняют отказ и очистку отклонённых cookies. Постоянные проверки: `tests/proxy-auth.test.mjs`, refresh-сценарий `tests/server-auth.integration.mjs`, fixture `tests/fixtures/auth-fault.mjs`. Критерий включён через #28 в #24 и проверен CI `ac362957`; production-приёмка остаётся открытой.
 
+## Первый срез объектов — отдельная feature-ветка
+
+[Матрица F01–F08](FACILITY_DIRECTORY.md): два клиента/объекта, explicit admission, revoked membership/staff со старой сессией, прямой API и подмена parent IDs, admin-only writes, maintenance, 50+1 site/building pagination, mobile и server-error retry, fresh/saved restore и rollback continuity. Новый suite: 271 SQL / 9 файлов, 38 browser cases плюс server integration. Это состав проверок; PASS базового #24 к новой feature-ветке не переносится. Hosted recovery в этом цикле не выполняется.
+
 ## Пилот на объекте
 
 - **P00 — Карточка пилота и разрешённые исходные данные приняты.** Указаны реальный объект/здание, участники, язык, допустимые документы, поддержка и границы; нет выдуманных согласований

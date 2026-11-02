@@ -54,6 +54,9 @@ test("provider, SSO, MFA, hook, Vault and application rows refuse before replace
     row("supabase_functions", "hooks"),
     row("vault", "secrets", "r", "supabase_vault"),
     row("public", "service_requests"),
+    row("public", "sites"),
+    row("public", "buildings"),
+    row("public", "site_memberships"),
   ]) {
     const catalog = { schemas: [relation.schema], relations: [relation] };
     assert.deepEqual(attempt(catalog, true), {
@@ -121,11 +124,11 @@ test("restored SQL count follows the archived test suite and rejects missing or 
         ).toString("base64"),
       ]),
   );
-  assert.equal(restoredSqlTestCount(files), 230);
-  assert.equal(restoredSqlTestPaths(files).length, 8);
+  assert.equal(restoredSqlTestCount(files), 271);
+  assert.equal(restoredSqlTestPaths(files).length, 9);
   delete files["supabase/tests/maintenance.test.sql"];
-  assert.equal(restoredSqlTestCount(files), 200);
-  assert.equal(restoredSqlTestPaths(files).length, 7);
+  assert.equal(restoredSqlTestCount(files), 241);
+  assert.equal(restoredSqlTestPaths(files).length, 8);
   assert(
     !restoredSqlTestPaths(files).includes(
       "supabase/tests/maintenance.test.sql",

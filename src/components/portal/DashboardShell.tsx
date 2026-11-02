@@ -15,6 +15,11 @@ type NavItem = {
 
 const workspaceNav: NavItem[] = [
   {
+    label: "Sites",
+    icon: "building",
+    href: "/dashboard/sites",
+  },
+  {
     label: "Overview",
     icon: "dashboard",
     href: "/dashboard",
@@ -110,13 +115,15 @@ export function DashboardShell({
 
   const isSettingsPage = pathname.startsWith("/dashboard/settings");
 
-  const heading = isRequestsPage
-    ? "Service requests"
-    : isSettingsPage
-      ? "Settings"
-      : pathname.startsWith("/dashboard/staff")
-        ? "Service queue"
-        : "Overview";
+  const heading = pathname.startsWith("/dashboard/sites")
+    ? "Sites"
+    : isRequestsPage
+      ? "Service requests"
+      : isSettingsPage
+        ? "Settings"
+        : pathname.startsWith("/dashboard/staff")
+          ? "Service queue"
+          : "Overview";
 
   function navItem(item: NavItem) {
     const selected =

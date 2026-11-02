@@ -183,6 +183,31 @@ async function seed(status, fixture) {
       }
     }
   }
+  fixture.siteIds = [randomUUID(), randomUUID()];
+  fixture.buildingIds = [randomUUID(), randomUUID()];
+  const sites = await admin.from("sites").insert(
+    fixture.siteIds.map((id, i) => ({
+      id,
+      name: `Restore site ${i}`,
+      address: `Synthetic restore address ${i}`,
+    })),
+  );
+  assert.equal(sites.error, null);
+  const buildings = await admin.from("buildings").insert(
+    fixture.siteIds.map((site_id, i) => ({
+      id: fixture.buildingIds[i],
+      site_id,
+      name: `Restore building ${i}`,
+    })),
+  );
+  assert.equal(buildings.error, null);
+  const admissions = await admin.from("site_memberships").insert(
+    fixture.siteIds.map((site_id, i) => ({
+      site_id,
+      user_id: fixture.users[i].id,
+    })),
+  );
+  assert.equal(admissions.error, null);
   const inactive = await admin
     .from("service_staff")
     .update({ is_active: false })
@@ -212,6 +237,16 @@ export async function cleanup(status, fixture) {
         ? assertTargetContainer()
         : null;
   if (!container) throw Error("Unapproved fixture cleanup target");
+  for (const id of fixture.siteIds ?? []) {
+    if (!/^[0-9a-f-]{36}$/.test(id))
+      throw Error("Invalid synthetic site identifier");
+    sql(
+      container,
+      `delete from public.site_memberships where site_id='${id}'::uuid;
+      delete from public.buildings where site_id='${id}'::uuid;
+      delete from public.sites where id='${id}'::uuid;`,
+    );
+  }
   for (const user of fixture.users) {
     if (!/^[0-9a-f-]{36}$/.test(user.id))
       throw Error("Invalid synthetic fixture identifier");
@@ -222,6 +257,33 @@ export async function cleanup(status, fixture) {
 export async function probes(status, fixture, sourceToken, sourceRefresh) {
   const clients = await loginAll(status, fixture);
   const admin = api(status, true);
+  if (fixture.siteIds) {
+    for (let i = 0; i < clients.length; i++) {
+      const expectedSites =
+        i < 2 ? [fixture.siteIds[i]] : i === 2 ? fixture.siteIds : [];
+      const sites = await clients[i].from("sites").select("id").order("id");
+      assert.equal(sites.error, null);
+      assert.deepEqual(
+        sites.data.map((s) => s.id).sort(),
+        [...expectedSites].sort(),
+      );
+      const buildings = await clients[i]
+        .from("buildings")
+        .select("id")
+        .order("id");
+      assert.equal(buildings.error, null);
+      const expectedBuildings =
+        i < 2 ? [fixture.buildingIds[i]] : i === 2 ? fixture.buildingIds : [];
+      assert.deepEqual(
+        buildings.data.map((b) => b.id).sort(),
+        [...expectedBuildings].sort(),
+      );
+    }
+    const denied = await clients[0]
+      .from("site_memberships")
+      .insert({ site_id: fixture.siteIds[1], user_id: fixture.users[0].id });
+    assert.equal(denied.error?.code, "42501");
+  }
   const previousEvent = await admin
     .from("request_events")
     .select("id")
@@ -378,6 +440,7 @@ export async function probes(status, fixture, sourceToken, sourceRefresh) {
   return {
     passwordLogin: true,
     clientIsolation: true,
+    facilityDirectory: Boolean(fixture.siteIds),
     activeStaff: true,
     inactiveStaff: true,
     sourceAccessRejected: sourceToken ? true : null,
