@@ -1,6 +1,6 @@
 # Password recovery
 
-Implemented in the candidate and exercised by the isolated remote CI browser/server-Auth suites. The deployed uploaded source matches `a0c1af0`; hosted email delivery, recovery and signing-secret runtime acceptance are still unverified. This does not mean those settings are absent. See [current security status](SECURITY_STATUS.md) and [source identification](DEPLOYED_VERSION_20261101.md).
+Implemented in candidate #24 (application-code baseline `ac362957`) and exercised by the isolated remote CI browser/server-Auth suites in [run 41327554868](https://github.com/bondarenkodenis0907-web/client-portal-dashboard/actions/runs/41327554868). The deployed uploaded source matches `a0c1af0`; hosted email delivery, recovery and signing-secret runtime acceptance are still unverified. This does not mean those settings are absent. See [current security status](SECURITY_STATUS.md) and [source identification](DEPLOYED_VERSION_20261101.md).
 
 1. Forgot-password requests an email with a fixed same-origin callback. Existing and unknown accounts receive the same generic success message.
 2. Callback/confirmation GETs do not consume the token. A bounded, same-origin form POST verifies the fixed recovery type; redirects are relative.
@@ -18,3 +18,5 @@ Local Mailpit uses the recovery template in `supabase/templates`; development an
 The application grant does not change Supabase's direct Auth password policy. Concurrent password writes from multiple tabs and scanners that submit forms remain outside the established atomicity/GET-scanner guarantees.
 
 [Verification](evidence/verification.json) · [Release](RELEASE_ROLLBACK_RUNBOOK.md) · [Supabase logout API](https://supabase.com/docs/reference/javascript/auth-admin-signout).
+
+Hosted acceptance uses an explicitly approved disposable account/mailbox on the canonical production alias. Test the current baseline before release and repeat on the candidate after the approved opening of writes; the first test does not attest the candidate. The existing maintenance gate also blocks `auth.users` password updates. Do not briefly reopen writes to everyone for recovery acceptance; candidate acceptance before reopening requires separately approved isolated hosted infrastructure. See the [current release plan](RELEASE_ROLLBACK_RUNBOOK.md).

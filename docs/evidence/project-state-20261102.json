@@ -1,0 +1,69 @@
+{
+  "checkedDate": "2026-11-02",
+  "scope": "read-only provider metadata and Git source comparison; no production mutations",
+  "mainSha": "00fc4b856109c29e59c9c71bfc7ea9c9927f8d58",
+  "candidate": {
+    "pullRequest": 24,
+    "applicationCodeBaseline": "ac362957a0c4c3aea2453a89f28ff90c71bccbec",
+    "treeAtBaseline": "9c678ef38c26c569e8012017fe4619e45add1e47",
+    "state": "DRAFT",
+    "lastVerifiedCI": {
+      "runId": 41327554868,
+      "sha": "ac362957a0c4c3aea2453a89f28ff90c71bccbec",
+      "jobs": 8,
+      "conclusion": "success",
+      "environment": "isolated synthetic runner",
+      "unitPolicy": 43,
+      "sqlAssertions": 230,
+      "browserCases": 35
+    },
+    "subsequentDocumentationCommitsRequireOwnCI": true
+  },
+  "vercel": {
+    "projectId": "prj_srNDpGdYxBgtSfsVfcizbRhistuJ",
+    "accountId": "team_vOX8YKiZtfFXHWpxEya9i06D",
+    "alias": "client-portal-dashboard-one.vercel.app",
+    "deploymentId": "dpl_7ge2eQz56sSgVe1CRcQqM8d3k6od",
+    "readyState": "READY",
+    "target": "production",
+    "uploadedSourceCommit": "a0c1af06b842e52e0b98d015adae15433fa2922d",
+    "sourceComparisonDate": "2026-11-01",
+    "matchedSourceFiles": 149,
+    "compiledProvenance": "UNVERIFIED",
+    "explicitTeamLookup404": "observed previously; optional scope omitted for successful read; returned ownership IDs checked"
+  },
+  "supabase": {
+    "projectRef": "xdpewqewdeiaoyotpawv",
+    "status": "ACTIVE_HEALTHY",
+    "postgresVersion": "17.6.1.166",
+    "migrationVersions": [
+      "20261004120000",
+      "20261005111845",
+      "20261005112441",
+      "20261010095857",
+      "20261010102907",
+      "20261010125244",
+      "20261010143339",
+      "20261010153002",
+      "20261026141410",
+      "20261026143113",
+      "20261030113426"
+    ],
+    "maintenanceEnabled": false,
+    "catalogComparisonDate": "2026-11-01"
+  },
+  "rollback": {
+    "deploymentId": "dpl_7ge2eQz56sSgVe1CRcQqM8d3k6od",
+    "sourceCommit": "a0c1af06b842e52e0b98d015adae15433fa2922d",
+    "syntheticTestedSource": "db0f9fb98acd6793c6bdacfc3c2e63fc2ca210ff",
+    "runtimeSourcesEqual": true,
+    "cloudSwitch": "NOT_RUN",
+    "planAndPermission": "UNVERIFIED",
+    "knownRegression": "A02 transient Proxy Auth fix absent"
+  },
+  "releaseDecision": "NO_GO",
+  "hostedRecovery": "NOT_RUN",
+  "freshProductionBackup": "NOT_CREATED",
+  "independentProductionBackupRestore": "NOT_RUN",
+  "productionChangedByThisSync": false
+}

@@ -10,6 +10,14 @@ A service portal for building systems: report a fault, assign an engineer and re
 
 Built with Next.js, React, TypeScript, Tailwind CSS and Supabase. Screenshots use fictional accounts and requests.
 
+## Project status
+
+The [live application](https://client-portal-dashboard-one.vercel.app) uses uploaded source `a0c1af06`. The integrated [release candidate #24](https://github.com/bondarenkodenis0907-web/client-portal-dashboard/pull/24) adds retryable Proxy Auth failure handling and the updated demonstration. Its application-code baseline `ac362957` passed [all eight CI jobs](https://github.com/bondarenkodenis0907-web/client-portal-dashboard/actions/runs/41327554868): 43 unit/policy tests, 230 SQL assertions, 35 browser cases, server-Auth, guard, maintenance, rollback and synthetic restore checks.
+
+`main` is still `00fc4b8`; it is behind the deployed source and candidate. Production already has eleven migrations. Do not replay the historical eight-to-eleven migration sequence. Hosted recovery, a fresh production backup with an independent restore, and the release window remain open. The selected cloud rollback is recorded in the [current release plan](docs/RELEASE_ROLLBACK_RUNBOOK.md); it has not been exercised in the cloud.
+
+Screenshots show the candidate on an isolated backend with fictional data. The next planned product stage is a facility with a contract and buildings, each with documentation, equipment, planned work and requests. Those facility modules are not implemented. See the [roadmap](docs/PROJECT_MASTER_PLAN.md) and [verified security status](docs/SECURITY_STATUS.md).
+
 ## Features
 
 - Clients see their own requests; active staff share the service queue.
@@ -27,7 +35,7 @@ Built with Next.js, React, TypeScript, Tailwind CSS and Supabase. Screenshots us
 
 Use Node 24.19.0, npm 11.17.0 and Docker. Run `npm ci`, then follow [local setup and tests](docs/DEVELOPMENT.md).
 
-Local changes are not released to the live application. See [verification](docs/evidence/verification.json), [environments](docs/ENVIRONMENT_REGISTER.md) and the [release checklist](docs/RELEASE_ROLLBACK_RUNBOOK.md). Publication still requires approval.
+Local changes are not released to the live application. See the [dated local verification](docs/evidence/verification.json), [environments](docs/ENVIRONMENT_REGISTER.md) and the [release checklist](docs/RELEASE_ROLLBACK_RUNBOOK.md). Publication still requires approval.
 
 The next milestone is a pilot at one real site: [development plan](docs/PROJECT_MASTER_PLAN.md) · [decisions](docs/DECISIONS.md) · [acceptance criteria](docs/QA_ACCEPTANCE_MATRIX.md).
 

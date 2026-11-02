@@ -54,7 +54,7 @@ Next.js Proxy denies Preview/Netlify/unknown hosts before Auth. The local test e
 
 [Recovery](AUTH_RECOVERY.md) · [Backup and restore](BACKUP_RESTORE_RUNBOOK.md) · [Dependencies](DEPENDENCY_SECURITY.md) · [Release](RELEASE_ROLLBACK_RUNBOOK.md).
 
-Remote CI has run: all eight jobs passed on candidate `7f20ae9` in [run 41317408116](https://github.com/bondarenkodenis0907-web/client-portal-dashboard/actions/runs/41317408116). Local/CI acceptance and hosted production acceptance remain separate; use the SHA and environment attached to each result. [Current security status](SECURITY_STATUS.md).
+Remote CI has run: all eight jobs passed on candidate `ac362957` in [run 41327554868](https://github.com/bondarenkodenis0907-web/client-portal-dashboard/actions/runs/41327554868). Local/CI acceptance and hosted production acceptance remain separate; use the SHA and environment attached to each result. [Current security status](SECURITY_STATUS.md).
 
 Maintenance is disabled for ordinary tests. See [maintenance controls and checks](MAINTENANCE.md) for the database switch, frontend flag and local API/concurrency tests. The production schema has its own [read-only comparison](PRODUCTION_SCHEMA_CHECK_20261101.md); local test success does not attest hosted runtime settings.
 

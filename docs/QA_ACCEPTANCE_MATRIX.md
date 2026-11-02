@@ -1,6 +1,6 @@
 # Приёмка
 
-На 01.11.2026 TA-01–TA-04 проверены в remote CI: [run 41317408116](https://github.com/bondarenkodenis0907-web/client-portal-dashboard/actions/runs/41317408116), 8 jobs PASS на кандидате `7f20ae9`; набор содержит 35 browser, 39 unit/policy и 230 SQL проверок плюс server-Auth regression. Hosted/device acceptance этим не закрыта. [Актуальный статус](SECURITY_STATUS.md).
+На 02.11.2026 TA-01–TA-04 и интегрированный Q29 проверены в remote CI: [run 41327554868](https://github.com/bondarenkodenis0907-web/client-portal-dashboard/actions/runs/41327554868), 8 jobs PASS на кандидате `ac362957`; набор содержит 35 browser, 43 unit/policy и 230 SQL проверок плюс server-Auth regression. Hosted/device acceptance этим не закрыта. [Актуальный статус](SECURITY_STATUS.md).
 
 Критерии сохраняются при рефакторинге. Локальные результаты — в [verification](evidence/verification.json); hosted и пилотная приёмка выполняются отдельно.
 
@@ -31,7 +31,7 @@
 - **Q23 — Ошибка staging и уведомление.** Безопасный код/среда/SHA, без token/PII; алерт получил назначенный человек
 - **Q24 — Административный offboarding.** Принятая деактивация сохраняет сервисную историю; каскадное удаление не применяется молча
 
-**Q29 — Временный отказ Proxy/refresh.** Истёкший access token и действующий refresh token при ответе token endpoint 503 получают retryable HTTP 503, private/no-store, без login redirect и очистки cookies. После восстановления повторный запрос обновляет сессию без нового входа. Cookies, уже обновлённые до отказа последующей верификации, передаются браузеру. Guest/явный 400 invalid refresh/401/403 сохраняют отказ и очистку отклонённых cookies. Постоянные проверки: `tests/proxy-auth.test.mjs`, refresh-сценарий `tests/server-auth.integration.mjs`, fixture `tests/fixtures/auth-fault.mjs`. Это критерий новой ветки, а не утверждение о production-приёмке.
+**Q29 — Временный отказ Proxy/refresh.** Истёкший access token и действующий refresh token при ответе token endpoint 503 получают retryable HTTP 503, private/no-store, без login redirect и очистки cookies. После восстановления повторный запрос обновляет сессию без нового входа. Cookies, уже обновлённые до отказа последующей верификации, передаются браузеру. Guest/явный 400 invalid refresh/401/403 сохраняют отказ и очистку отклонённых cookies. Постоянные проверки: `tests/proxy-auth.test.mjs`, refresh-сценарий `tests/server-auth.integration.mjs`, fixture `tests/fixtures/auth-fault.mjs`. Критерий включён через #28 в #24 и проверен CI `ac362957`; production-приёмка остаётся открытой.
 
 ## Пилот на объекте
 

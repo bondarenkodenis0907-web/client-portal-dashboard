@@ -2,7 +2,7 @@
 
 Only for the owned synthetic local profiles. This is not a production backup or hosted restore procedure.
 
-Remote synthetic acceptance: fresh + saved-backup consumer and restore preflight passed in [CI 41317408116](https://github.com/bondarenkodenis0907-web/client-portal-dashboard/actions/runs/41317408116). This does not attest a fresh production backup, long-term key custody or a hosted restore. [Current security status](SECURITY_STATUS.md).
+Remote synthetic acceptance: fresh + saved-backup consumer and restore preflight passed in [CI 41327554868](https://github.com/bondarenkodenis0907-web/client-portal-dashboard/actions/runs/41327554868). This does not attest a fresh production backup, long-term key custody or a hosted restore. [Current security status](SECURITY_STATUS.md).
 
 ## Run
 
