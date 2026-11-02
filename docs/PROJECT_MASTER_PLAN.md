@@ -1,5 +1,16 @@
 # План разработки Client Portal
 
+## Production update — 02.11.2026
+
+[Authoritative release record](PRODUCTION_RELEASE_20261102.md): application `b001fd9`, READY deployment `dpl_BBNzNkpNaJpod5fgYGCdJAYp98DL`, fourteen production migrations, RLS verified. #30/#29/#24 are merged. Owner authorized publication and deferred hosted recovery. Bounded production DB backup/isolated restore was reported successful. Authenticated acceptance and runtime-log access remain open.
+
+DONE: production schema/deployment and unauthenticated smoke. PENDING: manager/client/mobile/PDF acceptance. PLANNED: building-scoped requests, equipment, building documents and planned work. Future releases require a fresh backup and their own verified candidate.
+
+## Pre-release baseline (historical)
+
+Earlier unmerged/eleven-migration/NO-GO statements below describe the baseline before the authorized release. Do not use them to replay migrations. The release record above takes precedence for current version/environment state.
+
+
 Обновлено 02.11.2026. Владелец продукта — Денис Бондаренко. Цель: пилот на одном реальном обслуживаемом объекте. Одна сервисная компания; Minimal Enterprise.
 
 ## Управление объектом и контрактом — 02.11.2026
