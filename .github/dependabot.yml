@@ -1,0 +1,22 @@
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 3
+    versioning-strategy: increase
+    groups:
+      next-and-react:
+        patterns:
+          - next
+          - eslint-config-next
+          - react
+          - react-dom
+          - "@types/react*"
+      compatible-updates:
+        patterns:
+          - "*"
+        update-types:
+          - minor
+          - patch

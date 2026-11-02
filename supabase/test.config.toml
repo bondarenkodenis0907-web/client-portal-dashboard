@@ -1,0 +1,54 @@
+# Used only by scripts/local-tests.mjs, never the development/hosted project.
+project_id = "client-portal-tests"
+
+[api]
+enabled = true
+port = 56321
+schemas = ["public", "graphql_public"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
+[db]
+port = 56322
+shadow_port = 56320
+major_version = 17
+
+[db.seed]
+enabled = false
+
+[db.pooler]
+enabled = false
+port = 56329
+
+[studio]
+enabled = false
+port = 56323
+
+[local_smtp]
+enabled = true
+port = 56324
+
+[analytics]
+enabled = false
+port = 56327
+
+[realtime]
+enabled = false
+
+[storage]
+enabled = false
+
+[edge_runtime]
+enabled = false
+
+[auth]
+enabled = true
+site_url = "http://127.0.0.1:3010"
+additional_redirect_urls = ["http://127.0.0.1:3010/**"]
+
+[auth.email]
+enable_confirmations = false
+
+[auth.email.template.recovery]
+subject = "Reset your Client Portal password"
+content_path = "./supabase/templates/recovery.html"

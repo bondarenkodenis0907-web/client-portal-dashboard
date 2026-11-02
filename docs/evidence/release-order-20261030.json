@@ -1,0 +1,66 @@
+{
+  "date": "2026-10-30T12:04:14.759Z",
+  "scope": "synthetic separate database on owned local test container",
+  "result": "PASS",
+  "serverVersion": "17.11",
+  "authSchemaOnlyNoProviderACL": true,
+  "order": [
+    {
+      "name": "20261004120000_profiles_rls.sql",
+      "sha256": "6f36edfce64890da4b606d4fe0529b2adec557ecd0d1c16dffadffa2b32b56d6"
+    },
+    {
+      "name": "20261005111845_service_requests.sql",
+      "sha256": "52025e97bbeab9e9a73dc19c11d222b2b765f09b2d79485b244d21f28245b9c0"
+    },
+    {
+      "name": "20261005112441_restrict_security_definer_functions.sql",
+      "sha256": "664f30b8865f3d2c03a067d37be8ef4661a40e022e3c156eebc6bc0c78ee3b86"
+    },
+    {
+      "name": "20261010095857_restrict_client_table_privileges.sql",
+      "sha256": "c71b3d1dc14632d7581e0b662a6391ad79f8d47978ac23e9f1905e596485b37d"
+    },
+    {
+      "name": "20261010102907_reconcile_profile_schema.sql",
+      "sha256": "c1ad5cd51ed74e167b6eb21b85f997a344b1ca2ffa51c67e62848ed39bbdf5d7"
+    },
+    {
+      "name": "20261010125244_request_processing.sql",
+      "sha256": "744ad1bca5b0c176abb1767fa9dafed3a77ec958e94c91172321ac6ad1989e26"
+    },
+    {
+      "name": "20261010143339_validate_portal_input.sql",
+      "sha256": "daea5d78a134e9fd8ff8d3d88761e1961573ab3d39976fbd80e6ba7402de4b48"
+    },
+    {
+      "name": "20261010153002_deactivate_service_staff.sql",
+      "sha256": "f3ccc64ac8b323b17f66b5b7708c9733f3acd5df1c8f819fcc6e4e74f72fa993"
+    },
+    {
+      "name": "20261030113426_maintenance_write_gate.sql",
+      "sha256": "ebbac52e7754e75d08daaf289c93bd1138ed1f9e3827d5ccb8dae2b5b4373128"
+    },
+    {
+      "name": "20261026141410_idempotent_request_creation.sql",
+      "sha256": "a53f65a95c0da300d2da43421304d328867fafe231342d503eca39b94a345985"
+    },
+    {
+      "name": "20261026143113_versioned_request_processing.sql",
+      "sha256": "8e01dc128a50863389e66c98b65864f07a0371e1453dea5307f67f0430f4fd5c"
+    }
+  ],
+  "assertions": [
+    "eight-migration legacy writes",
+    "gate installed before SR06/SR07",
+    "old tab rejected",
+    "gate retained after each migration",
+    "legacy data/events preserved",
+    "eleven history versions",
+    "legacy key/version backfill",
+    "new RPC creation and processing after reopening",
+    "restore preflight accepts only exact disabled singleton; rejects enabled, missing and extra-column states"
+  ],
+  "productionChanged": false,
+  "databaseRemoved": true
+}

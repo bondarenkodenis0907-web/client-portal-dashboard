@@ -20,6 +20,7 @@ export type ServiceRequest = Omit<
     | "created_at"
     | "updated_at"
     | "closed_at"
+    | "version"
   >,
   "status" | "priority"
 > & {
@@ -43,7 +44,7 @@ export type RequestEvent = Omit<
 > & { status: RequestStatus };
 
 export const requestColumns =
-  "id, site, system, description, priority, status, assigned_to, resolution, created_at, updated_at, closed_at";
+  "id, site, system, description, priority, status, assigned_to, resolution, created_at, updated_at, closed_at, version";
 
 export function isRequestStatus(value: string): value is RequestStatus {
   return value === "new" || value === "in_progress" || value === "closed";
@@ -87,8 +88,11 @@ export function parseRequestEvent<
 }
 
 export function formatRequestDate(value: string) {
-  return new Date(value).toLocaleString("en-US", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  });
+  return (
+    new Date(value).toLocaleString("en-US", {
+      dateStyle: "medium",
+      timeStyle: "short",
+      timeZone: "UTC",
+    }) + " UTC"
+  );
 }

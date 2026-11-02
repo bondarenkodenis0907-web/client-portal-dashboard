@@ -173,6 +173,14 @@ export default function LoginPage() {
                 aria-busy={loading}
                 className="space-y-5"
               >
+                {!signingUp && (
+                  <Link
+                    href="/forgot-password"
+                    className="inline-block text-sm font-semibold text-blue-700 hover:underline"
+                  >
+                    Forgot password?
+                  </Link>
+                )}
                 <fieldset disabled={loading} className="space-y-5">
                   <div>
                     <label

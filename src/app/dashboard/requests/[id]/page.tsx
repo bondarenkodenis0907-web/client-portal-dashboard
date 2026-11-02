@@ -1,11 +1,9 @@
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { RequestDetail } from "@/components/portal/RequestDetail";
-import {
-  requestColumns,
-  parseServiceRequest,
-  parseRequestEvent,
-} from "@/lib/requests";
+import { isTransientAuthError } from "@/lib/auth-errors";
+import { getRequestHistoryPage } from "@/lib/request-history";
+import { requestColumns, parseServiceRequest } from "@/lib/requests";
 
 export default async function RequestPage({
   params,
@@ -20,25 +18,26 @@ export default async function RequestPage({
   const supabase = await createClient();
   const {
     data: { user },
+    error: authError,
   } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
+  if (isTransientAuthError(authError))
+    throw new Error(
+      "Authentication is temporarily unavailable. Please try again.",
+    );
+  if (authError || !user) redirect("/login");
   const [request, events, staff] = await Promise.all([
     supabase
       .from("service_requests")
       .select(requestColumns)
       .eq("id", id)
       .maybeSingle(),
-    supabase
-      .from("request_events")
-      .select("id, status, assigned_name, resolution, created_at")
-      .eq("request_id", id)
-      .order("id", { ascending: false }),
+    getRequestHistoryPage(supabase, id),
     supabase
       .from("service_staff")
       .select("user_id, display_name, is_active")
       .order("display_name"),
   ]);
-  if (request.error || events.error || staff.error)
+  if (request.error || staff.error)
     throw new Error("The request could not be loaded. Please try again.");
   if (!request.data) notFound();
   const members = staff.data ?? [];
@@ -46,7 +45,7 @@ export default async function RequestPage({
     <RequestDetail
       key={request.data.id}
       request={parseServiceRequest(request.data)}
-      events={(events.data ?? []).map(parseRequestEvent)}
+      history={events}
       staff={members}
       isStaff={members.some(
         (member) => member.user_id === user.id && member.is_active,

@@ -1,13 +1,25 @@
-# Dependency security maintenance
+# Dependency maintenance
 
-The lockfile was checked on 2026-10-09 against the official npm bulk advisory service. The remaining advisory was reviewed on 2026-10-10.
+Use the exact versions in package.json and package-lock.json: Node 24.19.0, npm 11.17.0, Supabase CLI 2.122.0. Install with `npm ci`.
 
-## Remaining advisory
+Next.js/eslint-config-next 16.4.3 include the October security fixes; transitive Zod is 4.6.7. No overrides or advisory exclusions are configured. ESLint 9 is out of support; its major upgrade remains separate maintenance.
 
-The lockfile includes development-only `braces@3.0.3` through tooling that uses micromatch. [GHSA-vfj7-8cjw-p6xm](https://github.com/advisories/GHSA-vfj7-8cjw-p6xm) lists that version as affected and does not list a patched release. The dependency audit therefore still has an open high-severity advisory.
+The 1 November 2026 registry audit of candidate `a0c1af0` found 16 moderate package records and no high/critical records. These are development-tool dependency paths to the minimatch advisory [GHSA-g3hv-75wg-m249](https://github.com/advisories/GHSA-g3hv-75wg-m249), not 16 separate vulnerabilities. Do not describe this candidate as having zero advisories. The separate production-only result and runtime verification are recorded in [the current check](evidence/priority-check-20261101.md).
 
-The reported failure occurs when a deeply nested brace pattern reaches the parser. The reviewed application does not pass user request input to this parser; the dependency is used by development tooling. This limits the identified exposure but does not resolve the advisory. Build and lint tooling should run without sensitive credentials when processing untrusted code or patterns.
+The 29 October check verified 380 installed package signatures, including 106 attestations. Signatures were not rechecked on 1 November. These results cover their date and platform, not future packages or every optional target.
 
-Lockfile changes require a new dependency audit and compatibility checks. `npm ci` reproduces the committed dependency tree. Any temporary override needs removal once parent packages adopt the intended dependency version.
+ESLint 10 cannot currently be adopted within the installed peer ranges: eslint-plugin-react 7.37.5 accepts through ESLint 9, and eslint-plugin-jsx-a11y 6.10.2 accepts through ESLint 9. Review compatible upstream releases before changing the major. Do not force an incompatible install or accept the audit's suggested downgrade to ESLint 4 / eslint-config-next 12. The minimatch advisory affects versions below 11.0.1; replacing its older majors blindly with 11 is not a tested compatible fix.
 
-The update reduces matched advisory records from 8 to 1. Next.js and eslint-config-next are pinned together at 16.3.8. Supabase packages are pinned explicitly, and CI now builds the production bundle using placeholder public configuration without contacting a production database.
+The Dependabot configuration prepares weekly npm update PRs after it reaches the default branch. Next/React/config updates are grouped; other patch/minor updates are grouped separately. Major upgrades require separate review. PRs still need CI and review; this does not enable automatic merging or make release approval unnecessary.
+
+```sh
+npm audit --audit-level=high
+npm audit signatures
+npm run check:security
+```
+
+The security check enforces runtime/direct-version pins, registry origins, lockfile integrity and immutable Actions references. Its secret-pattern scan covers current Git candidate text files, not full history, binaries or provider secrets. The 29 October local verification recorded an unrs-resolver pending-postinstall warning while lint/build passed; this is historical evidence, not a guarantee that later npm ci runs skip lifecycle scripts. The 1 November workspace install used --ignore-scripts; CI uses the committed npm ci workflow.
+
+Review upstream advisories and compatible parent updates, update the lockfile, then repeat the relevant tests. Never expose production credentials to install/build/test tooling. [Verification](evidence/verification.json) · [Release](RELEASE_ROLLBACK_RUNBOOK.md).
+
+[Current security status](SECURITY_STATUS.md) separates candidate CI, production-source identification and outstanding hosted acceptance.

@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { isTransientAuthError } from "@/lib/auth-errors";
 import { PortalIcon } from "@/components/portal/PortalIcon";
 import { inputLimits } from "@/lib/input-limits";
 import type { Tables } from "@/lib/supabase/database.types";
@@ -35,6 +36,7 @@ export default function SettingsPage() {
           error: userError,
         } = await supabase.auth.getUser();
         if (cancelled) return;
+        if (isTransientAuthError(userError)) throw userError;
         if (
           !user ||
           userError?.status === 401 ||

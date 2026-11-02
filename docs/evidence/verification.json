@@ -1,0 +1,48 @@
+{
+  "date": "2026-10-29",
+  "scope": "local synthetic",
+  "baseCommit": "00fc4b856109c29e59c9c71bfc7ea9c9927f8d58",
+  "releaseCommit": null,
+  "candidateSha256": "e64e0b1226da1836ba8fecf41a4500e58a646e72cd98ddcc2d27fc13a130b697",
+  "packageLockSha256": "90c8ef30015133381ff6f631fd991206a5d18ffff2c3b170b2008cff2a183bc7",
+  "checks": {
+    "unitPolicy": 34,
+    "sql": 200,
+    "browser": 24,
+    "previewHttp": 144,
+    "previewBackendCalls": 0,
+    "restorePreflight": "PASS",
+    "productionBuild": "PASS",
+    "webpackBuild": "PASS",
+    "lint": "PASS",
+    "format": "PASS",
+    "typecheck": "PASS",
+    "documentationLinks": "PASS"
+  },
+  "restore": {
+    "runId": "f6bd0d54-cb6c-48af-b1ab-38af38763f38",
+    "result": "PASS",
+    "files": 122,
+    "inventoryGroups": 14,
+    "sql": 200,
+    "independent": "PASS",
+    "independentSourceUsed": false,
+    "independentSql": 200,
+    "cleaned": true,
+    "stopped": true,
+    "encryptedSha256": "aeabb504f569852847b01fb4fed2a2ba56f96b4b4f1a557bec5afd817f88cba4"
+  },
+  "preserved": {
+    "testFiles": 16,
+    "migrations": 10,
+    "existingDatabases": true,
+    "gitHistory": true
+  },
+  "remoteCI": "NOT_RUN",
+  "releaseDecision": "NO_GO",
+  "productionChanged": false,
+  "previewChanged": false,
+  "candidateHashScope": "Sorted non-documentation Git paths (excluding docs/ and *.md); each path and file bytes followed by NUL.",
+  "indexSha256": "c8ce8816c567116377226cd756990cf4b7ec877104422f95a8a696f34fde22e5",
+  "indexDifference": "17 non-documentation files differ from tested working-tree bytes only by CRLF to LF normalization."
+}
