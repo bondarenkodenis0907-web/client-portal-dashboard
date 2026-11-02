@@ -57,7 +57,8 @@ alter table public.contracts add constraint contracts_published_version_fkey
  deferrable initially deferred;
 create table private.contract_files (
  version_id uuid primary key references public.contract_versions(id) on delete restrict,
- pdf bytea not null check(octet_length(pdf) between 5 and 2097152 and substring(pdf from 1 for 5)=convert_to('%PDF-','UTF8'))
+ -- Explicit bounds keep the CHECK expression stable through pg_dump/restore.
+ pdf bytea not null check(octet_length(pdf)>=5 and octet_length(pdf)<=2097152 and substring(pdf from 1 for 5)=convert_to('%PDF-','UTF8'))
 );
 alter table public.contract_versions add constraint contract_versions_file_required
  foreign key(id) references private.contract_files(version_id) deferrable initially deferred;

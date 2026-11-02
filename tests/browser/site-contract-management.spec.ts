@@ -168,7 +168,9 @@ test("manager creates and edits site; concurrent stale edit and non-manager acce
     ).toBeVisible();
     await other.getByLabel("Site name").fill("Stale office");
     await other.getByRole("button", { name: "Save", exact: true }).click();
-    await expect(other.getByRole("alert")).toContainText("changed");
+    await expect(other.locator("form").getByRole("alert")).toContainText(
+      "changed",
+    );
     await expect(other.getByLabel("Site name")).toHaveValue("Stale office");
     const saved = await f.admin
       .from("sites")
@@ -338,9 +340,18 @@ test("PDF versions remain private until publication; replacing or revoking publi
       has: page.getByRole("button", { name: "Remove client publication" }),
     });
     await remove.getByRole("checkbox").check();
+    const removed = page.waitForResponse(
+      (response) =>
+        response.url().endsWith("/api/facility/manage") &&
+        response.request().method() === "POST",
+    );
     await remove
       .getByRole("button", { name: "Remove client publication" })
       .click();
+    expect((await removed).status()).toBe(200);
+    await expect(
+      second.getByRole("button", { name: "Publish version 2" }),
+    ).toBeVisible();
     await expect(
       page.getByRole("button", { name: "Remove client publication" }),
     ).toHaveCount(0);
@@ -380,7 +391,9 @@ test("lost save acknowledgement keeps operation identity; role revoke and cross-
       await route.abort("failed");
     });
     await page.getByRole("button", { name: "Save", exact: true }).click();
-    await expect(page.getByRole("alert")).toBeVisible();
+    await expect(page.locator("form").getByRole("alert")).toContainText(
+      "Save result is not confirmed",
+    );
     await page.unroute("**/api/facility/manage");
     await page.getByRole("button", { name: "Reload saved details" }).click();
     await expect(
