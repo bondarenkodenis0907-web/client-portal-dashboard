@@ -94,6 +94,11 @@ let server, browser, report, failure;
 const facilitySite = randomUUID(),
   facilityBuilding = randomUUID();
 let facilitySeeded = false;
+const contractId = randomUUID(),
+  contractVersionId = randomUUID();
+const contractPdf = Buffer.from(
+  "%PDF-1.4\nRollback contract continuity\n%%EOF",
+);
 const cleanup = {
   browserClosed: false,
   serverStopped: false,
@@ -161,6 +166,15 @@ async function seeRequest(id, text) {
       .single();
     assert.equal(building.error, null);
     assert.equal(building.data.site_id, facilitySite);
+    const pdf = await client.rpc("download_contract_file", {
+      p_version_id: contractVersionId,
+    });
+    assert.equal(pdf.error, null);
+    assert.equal(
+      pdf.data[0].pdf_base64.replace(/\s/g, ""),
+      contractPdf.toString("base64"),
+    );
+    assert.equal(pdf.data[0].sha256, sha256(contractPdf));
   } finally {
     await context.close();
   }
@@ -261,6 +275,44 @@ try {
       await admin
         .from("site_memberships")
         .insert({ site_id: facilitySite, user_id: ids[0] })
+    ).error,
+    null,
+  );
+  assert.equal(
+    (await admin.from("facility_managers").insert({ user_id: ids[1] })).error,
+    null,
+  );
+  assert.equal(
+    (
+      await staffClient.rpc("save_contract_version", {
+        p_contract_id: contractId,
+        p_site_id: facilitySite,
+        p_version_id: contractVersionId,
+        p_expected_revision: 0,
+        p_details: {
+          number: "ROLLBACK-1",
+          title: "Retained contract",
+          customer: "Synthetic customer",
+          provider: "Synthetic service",
+          starts_on: "2026-01-01",
+          ends_on: "",
+          state: "active",
+          responsible_id: ids[1],
+          notes: "Continuity fixture",
+        },
+        p_filename: "rollback.pdf",
+        p_pdf_base64: contractPdf.toString("base64"),
+      })
+    ).error,
+    null,
+  );
+  assert.equal(
+    (
+      await staffClient.rpc("publish_contract", {
+        p_contract_id: contractId,
+        p_expected_revision: 1,
+        p_version_id: contractVersionId,
+      })
     ).error,
     null,
   );
@@ -365,6 +417,7 @@ try {
     ],
     retainedRequest: true,
     retainedFacilityDirectory: true,
+    retainedContractPdf: true,
     retainedVersion: 3,
     retainedEvents: 3,
     idempotentReplay: true,
@@ -389,6 +442,35 @@ try {
     cleanup.serverStopped = true;
   } catch {
     failure ??= Error("Server cleanup failed");
+  }
+  try {
+    command(
+      "docker",
+      [
+        "exec",
+        "-i",
+        `supabase_db_${projectId}`,
+        "psql",
+        "-XqAt",
+        "-U",
+        "postgres",
+        "-d",
+        "postgres",
+        "-v",
+        "ON_ERROR_STOP=1",
+      ],
+      {
+        input: `begin; delete from public.contract_events where contract_id='${contractId}'; delete from private.contract_files where version_id='${contractVersionId}'; delete from public.contract_versions where contract_id='${contractId}'; delete from public.contracts where id='${contractId}'; commit;`,
+      },
+    );
+    if (ids[1])
+      assert.equal(
+        (await admin.from("facility_managers").delete().eq("user_id", ids[1]))
+          .error,
+        null,
+      );
+  } catch {
+    failure ??= Error("Contract continuity fixture cleanup failed");
   }
   if (facilitySeeded) {
     try {

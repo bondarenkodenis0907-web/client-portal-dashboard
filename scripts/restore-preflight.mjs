@@ -46,6 +46,7 @@ const authTables = [
 ];
 const relations = new Map([
   ["private.maintenance_state", { kind: "r", extension: null }],
+  ["private.contract_files", { kind: "r", extension: null }],
   ...authTables.map((name) => [`auth.${name}`, { kind: "r", extension: null }]),
   ...[
     "profiles",
@@ -55,6 +56,10 @@ const relations = new Map([
     "sites",
     "buildings",
     "site_memberships",
+    "facility_managers",
+    "contracts",
+    "contract_versions",
+    "contract_events",
   ].map((name) => [`public.${name}`, { kind: "r", extension: null }]),
   ...[
     "auth.refresh_tokens_id_seq",

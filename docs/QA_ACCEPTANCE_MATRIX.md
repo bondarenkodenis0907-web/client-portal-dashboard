@@ -37,6 +37,10 @@
 
 [Матрица F01–F08](FACILITY_DIRECTORY.md): два клиента/объекта, explicit admission, revoked membership/staff со старой сессией, прямой API и подмена parent IDs, admin-only writes, maintenance, 50+1 site/building pagination, mobile и server-error retry, fresh/saved restore и rollback continuity. Новый suite: 271 SQL / 9 файлов, 38 browser cases плюс server integration. Это состав проверок; PASS базового #24 к новой feature-ветке не переносится. Hosted recovery в этом цикле не выполняется.
 
+## Управление объектом/контрактом — отдельный срез
+
+[Матрица M01–M08](SITE_CONTRACT_MANAGEMENT.md): явный manager, конкурирующие редакторы, replay/unknown outcome, atomic version+PDF, публикация/отзыв/чужой UUID/parent, HTTP и SQL input validation, CAS publication, private bytes backup/restore и frontend rollback. Suite: 46 unit/policy, 334 SQL/10 файлов, 41 browser cases; прежний PASS #29 не аттестует этот код. Лимит PDF/выбор bytea вместо Storage ещё требуют принятия до выпуска.
+
 ## Пилот на объекте
 
 - **P00 — Карточка пилота и разрешённые исходные данные приняты.** Указаны реальный объект/здание, участники, язык, допустимые документы, поддержка и границы; нет выдуманных согласований

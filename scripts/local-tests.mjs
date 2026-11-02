@@ -186,7 +186,7 @@ function verify(recordSnapshot = false) {
     .sort();
   const query = `select json_build_object(
     'versions', (select json_agg(version order by version) from supabase_migrations.schema_migrations),
-    'tables', (select count(*) from pg_tables where schemaname='public' and tablename in ('profiles','service_requests','service_staff','request_events','sites','buildings','site_memberships') and rowsecurity),
+    'tables', (select count(*) from pg_tables where schemaname='public' and tablename in ('profiles','service_requests','service_staff','request_events','sites','buildings','site_memberships','facility_managers','contracts','contract_versions','contract_events') and rowsecurity),
     'active_column', exists(select 1 from information_schema.columns where table_schema='public' and table_name='service_staff' and column_name='is_active'),
     'input_checks', (select count(*) from pg_constraint where conrelid='public.service_requests'::regclass and conname like '%_input_check'),
     'submission_unique', exists(select 1 from pg_constraint where conrelid='public.service_requests'::regclass and conname='service_requests_user_operation_key' and contype='u'),
@@ -194,7 +194,8 @@ function verify(recordSnapshot = false) {
     'processing_rpc', exists(select 1 from pg_proc where oid=to_regprocedure('public.process_service_request(uuid,integer,uuid,text,text)') and not prosecdef and proconfig @> array['search_path=""']),
     'version_guard', exists(select 1 from pg_trigger where tgrelid='public.service_requests'::regclass and tgname='check_request_version' and tgenabled='O'),
     'version_input', exists(select 1 from pg_constraint where conrelid='public.service_requests'::regclass and conname='service_requests_expected_version_transient'),
-    'maintenance_triggers', (select count(*) from pg_trigger where tgname='maintenance_write_gate' and tgenabled='O' and tgrelid in ('public.profiles'::regclass,'public.service_requests'::regclass,'public.request_events'::regclass,'public.service_staff'::regclass,'auth.users'::regclass,'public.sites'::regclass,'public.buildings'::regclass,'public.site_memberships'::regclass)),
+    'maintenance_triggers', (select count(*) from pg_trigger where tgname='maintenance_write_gate' and tgenabled='O' and tgrelid in ('public.profiles'::regclass,'public.service_requests'::regclass,'public.request_events'::regclass,'public.service_staff'::regclass,'auth.users'::regclass,'public.sites'::regclass,'public.buildings'::regclass,'public.site_memberships'::regclass,'public.facility_managers'::regclass,'public.contracts'::regclass,'public.contract_versions'::regclass,'public.contract_events'::regclass,'private.contract_files'::regclass)),
+    'private_files_rls', (select relrowsecurity from pg_class where oid='private.contract_files'::regclass),
     'maintenance_off', (select not enabled from private.maintenance_state where singleton)
   );`;
   const schema = JSON.parse(
@@ -212,7 +213,7 @@ function verify(recordSnapshot = false) {
   );
   if (
     JSON.stringify(schema.versions) !== JSON.stringify(versions) ||
-    schema.tables !== 7 ||
+    schema.tables !== 11 ||
     !schema.active_column ||
     schema.input_checks !== 4 ||
     !schema.submission_unique ||
@@ -220,7 +221,8 @@ function verify(recordSnapshot = false) {
     !schema.processing_rpc ||
     !schema.version_guard ||
     !schema.version_input ||
-    schema.maintenance_triggers !== 8 ||
+    schema.maintenance_triggers !== 13 ||
+    !schema.private_files_rls ||
     !schema.maintenance_off
   )
     throw new Error(
@@ -233,7 +235,7 @@ function verify(recordSnapshot = false) {
     JSON.stringify({ root, projectId, snapshotHash: snapshotHash() }, null, 2),
   );
   console.log(
-    `PASS: ${versions.length} migrations, 7 RLS tables, local API ${apiOrigin}`,
+    `PASS: ${versions.length} migrations, 11 RLS tables, local API ${apiOrigin}`,
   );
   return status;
 }

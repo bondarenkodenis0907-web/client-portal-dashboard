@@ -65,3 +65,5 @@ After the browser suite, the same guarded command runs `tests/server-auth.integr
 Request history uses 50-event cursor pages, shared by SSR and processing refreshes. Load older events follows descending event IDs, retains already loaded events on failure and resets when a newer initial history page arrives. This does not change database permissions or migrations.
 
 The facility feature branch adds sites/buildings/site_memberships and tests 7 public RLS tables / 8 maintenance triggers. Production remains on eleven migrations. [Directory scope and test matrix](FACILITY_DIRECTORY.md). Provisioning fixtures and schema writes run only against the owned synthetic backend; do not apply the new migration or run its mutating tests against production.
+
+The separately stacked site/contract-management branch has 14 migrations, 11 public RLS tables, private PDF RLS and 13 maintenance triggers. Fixture managers require both active service_staff and an active facility_managers row, provisioned only in the owned synthetic backend. Main/production are unchanged. [Management details](SITE_CONTRACT_MANAGEMENT.md).

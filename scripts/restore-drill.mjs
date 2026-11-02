@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { randomUUID } from "node:crypto";
+import { randomUUID, createHash } from "node:crypto";
 import { mkdirSync, readFileSync, writeFileSync, lstatSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -208,6 +208,49 @@ async function seed(status, fixture) {
     })),
   );
   assert.equal(admissions.error, null);
+  assert.equal(
+    (
+      await admin
+        .from("facility_managers")
+        .insert({ user_id: fixture.users[2].id })
+    ).error,
+    null,
+  );
+  fixture.contractIds = [randomUUID(), randomUUID()];
+  fixture.contractVersionIds = [randomUUID(), randomUUID()];
+  for (let i = 0; i < 2; i++) {
+    const pdf = Buffer.from(`%PDF-1.4\nSynthetic restore contract ${i}\n%%EOF`);
+    const saved = await clients[2].rpc("save_contract_version", {
+      p_contract_id: fixture.contractIds[i],
+      p_site_id: fixture.siteIds[i],
+      p_version_id: fixture.contractVersionIds[i],
+      p_expected_revision: 0,
+      p_details: {
+        number: `RESTORE-${i}`,
+        title: `Restore contract ${i}`,
+        customer: "Synthetic customer",
+        provider: "Synthetic provider",
+        starts_on: "2026-01-01",
+        ends_on: "",
+        state: "active",
+        responsible_id: fixture.users[2].id,
+        notes: "Restore fixture",
+      },
+      p_filename: `restore-${i}.pdf`,
+      p_pdf_base64: pdf.toString("base64"),
+    });
+    assert.equal(saved.error, null);
+  }
+  assert.equal(
+    (
+      await clients[2].rpc("publish_contract", {
+        p_contract_id: fixture.contractIds[0],
+        p_expected_revision: 1,
+        p_version_id: fixture.contractVersionIds[0],
+      })
+    ).error,
+    null,
+  );
   const inactive = await admin
     .from("service_staff")
     .update({ is_active: false })
@@ -237,6 +280,24 @@ export async function cleanup(status, fixture) {
         ? assertTargetContainer()
         : null;
   if (!container) throw Error("Unapproved fixture cleanup target");
+  for (const id of fixture.contractIds ?? []) {
+    if (!/^[0-9a-f-]{36}$/.test(id)) throw Error("Invalid fixture contract");
+    sql(
+      container,
+      `begin; delete from public.contract_events where contract_id='${id}'::uuid;
+      delete from private.contract_files where version_id in(select id from public.contract_versions where contract_id='${id}'::uuid);
+      delete from public.contract_versions where contract_id='${id}'::uuid;
+      delete from public.contracts where id='${id}'::uuid; commit;`,
+    );
+  }
+  for (const user of fixture.users) {
+    if (!/^[0-9a-f-]{36}$/.test(user.id))
+      throw Error("Invalid fixture manager");
+    sql(
+      container,
+      `delete from public.facility_managers where user_id='${user.id}'::uuid;`,
+    );
+  }
   for (const id of fixture.siteIds ?? []) {
     if (!/^[0-9a-f-]{36}$/.test(id))
       throw Error("Invalid synthetic site identifier");
@@ -283,6 +344,50 @@ export async function probes(status, fixture, sourceToken, sourceRefresh) {
       .from("site_memberships")
       .insert({ site_id: fixture.siteIds[1], user_id: fixture.users[0].id });
     assert.equal(denied.error?.code, "42501");
+  }
+  if (fixture.contractIds) {
+    for (let i = 0; i < 4; i++) {
+      const visible = await clients[i]
+        .from("contracts")
+        .select("id")
+        .order("id");
+      assert.equal(visible.error, null);
+      const expected =
+        i === 0 ? [fixture.contractIds[0]] : i === 2 ? fixture.contractIds : [];
+      assert.deepEqual(
+        visible.data.map((c) => c.id).sort(),
+        [...expected].sort(),
+      );
+    }
+    const file = await clients[0].rpc("download_contract_file", {
+      p_version_id: fixture.contractVersionIds[0],
+    });
+    assert.equal(file.error, null);
+    const pdf = Buffer.from(file.data[0].pdf_base64, "base64");
+    assert.equal(
+      pdf.toString(),
+      "%PDF-1.4\nSynthetic restore contract 0\n%%EOF",
+    );
+    assert.equal(
+      createHash("sha256").update(pdf).digest("hex"),
+      file.data[0].sha256,
+    );
+    assert.deepEqual(
+      (
+        await clients[1].rpc("download_contract_file", {
+          p_version_id: fixture.contractVersionIds[0],
+        })
+      ).data,
+      [],
+    );
+    assert.deepEqual(
+      (
+        await clients[0].rpc("download_contract_file", {
+          p_version_id: fixture.contractVersionIds[1],
+        })
+      ).data,
+      [],
+    );
   }
   const previousEvent = await admin
     .from("request_events")
@@ -441,6 +546,7 @@ export async function probes(status, fixture, sourceToken, sourceRefresh) {
     passwordLogin: true,
     clientIsolation: true,
     facilityDirectory: Boolean(fixture.siteIds),
+    contractPdfAndPublication: Boolean(fixture.contractIds),
     activeStaff: true,
     inactiveStaff: true,
     sourceAccessRejected: sourceToken ? true : null,
@@ -647,8 +753,25 @@ export async function runRestoreDrill(action, argument) {
     restored = true;
     const after = inventory(destination);
     for (const name of Object.keys(before)) {
-      if (fingerprint(before[name]) !== fingerprint(after[name]))
+      if (fingerprint(before[name]) !== fingerprint(after[name])) {
+        if (name === "constraints") {
+          // Schema definitions only: never log table contents or Auth sessions.
+          const key = (row) =>
+            JSON.stringify([row.schema, row.table_name, row.name]);
+          const prior = new Map(before[name].map((row) => [key(row), row]));
+          const restored = new Map(after[name].map((row) => [key(row), row]));
+          for (const id of new Set([...prior.keys(), ...restored.keys()])) {
+            if (
+              JSON.stringify(prior.get(id)) !== JSON.stringify(restored.get(id))
+            )
+              console.error("Constraint mismatch", {
+                before: prior.get(id),
+                after: restored.get(id),
+              });
+          }
+        }
         throw Error(`Restored inventory mismatch: ${name}`);
+      }
     }
     report.inventoryEqual = Object.fromEntries(
       Object.keys(before).map((name) => [name, true]),

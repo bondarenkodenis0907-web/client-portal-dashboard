@@ -1,3 +1,6 @@
+import Link from "next/link";
+import { managementAccess } from "@/lib/facility-management";
+import { facilityClient } from "@/lib/facility-directory";
 import {
   DirectoryCard,
   DirectoryPages,
@@ -10,7 +13,10 @@ export default async function SitesPage({
   searchParams: Promise<{ page?: string | string[] }>;
 }) {
   const page = facilityPage((await searchParams).page);
-  const sites = await listSites(page);
+  const [sites, manager] = await Promise.all([
+    listSites(page),
+    managementAccess(await facilityClient()),
+  ]);
   return (
     <section>
       <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
@@ -19,6 +25,14 @@ export default async function SitesPage({
       <p className="mb-7 mt-2 text-sm text-slate-500">
         Open a site to view its buildings.
       </p>
+      {manager && (
+        <Link
+          href="/dashboard/sites/new"
+          className="mb-5 inline-block rounded-lg bg-blue-700 px-4 py-2 text-sm text-white"
+        >
+          New site
+        </Link>
+      )}
       {sites.items.length ? (
         <div className="grid gap-4 md:grid-cols-2">
           {sites.items.map((site) => (

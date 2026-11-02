@@ -4,6 +4,8 @@
 
 Этот runbook относится к базовому #24 без facility migration. Отдельная [feature-ветка объектов](FACILITY_DIRECTORY.md) готовит двенадцатую миграцию; для её выпуска нужен новый reviewed delta plan и собственный CI/rollback/schema acceptance. Разработка этой ветки продолжается с отложенным hosted recovery, без изменения production.
 
+Отдельная [ветка управления объектом и контрактом](SITE_CONTRACT_MANAGEMENT.md) содержит 13-ю миграцию и private DB PDF. Она также не покрыта этим runbook: нужны delta rollout, review manager/definer boundaries, принятие storage/лимита, собственные CI и проверка реального restore с файлами. Production на 11; auto-merge/deploy не выполняется.
+
 ## Исходное состояние
 
 | Назначение                         | Закреплённый ресурс                                                                                                                                                                         |

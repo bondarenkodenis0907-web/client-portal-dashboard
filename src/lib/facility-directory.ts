@@ -41,7 +41,9 @@ export async function getSite(id: string) {
   const client = await facilityClient();
   const result = await client
     .from("sites")
-    .select("id, name, address")
+    .select(
+      "id, name, address, customer_name, contact_name, contact_email, contact_phone, is_archived, version",
+    )
     .eq("id", id)
     .maybeSingle()
     .retry(false);
