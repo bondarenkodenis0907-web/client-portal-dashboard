@@ -33,6 +33,8 @@ test(
       auth: { persistSession: false, autoRefreshToken: false },
     });
     const users = [];
+    const directorySite = randomUUID();
+    const directoryName = "Private server directory fixture";
     const origin = "http://127.0.0.1:3012";
     let server, browser;
     try {
@@ -103,6 +105,22 @@ test(
         .select("id")
         .single();
       assert.equal(made.error, null);
+      assert.equal(
+        (
+          await admin
+            .from("sites")
+            .insert({ id: directorySite, name: directoryName })
+        ).error,
+        null,
+      );
+      assert.equal(
+        (
+          await admin
+            .from("site_memberships")
+            .insert({ site_id: directorySite, user_id: users[0].id })
+        ).error,
+        null,
+      );
       const channel =
         process.env.PLAYWRIGHT_CHANNEL ||
         (process.platform === "win32" &&
@@ -115,6 +133,7 @@ test(
       for (const [i, path, heading] of [
         [0, `/dashboard/requests/${made.data.id}`, "Auth retry"],
         [1, "/dashboard/staff", "Service queue"],
+        [0, "/dashboard/sites", "Sites"],
       ]) {
         const context = await browser.newContext();
         const page = await context.newPage();
@@ -141,13 +160,48 @@ test(
           await expect(
             page.getByRole("heading", { name: heading, exact: true }),
           ).toBeVisible();
+          if (path === "/dashboard/sites") {
+            await expect(
+              page.getByText(directoryName, { exact: true }),
+            ).toBeVisible();
+            writeFileSync(marker, "sites:503");
+            await page.reload();
+            await expect(
+              page.getByRole("heading", { name: "Unable to load this page" }),
+            ).toBeVisible();
+            await expect(
+              page.getByRole("heading", { name: "No sites available" }),
+            ).toHaveCount(0);
+            rmSync(marker);
+            await page
+              .getByRole("button", { name: "Try again", exact: true })
+              .click();
+            await expect(
+              page.getByRole("heading", { name: "Sites", exact: true }),
+            ).toBeVisible();
+          }
           for (const code of [401, 403]) {
             writeFileSync(marker, String(code));
             const rejected = await context.request.get(origin + path, {
               maxRedirects: 0,
             });
-            assert.equal(rejected.status(), 307);
-            assert.equal(rejected.headers().location, "/login");
+            if (path === "/dashboard/sites") {
+              // A loading boundary may already have sent 200 before a server
+              // redirect is emitted in the stream. Check access, not just status.
+              assert([200, 307].includes(rejected.status()));
+              assert(
+                !(await rejected.text()).includes(directoryName),
+                "Rejected stream must contain no private directory data",
+              );
+              await page.goto(origin + path);
+              await expect(page).toHaveURL(origin + "/login");
+              await expect(
+                page.getByText(directoryName, { exact: true }),
+              ).toHaveCount(0);
+            } else {
+              assert.equal(rejected.status(), 307);
+              assert.equal(rejected.headers().location, "/login");
+            }
           }
           rmSync(marker);
         } finally {
@@ -336,6 +390,19 @@ test(
           }),
         ]);
       }
+      assert.equal(
+        (
+          await admin
+            .from("site_memberships")
+            .delete()
+            .eq("site_id", directorySite)
+        ).error,
+        null,
+      );
+      assert.equal(
+        (await admin.from("sites").delete().eq("id", directorySite)).error,
+        null,
+      );
       for (const user of users)
         assert.equal(
           (await admin.auth.admin.deleteUser(user.id)).error,

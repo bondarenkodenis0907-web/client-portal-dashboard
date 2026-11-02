@@ -9,6 +9,215 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      facility_managers: {
+        Row: { user_id: string; is_active: boolean };
+        Insert: { user_id: string; is_active?: boolean };
+        Update: { user_id?: string; is_active?: boolean };
+        ComputedFields: never;
+        Relationships: [];
+      };
+      contracts: {
+        Row: {
+          id: string;
+          site_id: string;
+          revision: number;
+          published_version_id: string | null;
+          created_at: string;
+          created_by: string;
+        };
+        Insert: {
+          id?: string;
+          site_id: string;
+          revision?: number;
+          published_version_id?: string | null;
+          created_at?: string;
+          created_by: string;
+        };
+        Update: {
+          id?: string;
+          site_id?: string;
+          revision?: number;
+          published_version_id?: string | null;
+          created_at?: string;
+          created_by?: string;
+        };
+        ComputedFields: never;
+        Relationships: [];
+      };
+      contract_versions: {
+        Row: {
+          id: string;
+          contract_id: string;
+          version: number;
+          details: Json;
+          filename: string;
+          byte_size: number;
+          sha256: string;
+          created_at: string;
+          created_by: string;
+        };
+        Insert: {
+          id: string;
+          contract_id: string;
+          version: number;
+          details: Json;
+          filename: string;
+          byte_size: number;
+          sha256: string;
+          created_at: string;
+          created_by: string;
+        };
+        Update: {
+          id?: string;
+          contract_id?: string;
+          version?: number;
+          details?: Json;
+          filename?: string;
+          byte_size?: number;
+          sha256?: string;
+          created_at?: string;
+          created_by?: string;
+        };
+        ComputedFields: never;
+        Relationships: [];
+      };
+      contract_events: {
+        Row: {
+          id: string;
+          contract_id: string;
+          version_id: string | null;
+          actor_id: string;
+          event_type: string;
+          revision: number;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          contract_id: string;
+          version_id: string | null;
+          actor_id: string;
+          event_type: string;
+          revision?: number;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          contract_id?: string;
+          version_id?: string | null;
+          actor_id?: string;
+          event_type?: string;
+          revision?: number;
+          created_at?: string;
+        };
+        ComputedFields: never;
+        Relationships: [];
+      };
+      sites: {
+        Row: {
+          id: string;
+          name: string;
+          address: string;
+          created_at: string;
+          customer_name: string;
+          contact_name: string;
+          contact_email: string;
+          contact_phone: string;
+          is_archived: boolean;
+          version: number;
+          updated_at: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          id?: string;
+          name: string;
+          address?: string;
+          customer_name?: string;
+          contact_name?: string;
+          contact_email?: string;
+          contact_phone?: string;
+          is_archived?: boolean;
+          version?: number;
+          updated_at?: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          name?: string;
+          address?: string;
+          customer_name?: string;
+          contact_name?: string;
+          contact_email?: string;
+          contact_phone?: string;
+          is_archived?: boolean;
+          version?: number;
+          updated_at?: string;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      buildings: {
+        Row: {
+          id: string;
+          site_id: string;
+          name: string;
+          address: string;
+          created_at: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          id?: string;
+          site_id: string;
+          name: string;
+          address?: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          site_id?: string;
+          name?: string;
+          address?: string;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "buildings_site_id_fkey";
+            columns: ["site_id"];
+            isOneToOne: false;
+            referencedRelation: "sites";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      site_memberships: {
+        Row: {
+          site_id: string;
+          user_id: string;
+          is_active: boolean;
+          created_at: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          site_id: string;
+          user_id: string;
+          is_active?: boolean;
+          created_at?: string;
+        };
+        Update: {
+          site_id?: string;
+          user_id?: string;
+          is_active?: boolean;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "site_memberships_site_id_fkey";
+            columns: ["site_id"];
+            isOneToOne: false;
+            referencedRelation: "sites";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       profiles: {
         Row: {
           company: string | null;
@@ -163,6 +372,47 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      contract_summaries: {
+        Args: { p_site_id: string };
+        Returns: {
+          id: string;
+          site_id: string;
+          revision: number;
+          published_version_id: string | null;
+          created_at: string;
+          title: string;
+          contract_number: string;
+        }[];
+      };
+      can_manage_facilities: { Args: Record<string, never>; Returns: boolean };
+      save_site: {
+        Args: { p_id: string; p_expected_version: number; p_details: Json };
+        Returns: Json;
+      };
+      save_contract_version: {
+        Args: {
+          p_contract_id: string;
+          p_site_id: string;
+          p_version_id: string;
+          p_expected_revision: number;
+          p_details: Json;
+          p_filename: string;
+          p_pdf_base64: string;
+        };
+        Returns: Json;
+      };
+      publish_contract: {
+        Args: {
+          p_contract_id: string;
+          p_expected_revision: number;
+          p_version_id: string | null;
+        };
+        Returns: Json;
+      };
+      download_contract_file: {
+        Args: { p_version_id: string };
+        Returns: { filename: string; pdf_base64: string; sha256: string }[];
+      };
       create_service_request: {
         Args: {
           p_description: string;

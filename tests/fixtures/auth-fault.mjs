@@ -18,6 +18,19 @@ globalThis.fetch = async (input, init) => {
   const marker = process.env.TEST_AUTH_FAULT_FILE;
   if (url.origin === "http://127.0.0.1:56321" && marker && existsSync(marker)) {
     const value = readFileSync(marker, "utf8");
+    if (value === "sites:503") {
+      if (url.pathname !== "/rest/v1/sites") return original(input, init);
+      return new Response(
+        JSON.stringify({
+          code: "SYNTHETIC_FAILURE",
+          message: "Synthetic directory failure",
+        }),
+        {
+          status: 503,
+          headers: { "Content-Type": "application/json" },
+        },
+      );
+    }
     const refresh = value.startsWith("refresh:");
     const matches = refresh
       ? url.pathname === "/auth/v1/token" &&
