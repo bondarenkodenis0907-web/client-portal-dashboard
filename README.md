@@ -12,19 +12,11 @@ Built with Next.js, React, TypeScript, Tailwind CSS and Supabase. Screenshots us
 
 ## Project status
 
-The [live application](https://client-portal-dashboard-one.vercel.app) uses uploaded source `a0c1af06`. The integrated [release candidate #24](https://github.com/bondarenkodenis0907-web/client-portal-dashboard/pull/24) adds retryable Proxy Auth failure handling and the updated demonstration. Its application-code baseline `ac362957` passed [all eight CI jobs](https://github.com/bondarenkodenis0907-web/client-portal-dashboard/actions/runs/41327554868): 43 unit/policy tests, 230 SQL assertions, 35 browser cases, server-Auth, guard, maintenance, rollback and synthetic restore checks.
+The [live application](https://client-portal-dashboard-one.vercel.app) runs application source `b001fd9`, released on 2 November 2026. Production has fourteen migrations. Sites/buildings, explicit admission, manager site editing, contract versions and private PDF publication/download are deployed. Authenticated production acceptance is pending; equipment, building documents, planned work and building-scoped requests remain planned.
 
-`main` is still `00fc4b8`; it is behind the deployed source and candidate. Production already has eleven migrations. Do not replay the historical eight-to-eleven migration sequence. Hosted recovery, a fresh production backup with an independent restore, and the release window remain open. The selected cloud rollback is recorded in the [current release plan](docs/RELEASE_ROLLBACK_RUNBOOK.md); it has not been exercised in the cloud.
+Candidate verification: 46 unit/policy, 346 SQL and 41 browser checks plus server integration, guard, maintenance, compatible rollback and synthetic restore. Separate main CI, the bounded production-backup evidence and hosted-smoke limitations are in the [release record](docs/PRODUCTION_RELEASE_20261102.md). Do not replay historical migrations. Hosted password-recovery acceptance is deferred by owner decision.
 
-Screenshots show the candidate on an isolated backend with fictional data. The next planned product stage is a facility with a contract and buildings, each with documentation, equipment, planned work and requests. Contracts, documents, equipment and planned-work modules remain planned; the separate directory slice is described below. See the [roadmap](docs/PROJECT_MASTER_PLAN.md) and [verified security status](docs/SECURITY_STATUS.md).
-
-## Facility directory development
-
-A separate feature branch prepares persisted sites, buildings and explicit client admission with server-rendered directory pages. Clients see only assigned sites; active staff can read the company directory. Provisioning is administrative; there is no customer self-enrolment. See the [scope and acceptance criteria](docs/FACILITY_DIRECTORY.md). This feature is not in production or the #24 baseline; its twelfth migration is only for isolated development until reviewed and approved.
-
-## Site and contract management development
-
-A separately stacked branch adds explicitly admitted managers, site editing with conflict checks, versioned contract cards and private PDF download, and deliberate publication to admitted clients. The bounded pilot uses PostgreSQL-backed PDF files (up to 2 MiB) so metadata and bytes are atomic and restored together; the planned Storage bucket is not yet implemented. See the [management scope, access model and tests](docs/SITE_CONTRACT_MANAGEMENT.md). This feature is not deployed.
+PDFs up to 2 MiB are private PostgreSQL records, published by an explicitly admitted manager. Ordinary staff cannot manage contracts; clients only see the published version of admitted sites. [Directory](docs/FACILITY_DIRECTORY.md) · [Management](docs/SITE_CONTRACT_MANAGEMENT.md) · [Roadmap](docs/PROJECT_MASTER_PLAN.md).
 
 ## Features
 
@@ -43,8 +35,8 @@ A separately stacked branch adds explicitly admitted managers, site editing with
 
 Use Node 24.19.0, npm 11.17.0 and Docker. Run `npm ci`, then follow [local setup and tests](docs/DEVELOPMENT.md).
 
-Local changes are not released to the live application. See the [dated local verification](docs/evidence/verification.json), [environments](docs/ENVIRONMENT_REGISTER.md) and the [release checklist](docs/RELEASE_ROLLBACK_RUNBOOK.md). Publication still requires approval.
+Local changes are not released to the live application. See the [dated local verification](docs/evidence/verification.json), [environments](docs/ENVIRONMENT_REGISTER.md) and the [release checklist](docs/RELEASE_ROLLBACK_RUNBOOK.md). Future releases require their own reviewed scope and authorization.
 
 The next milestone is a pilot at one real site: [development plan](docs/PROJECT_MASTER_PLAN.md) · [decisions](docs/DECISIONS.md) · [acceptance criteria](docs/QA_ACCEPTANCE_MATRIX.md).
 
-Attachments, notifications, SLA escalation, reopening and separate contractor teams are not implemented.
+General request attachments, notifications, SLA escalation, reopening and separate contractor teams are not implemented; contract PDFs are supported.
