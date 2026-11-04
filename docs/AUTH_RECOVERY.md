@@ -1,8 +1,8 @@
 # Password recovery
 
-## Verification outage fix — 04.11.2026
+## Verification outage fix — 04.11.2026 release
 
-PREPARED in `fix/recovery-verification-outages-20261104`, based on main `b001fd9`; not released. OTP verification and the subsequent claims/user checks now distinguish temporary errors (timeouts, rate limits, server/transport failures) from explicit rejection. A temporary failure returns private/no-store HTTP 503 without issuing a recovery grant. Because OTP consumption may already have succeeded, the response requests a new recovery link rather than promising that replay will succeed. Explicit invalid/expired OTPs, missing sessions and identity mismatches remain denied.
+Included in the combined 04.11 release candidate from main `b001fd9`; publication is tracked by the exact candidate CI and Vercel deployment, not assumed here. See [release procedure](RELEASE_20261104.md). OTP verification and the subsequent claims/user checks now distinguish temporary errors (timeouts, rate limits, server/transport failures) from explicit rejection. A temporary failure returns private/no-store HTTP 503 without issuing a recovery grant. Because OTP consumption may already have succeeded, the response requests a new recovery link rather than promising that replay will succeed. Explicit invalid/expired OTPs, missing sessions and identity mismatches remain denied.
 
 The route-level unit suite exercises returned and thrown failures at all three Auth steps, explicit rejection, identity mismatch, missing signing configuration before OTP consumption, and successful issuance of one protected grant. Hosted email/password acceptance remains separate. The historical baseline below describes earlier verification; it does not describe this branch as published.
 
