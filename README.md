@@ -1,5 +1,7 @@
 # Client Portal Dashboard
 
+Mobile status refresh is prepared in `fix/request-refresh-mobile-20261104` (not released). A native link reloads the request from the server without depending on JavaScript, with a 44px touch target. See [mobile acceptance](docs/MOBILE_ACCEPTANCE_20261104.md).
+
 A service portal for building systems: report a fault, assign an engineer and record the repair.
 
 [Live application](https://client-portal-dashboard-one.vercel.app) · [CI](https://github.com/bondarenkodenis0907-web/client-portal-dashboard/actions)

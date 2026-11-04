@@ -58,6 +58,85 @@ async function fixture(count = 1) {
   };
 }
 
+test("mobile status refresh performs a document reload with and without JavaScript", async ({
+  page,
+  browser,
+}) => {
+  const f = await fixture();
+  try {
+    const made = await f.admin
+      .from("service_requests")
+      .insert({
+        user_id: f.users[0].id,
+        operation_key: randomUUID(),
+        site: "Mobile refresh acceptance",
+        system: "CCTV",
+        description: "Synthetic request for read-only refresh checks",
+      })
+      .select("id, version")
+      .single();
+    expect(made.error).toBeNull();
+    const id = made.data!.id;
+    await f.signIn(page);
+    const storageState = await page.context().storageState();
+    for (const javaScriptEnabled of [true, false]) {
+      const context = await browser.newContext({
+        baseURL: "http://127.0.0.1:3010",
+        storageState,
+        javaScriptEnabled,
+        viewport: { width: 390, height: 844 },
+        hasTouch: true,
+      });
+      try {
+        const mobile = await context.newPage();
+        const path = `/dashboard/requests/${id}`;
+        await mobile.goto(path);
+        const refresh = mobile.getByRole("link", {
+          name: "Refresh status",
+          exact: true,
+        });
+        await expect(refresh).toBeVisible();
+        await expect(refresh).toHaveAttribute("href", path);
+        await refresh.scrollIntoViewIfNeeded();
+        const box = await refresh.boundingBox();
+        expect(box!.height).toBeGreaterThanOrEqual(44);
+        expect(box!.width).toBeGreaterThanOrEqual(44);
+        const navigation = mobile.waitForResponse(
+          (response) =>
+            response.request().isNavigationRequest() &&
+            response.request().resourceType() === "document" &&
+            new URL(response.url()).pathname === path,
+        );
+        await refresh.tap();
+        expect((await navigation).status()).toBe(200);
+        await expect(
+          mobile.getByRole("heading", {
+            name: "Mobile refresh acceptance",
+            exact: true,
+          }),
+        ).toBeVisible();
+        await expect(
+          mobile
+            .getByRole("region", { name: "Request history", exact: true })
+            .locator("ol > li"),
+        ).toHaveCount(1);
+      } finally {
+        await context.close();
+      }
+    }
+    const saved = await f.admin
+      .from("service_requests")
+      .select("version, status")
+      .eq("id", id)
+      .single();
+    expect(saved.error).toBeNull();
+    expect(saved.data?.version).toBe(made.data!.version);
+    expect(saved.data?.status).toBe("new");
+  } finally {
+    await f.cleanup();
+  }
+});
+
 test("history pages reach every event, survive errors and new inserts, and retain RLS", async ({
   page,
 }) => {
