@@ -17,6 +17,26 @@ function invalid() {
   return recoveryRedirect("/forgot-password?status=invalid");
 }
 
+function unavailable() {
+  // A successful OTP may already have been consumed before a later check fails.
+  return new NextResponse(
+    "Authentication is temporarily unavailable. This link may already have been used. Request a new recovery link and try again.",
+    { status: 503, headers: recoveryHeaders },
+  );
+}
+
+function temporary(error: { status?: number; name?: string } | null) {
+  return (
+    !!error &&
+    error.name !== "AuthSessionMissingError" &&
+    (error.status === undefined ||
+      error.status === 0 ||
+      error.status === 408 ||
+      error.status === 429 ||
+      error.status >= 500)
+  );
+}
+
 export async function POST(request: Request) {
   if (!sameOriginPost(request))
     return new NextResponse("Confirmation rejected", {
@@ -51,9 +71,13 @@ export async function POST(request: Request) {
       type: "recovery",
       token_hash: tokenHash,
     });
+    if (temporary(error)) return unavailable();
     if (error || !data.session) return invalid();
     const claims = await supabase.auth.getClaims();
+    if (temporary(claims.error)) return unavailable();
+    if (claims.error) return invalid();
     const user = await supabase.auth.getUser();
+    if (temporary(user.error)) return unavailable();
     if (
       claims.error ||
       user.error ||
@@ -85,9 +109,6 @@ export async function POST(request: Request) {
     );
     return response;
   } catch {
-    return new NextResponse(
-      "Unable to verify this link. Request a new link and try again.",
-      { status: 503, headers: recoveryHeaders },
-    );
+    return unavailable();
   }
 }

@@ -1,5 +1,7 @@
 # Client Portal Dashboard
 
+Recovery verification outage handling is prepared in `fix/recovery-verification-outages-20261104` from main `b001fd9`, with route-level regression tests. It is not released; see [recovery details](docs/AUTH_RECOVERY.md). Historical deployment statements below are awaiting the separate documentation synchronization in PR #34.
+
 A service portal for building systems: report a fault, assign an engineer and record the repair.
 
 [Live application](https://client-portal-dashboard-one.vercel.app) · [CI](https://github.com/bondarenkodenis0907-web/client-portal-dashboard/actions)
