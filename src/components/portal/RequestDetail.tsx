@@ -2,7 +2,6 @@
 
 import { RequestProcessingForm } from "./RequestProcessingForm";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   formatRequestDate,
@@ -24,7 +23,6 @@ export function RequestDetail({
   staff: StaffMember[];
   isStaff: boolean;
 }) {
-  const router = useRouter();
   const [local, setLocal] = useState<{
     request: ServiceRequest;
     history: RequestHistoryPage;
@@ -125,13 +123,12 @@ export function RequestDetail({
                     ? "An engineer is working on this issue. The completed work will appear here when the request is closed."
                     : "This request is complete. If the issue returns, submit a new request with the updated details."}
               </p>
-              <button
-                type="button"
-                onClick={() => router.refresh()}
-                className="mt-4 text-sm font-semibold text-blue-700"
+              <a
+                href={`/dashboard/requests/${request.id}`}
+                className="mt-4 inline-flex min-h-11 items-center rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-blue-700 hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700"
               >
                 Refresh status
-              </button>
+              </a>
             </>
           ) : (
             <RequestProcessingForm

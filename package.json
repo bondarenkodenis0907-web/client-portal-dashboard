@@ -21,7 +21,7 @@
     "test:preview-guard": "node scripts/verify-preview-guard.mjs",
     "test:deployment-hosts": "node --test tests/deployment-hosts.test.mjs",
     "check:preview-hosts": "node scripts/probe-preview-hosts.mjs",
-    "test:recovery-policy": "node --test tests/recovery-policy.test.mjs tests/recovery-actions.test.mjs tests/recovery-grant.test.mjs tests/recovery-logout.test.mjs",
+    "test:recovery-policy": "node --test tests/recovery-policy.test.mjs tests/recovery-actions.test.mjs tests/recovery-grant.test.mjs tests/recovery-logout.test.mjs tests/recovery-verification.test.mjs",
     "test:request-submission": "node --test tests/request-submission.test.mjs",
     "test:backup-safety": "node --test tests/backup-safety.test.mjs tests/restore-preflight.test.mjs",
     "test:restore": "node scripts/restore-drill.mjs drill",
